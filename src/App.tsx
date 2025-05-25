@@ -97,7 +97,7 @@ function App() {
             cursor: 'pointer',
           }}
         >
-          Sign In
+          Sign In / Sign Up
         </button>
       </div>
     );
