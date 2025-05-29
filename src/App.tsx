@@ -6,6 +6,7 @@ import Contacts from './pages/Contacts';
 import AppLayout from './components/AppLayout';
 import ApplicationPage from './pages/ApplicationPage';
 import AllConversations from './pages/AllConversations';
+import AcceptInvitation from './pages/AcceptInvitation';
 
 
 function ProtectedRoutes() {
@@ -38,6 +39,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/app/*" element={<ProtectedRoutes />}>
           <Route index element={<ApplicationPage />} />
           <Route path="profile" element={<Profile />} />

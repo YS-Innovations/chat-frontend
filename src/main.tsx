@@ -11,9 +11,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
       authorizationParams={{
         redirect_uri: window.location.origin,
-        cacheLocation: 'localstorage' // Add this line
+        cacheLocation: 'localstorage',
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       }}
-      useRefreshTokens={true} // Add this line
+      useRefreshTokens={true}
     >
       <App />
     </Auth0Provider>
