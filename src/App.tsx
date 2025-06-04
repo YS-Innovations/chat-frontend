@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
@@ -6,8 +7,7 @@ import Contacts from './pages/Contacts';
 import AppLayout from './components/AppLayout';
 import ApplicationPage from './pages/ApplicationPage';
 import AllConversations from './pages/AllConversations';
-import AcceptInvitation from './pages/AcceptInvitation';
-
+import AcceptInvite from './pages/AcceptInvite';
 
 function ProtectedRoutes() {
   const { isAuthenticated, isLoading } = useAuth0();
@@ -39,7 +39,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/accept-invitation" element={<AcceptInvitation />} />
+        <Route path="/accept-invite" element={<AcceptInvite />} />
         <Route path="/app/*" element={<ProtectedRoutes />}>
           <Route index element={<ApplicationPage />} />
           <Route path="profile" element={<Profile />} />

@@ -1,3 +1,4 @@
+// main.tsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
@@ -11,8 +12,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
       authorizationParams={{
         redirect_uri: window.location.origin,
-        cacheLocation: 'localstorage',
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        cacheLocation: 'localstorage',
       }}
       useRefreshTokens={true}
     >

@@ -1,3 +1,4 @@
+// Home.tsx
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
@@ -14,7 +15,6 @@ import {
 export default function Home() {
   const { isAuthenticated, loginWithRedirect, logout, user, isLoading } = useAuth0();
   const navigate = useNavigate();
- 
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -118,22 +118,6 @@ export default function Home() {
         </div>
       </section>
 
-
-
-      {/* Logo Cloud */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <p className="text-center text-gray-400 uppercase text-sm tracking-wider mb-8">TRUSTED BY INNOVATIVE TEAMS</p>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 hover:opacity-100 transition-opacity">
-            {['Microsoft', 'Slack', 'Shopify', 'Airbnb', 'Spotify'].map((logo) => (
-              <div key={logo} className="text-2xl font-bold text-gray-700 hover:text-indigo-600 transition-colors">
-                {logo}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -166,56 +150,6 @@ export default function Home() {
               description="Automate repetitive tasks and focus on what matters most."
               features={['Auto-responses', 'Sentiment analysis', 'Smart suggestions']}
             />
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* Stats Section */}
-      <section className="py-16 bg-indigo-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div className="p-6">
-              <div className="text-4xl font-bold mb-2">10,000+</div>
-              <div className="text-indigo-100">Happy Customers</div>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold mb-2">40%</div>
-              <div className="text-indigo-100">Faster Response Time</div>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-indigo-100">Dedicated Support</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center relative overflow-hidden">
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-6 text-[#4c1d95] transition-transform duration-500 hover:scale-105">
-            Ready to transform your customer communication?
-          </h2>
-          <p className="text-xl mb-10 max-w-2xl mx-auto text-[#6b7280]">
-            Join thousands of businesses providing exceptional customer service with CoConnect.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-            <Button
-              size="lg"
-              className="bg-white text-indigo-600 hover:bg-gray-100 shadow-md hover:shadow-lg transition-all hover:scale-110"
-              onClick={() => loginWithRedirect()}
-            >
-              Start Free Trial
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="bg-[#7c3aed] text-white hover:bg-[#6d28d9] transition transform hover:scale-110 hover:shadow-lg"
-            >
-              Contact Sales
-            </Button>
           </div>
         </div>
       </section>
@@ -291,14 +225,12 @@ function FeatureCard({ icon, title, description, features }: {
   features?: string[];
 }) {
   return (
-    <Card className="h-full hover:shadow-lg transition-all border border-gray-100 hover:border-indigo-100 group">
-      <CardHeader>
+    <div className="h-full hover:shadow-lg transition-all border border-gray-100 hover:border-indigo-100 group">
+      <div className="p-6">
         <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
           {icon}
         </div>
-        <CardTitle className="text-gray-900">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
         <p className="text-gray-600 mb-4">{description}</p>
         {features && (
           <ul className="space-y-2">
@@ -310,7 +242,7 @@ function FeatureCard({ icon, title, description, features }: {
             ))}
           </ul>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

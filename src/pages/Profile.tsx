@@ -1,11 +1,12 @@
-// pages/Profile.tsx
-import { useState, useEffect } from 'react';
+// Profile.tsx
 import { useAuth0 } from '@auth0/auth0-react';
 import useUser from '../hooks/useUser';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Link } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function Profile() {
   const { user, logout } = useAuth0();
@@ -16,15 +17,14 @@ export default function Profile() {
     name: ''
   });
 
-  // Initialize form data when profile or user changes
   useEffect(() => {
-    if (profile || user) {
+    if (profile) {
       setFormData({
-        nickname: profile?.nickname || '',
-        name: profile?.name || user?.name || ''
+        nickname: profile.nickname || '',
+        name: profile.name || ''
       });
     }
-  }, [profile, user]);
+  }, [profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,7 +43,7 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <Loader2 className="h-12 w-12 animate-spin" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function Profile() {
                 <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
                 <Button 
                   variant="outline" 
-                   onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+                  onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
                 >
                   Logout
                 </Button>
