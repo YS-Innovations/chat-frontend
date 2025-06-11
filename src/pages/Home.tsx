@@ -1,7 +1,3 @@
-// Home.tsx
-import { useAuth0 } from '@auth0/auth0-react';
-import { Button } from '../components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { MessageSquare, BarChart2, Bot, Zap, ChevronRight, Check } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,9 +7,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu"
+import { Button } from '../components/ui/button';
+import { useAuth } from '../hooks/useAuth'; // Import custom hook
 
 export default function Home() {
-  const { isAuthenticated, loginWithRedirect, logout, user, isLoading } = useAuth0();
+  const { 
+    isAuthenticated, 
+    user, 
+    isLoading, 
+    handleLogin, 
+    handleLogout 
+  } = useAuth();
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,16 +34,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const handleLogin = () => {
-    if (isAuthenticated) {
-      navigate('/app');
-    } else {
-      loginWithRedirect({
-        appState: { returnTo: '/app' }
-      });
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-indigo-50">
@@ -68,7 +63,7 @@ export default function Home() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
-                  onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+                  onClick={handleLogout}
                 >
                   Logout
                 </DropdownMenuItem>
@@ -99,7 +94,7 @@ export default function Home() {
             <Button
               size="lg"
               className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
-              onClick={() => loginWithRedirect()}
+              onClick={handleLogin}
             >
               Get Started Free
               <Zap className="ml-2 h-5 w-5" />

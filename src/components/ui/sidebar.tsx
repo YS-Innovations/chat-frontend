@@ -1,9 +1,11 @@
+"use client"
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { type  VariantProps, cva } from "class-variance-authority"
+import { cva, type VariantProps } from "class-variance-authority"
 import { PanelLeftIcon } from "lucide-react"
 
-import { useIsMobile } from "@/hooks/useIsMobile"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +40,8 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
+  isCollapsed: boolean
+  setIsCollapsed: (collapsed: boolean) => void
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
@@ -111,18 +115,21 @@ function SidebarProvider({
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed"
 
-  const contextValue = React.useMemo<SidebarContextProps>(
-    () => ({
-      state,
-      open,
-      setOpen,
-      isMobile,
-      openMobile,
-      setOpenMobile,
-      toggleSidebar,
-    }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
-  )
+const contextValue = React.useMemo<SidebarContextProps>(
+  () => ({
+    state,
+    open,
+    setOpen,
+    isMobile,
+    openMobile,
+    setOpenMobile,
+    toggleSidebar,
+    isCollapsed: !open, // ✅ Here
+    setIsCollapsed: (collapsed) => setOpen(!collapsed), // ✅ Here
+  }),
+  [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+)
+
 
   return (
     <SidebarContext.Provider value={contextValue}>
