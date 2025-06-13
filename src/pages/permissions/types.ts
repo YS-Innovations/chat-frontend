@@ -22,6 +22,9 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: 'invite-form', label: 'Invite Form Page Allow', value: 'invite-form' },
       { id: 'permission-view', label: 'Permission View Page Allow', value: 'permission-view' },
       { id: 'permission-edit', label: 'Permission Edit Page Allow', value: 'permission-edit' },
+      { id: 'user-delete', label: 'Delete User', value: 'user-delete' },
+      { id: 'inactive-members-view', label: 'View Inactive Members', value: 'inactive-members-view' },
+      { id: 'resend-invitation', label: 'Resend Invitations', value: 'resend-invitation' },
     ],
   }
 ];

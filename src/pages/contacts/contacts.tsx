@@ -9,9 +9,12 @@ import type { Member } from './types';
 import { MemberList } from './components/member-list';
 import { InviteForm } from './components/invite-form';
 import { MemberDetails } from './components/member-details';
-
+import { usePermissions } from '@/context/PermissionsContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InactiveMembersTab } from './inactive-members-tab';
 export function Contacts() {
   const { user, getAccessTokenSilently } = useAuth0();
+  const { hasPermission, role } = usePermissions();
   const [members, setMembers] = useState<Member[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [error, setError] = useState('');
@@ -20,7 +23,7 @@ export function Contacts() {
   const [panelMode, setPanelMode] = useState<'invite' | 'details' | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
+ const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
   useEffect(() => {
     if (user) fetchMembers();
   }, [user]);
@@ -65,112 +68,51 @@ export function Contacts() {
   };
 
   const handleMemberSelect = (member: Member) => {
-    setSelectedMember(member);
-    setPanelMode('details');
-  };
-
-  const handleUpdateRole = async (memberId: string, newRole: 'ADMIN' | 'AGENT') => {
-    setActionLoading(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`http://localhost:3000/auth/members/${memberId}/role`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update role');
-
-      setMembers(prev => prev.map(m =>
-        m.id === memberId ? { ...m, role: newRole } : m
-      ));
-    } catch (err) {
-      console.error('Error updating role:', err);
-      setError('Failed to update role');
-    } finally {
-      setActionLoading(false);
+    // Check if user has permission to view details
+    if (role === 'ADMIN' || hasPermission('member-details')) {
+      setSelectedMember(member);
+      setPanelMode('details');
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    setActionLoading(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`http://localhost:3000/auth/members/${memberId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to remove member');
-
-      setMembers(prev => prev.filter(m => m.id !== memberId));
-      setPanelMode(null);
-    } catch (err) {
-      console.error('Error removing member:', err);
-      setError('Failed to remove member');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleResendInvite = async (email: string) => {
-    setActionLoading(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:3000/auth/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error('Failed to resend invitation');
-    } catch (err) {
-      console.error('Error resending invitation:', err);
-      setError('Failed to resend invitation');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-// src/pages/contacts/contacts.tsx
-const handleUpdatePermissions = async (permissions: Record<string, boolean>) => {
-  if (!selectedMember) return;
-  
-  setActionLoading(true);
-  try {
-    const token = await getAccessTokenSilently();
-    const response = await fetch(
-      `http://localhost:3000/auth/permissions/${selectedMember.id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ permissions }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update permissions');
-    }
+  const handleUpdatePermissions = async (permissions: Record<string, boolean>) => {
+    if (!selectedMember) return;
     
-    // Update local state
-    setMembers(prev => prev.map(m => 
-      m.id === selectedMember.id ? { ...m, permissions } : m
-    ));
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Failed to update permissions');
-  } finally {
-    setActionLoading(false);
-  }
-};
+    setActionLoading(true);
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `http://localhost:3000/auth/permissions/${selectedMember.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ permissions }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update permissions');
+      }
+      
+      // Update local state
+      setMembers(prev => prev.map(m => 
+        m.id === selectedMember.id ? { ...m, permissions } : m
+      ));
+      
+      // Update selected member if it's the same
+      setSelectedMember(prev => 
+        prev && prev.id === selectedMember.id ? { ...prev, permissions } : prev
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update permissions');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -191,23 +133,40 @@ const handleUpdatePermissions = async (permissions: Record<string, boolean>) => 
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <Button onClick={() => {
-                      setSelectedMember(null);
-                      setPanelMode('invite');
-                    }}>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Invite
-                    </Button>
+                    {(role === 'ADMIN' || hasPermission('invite-form')) && (
+                      <Button onClick={() => {
+                        setSelectedMember(null);
+                        setPanelMode('invite');
+                      }}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Invite
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
-                <MemberList
-                  members={filteredMembers}
-                  loading={membersLoading}
-                  error={error}
-                  onSelect={handleMemberSelect}
-                />
+                <Tabs defaultValue="active">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="active">Active Members</TabsTrigger>
+                    {canViewInactive && (
+                      <TabsTrigger value="inactive">Inactive Members</TabsTrigger>
+                    )}
+                  </TabsList>
+                  <TabsContent value="active">
+                    <MemberList
+                      members={filteredMembers}
+                      loading={membersLoading}
+                      error={error}
+                      onSelect={handleMemberSelect}
+                    />
+                  </TabsContent>
+                  {canViewInactive && (
+                    <TabsContent value="inactive">
+                      <InactiveMembersTab />
+                    </TabsContent>
+                  )}
+                </Tabs>
               </CardContent>
             </Card>
           </Panel>
@@ -233,11 +192,8 @@ const handleUpdatePermissions = async (permissions: Record<string, boolean>) => 
                           setSelectedMember(null);
                           setPanelMode(null);
                         }}
-                        onUpdateRole={handleUpdateRole}
-                        onRemoveMember={handleRemoveMember}
-                        onResendInvite={handleResendInvite}
                         loading={actionLoading}
-                        permissions={selectedMember.permissions || []}
+                        permissions={selectedMember.permissions || {}}
                         onUpdatePermissions={handleUpdatePermissions}
                       />
                     )
@@ -251,5 +207,3 @@ const handleUpdatePermissions = async (permissions: Record<string, boolean>) => 
     </div>
   );
 }
-
-export default Contacts;

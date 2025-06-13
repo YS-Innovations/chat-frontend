@@ -1,4 +1,3 @@
-// src/pages/permissions/components/permission-view.tsx
 import { PERMISSION_GROUPS } from "../types";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,21 +6,24 @@ import { Pencil } from "lucide-react";
 interface PermissionViewProps {
   selectedPermissions: Record<string, boolean>;
   onEdit: () => void;
+  canEdit: boolean;
 }
 
-export function PermissionView({ selectedPermissions, onEdit }: PermissionViewProps) {
+export function PermissionView({ selectedPermissions, onEdit, canEdit }: PermissionViewProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Permissions</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onEdit}
-        >
-          <Pencil className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
+        {canEdit && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onEdit}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+        )}
       </div>
 
       <div className="space-y-4">

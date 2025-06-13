@@ -1,8 +1,7 @@
-// src/pages/permissions/components/permission-edit.tsx
 import { PERMISSION_GROUPS } from "../types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PermissionEditProps {
   initialPermissions: Record<string, boolean>;
@@ -20,6 +19,16 @@ export function PermissionEdit({
   const [tempPermissions, setTempPermissions] = 
     useState<Record<string, boolean>>(initialPermissions);
 
+  // Enforce dependency: permission-edit implies permission-view
+  useEffect(() => {
+    if (tempPermissions['permission-edit'] && !tempPermissions['permission-view']) {
+      setTempPermissions(prev => ({
+        ...prev,
+        'permission-view': true
+      }));
+    }
+  }, [tempPermissions]);
+
   const handleTogglePermission = (permissionValue: string, checked: boolean) => {
     setTempPermissions(prev => ({
       ...prev,
@@ -36,18 +45,25 @@ export function PermissionEdit({
           <div key={group.id} className="border rounded-lg p-4">
             <h3 className="font-medium mb-3">{group.label}</h3>
             <div className="space-y-2">
-              {group.permissions.map(permission => (
-                <div key={permission.id} className="flex items-center">
-                  <Checkbox
-                    checked={tempPermissions[permission.value] || false}
-                    onCheckedChange={(checked) => 
-                      handleTogglePermission(permission.value, !!checked)
-                    }
-                    className="mr-2"
-                  />
-                  <label>{permission.label}</label>
-                </div>
-              ))}
+              {group.permissions.map(permission => {
+                // Disable permission-view if permission-edit is enabled
+                const isViewPermission = permission.value === 'permission-view';
+                const isDisabled = isViewPermission && tempPermissions['permission-edit'];
+                
+                return (
+                  <div key={permission.id} className="flex items-center">
+                    <Checkbox
+                      checked={tempPermissions[permission.value] || false}
+                      onCheckedChange={(checked) => 
+                        handleTogglePermission(permission.value, !!checked)
+                      }
+                      className="mr-2"
+                      disabled={isDisabled}
+                    />
+                    <label>{permission.label}</label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

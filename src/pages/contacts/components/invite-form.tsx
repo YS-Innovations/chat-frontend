@@ -1,10 +1,11 @@
-// src/pages/contacts/components/invite-form.tsx
 import { useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types";
 
 interface InviteFormProps {
   onClose: () => void;
@@ -12,17 +13,40 @@ interface InviteFormProps {
 }
 
 export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   const [email, setEmail] = useState('');
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inviteStatus, setInviteStatus] = useState('');
 
+  const handleTogglePermission = (permissionValue: string, checked: boolean) => {
+    let updated = { ...permissions, [permissionValue]: checked };
+    
+    // Enforce dependency: permission-edit implies permission-view
+    if (permissionValue === 'permission-edit' && checked) {
+      updated['permission-view'] = true;
+    }
+    
+    setPermissions(updated);
+  };
+
   const handleInvite = async () => {
-    if (!email) return;
+    if (!email) {
+      setError('Email is required');
+      return;
+    }
+    
+    // Validate at least one permission is selected
+    const hasPermission = Object.values(permissions).some(value => value);
+    if (!hasPermission) {
+      setError('At least one permission must be selected');
+      return;
+    }
 
     try {
       setLoading(true);
+      setError('');
       setInviteStatus('');
       const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:3000/auth/invite', {
@@ -31,11 +55,12 @@ export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, permissions }),
       });
 
       if (response.ok) {
         setEmail('');
+        setPermissions({});
         setInviteStatus('Invitation sent successfully');
         onInviteSuccess();
       } else {
@@ -82,27 +107,44 @@ export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
             </div>
             
             <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">Invitation Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Role</p>
-                  <p>Agent</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Permissions</p>
-                  <p>View and manage contacts</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Expiration</p>
-                  <p>7 days</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Organization</p>
-                  <p>{user?.org_name || 'Your Organization'}</p>
-                </div>
+              <h3 className="font-medium mb-4">Assign Permissions</h3>
+              <div className="space-y-4">
+                {PERMISSION_GROUPS.map(group => (
+                  <div key={group.id} className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-3">{group.label}</h4>
+                    <div className="space-y-2">
+                      {group.permissions.map(permission => {
+                        // Disable permission-view if permission-edit is enabled
+                        const isViewPermission = permission.value === 'permission-view';
+                        const isDisabled = isViewPermission && permissions['permission-edit'];
+                        
+                        return (
+                          <div key={permission.id} className="flex items-center">
+                            <Checkbox
+                              checked={permissions[permission.value] || false}
+                              onCheckedChange={(checked) => 
+                                handleTogglePermission(permission.value, !!checked)
+                              }
+                              className="mr-2"
+                              disabled={isDisabled}
+                            />
+                            <label>{permission.label}</label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+        )}
+        
+        {error && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
       </div>
       

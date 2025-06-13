@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import Contacts from './pages/contacts/contacts.tsx';
+import {Contacts} from './pages/contacts/contacts.tsx';
 import AppLayout from './components/AppLayout';
 import ApplicationPage from './pages/ApplicationPage';
 import AllConversations from './pages/AllConversations';
@@ -11,6 +11,7 @@ import AcceptInvite from './pages/AcceptInvite';
 import { PermissionEditPage } from './pages/permissions/permission-edit-page.tsx';
 import { PermissionViewPage } from './pages/permissions/permission-view-page.tsx';
 import { useEffect, useState, type JSX } from 'react';
+import { PermissionGuard } from './components/PermissionGuard.tsx';
 
 function ProtectedRoutes() {
   const { isAuthenticated, isLoading } = useAuth0();
@@ -85,7 +86,9 @@ function AdminOnlyRoute({ children }: { children: JSX.Element }) {
         <Route path="/app/*" element={<ProtectedRoutes />}>
           <Route index element={<ApplicationPage />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="contacts" element={<Contacts />} />
+          <Route path="contacts" element={<PermissionGuard permission="member-list">
+      <Contacts />
+    </PermissionGuard>} />
           <Route path="conversations" element={<AllConversations />} />
            
         </Route>

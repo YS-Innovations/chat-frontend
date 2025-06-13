@@ -1,4 +1,3 @@
-// src/pages/contacts/components/member-list.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -6,16 +5,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import type { Member } from "../types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/context/PermissionsContext";
 
 interface MemberListProps {
   members: Member[];
   loading: boolean;
   error: string | null;
-  onSelect: (member: Member) => void; // Add this prop
+  onSelect: (member: Member) => void;
 }
 
 export function MemberList({ members, loading, error, onSelect }: MemberListProps) {
+  const { hasPermission, role } = usePermissions();
+
   if (error) {
     return (
       <Alert variant="destructive" className="mb-4">
@@ -48,7 +49,6 @@ export function MemberList({ members, loading, error, onSelect }: MemberListProp
           <TableHead>Member</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Last Login</TableHead>
-          <TableHead className="text-right">Actions</TableHead> {/* Add this */}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -57,6 +57,7 @@ export function MemberList({ members, loading, error, onSelect }: MemberListProp
             key={member.id} 
             member={member} 
             onSelect={onSelect} 
+            canViewDetails={role === 'ADMIN' || hasPermission('member-details')}
           />
         ))}
       </TableBody>
@@ -66,14 +67,16 @@ export function MemberList({ members, loading, error, onSelect }: MemberListProp
 
 interface MemberRowProps {
   member: Member;
-  onSelect: (member: Member) => void; // Add this prop
+  onSelect: (member: Member) => void;
+  canViewDetails: boolean;
 }
 
-function MemberRow({ member, onSelect }: MemberRowProps) {
+function MemberRow({ member, onSelect, canViewDetails }: MemberRowProps) {
+
   return (
     <TableRow 
-      className="hover:bg-muted/50 cursor-pointer"
-      onClick={() => onSelect(member)}
+      className={`${canViewDetails ? 'hover:bg-muted/50 cursor-pointer' : ''}`}
+      onClick={() => canViewDetails && onSelect(member)}
     >
       <TableCell>
         <Avatar className="h-8 w-8">
@@ -100,18 +103,6 @@ function MemberRow({ member, onSelect }: MemberRowProps) {
         {member.lastLogin 
           ? new Date(member.lastLogin).toLocaleDateString() 
           : 'Never'}
-      </TableCell>
-      <TableCell className="text-right">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(member);
-          }}
-        >
-          View
-        </Button>
       </TableCell>
     </TableRow>
   );

@@ -8,3 +8,19 @@ export interface Member {
   createdAt?: Date | null; 
  permissions: Record<string, boolean>; 
 }
+
+
+
+
+export interface InactiveMember {
+  usedAt: string | number | Date;
+  id: string;
+  email: string;
+  invitedBy: {
+    name: string | null;
+    email: string;
+  } | null;
+  createdAt: Date;
+  expiresAt: Date;
+  status: string;
+}

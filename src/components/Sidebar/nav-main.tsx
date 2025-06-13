@@ -1,4 +1,3 @@
-// NavMain.tsx
 "use client";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,10 +25,12 @@ type NavItem = {
   url: string;
   icon?: LucideIcon;
   badge?: string;
+  permission?: string;
   items?: {
     title: string;
     url: string;
     badge?: string;
+    permission?: string;
   }[];
 };
 
