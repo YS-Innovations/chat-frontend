@@ -1,20 +1,33 @@
-import { useState, useEffect } from "react";
+// src/pages/contacts/components/member-details.tsx
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
-import { Mail, X } from "lucide-react";
+import { Mail, X, Pencil, Check } from "lucide-react";
 import type { Member } from "../types";
-import { PermissionView } from "@/pages/permissions/components/permission-view";
 import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
 import { usePermissions } from "@/context/PermissionsContext";
 import { useAuth0 } from "@auth0/auth0-react";
+
+import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
+import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
+
+// ✅ Sonner toast import
+import { toast } from "sonner";
 
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;
   permissions: Record<string, boolean>;
-  onUpdatePermissions: (permissions: Record<string, boolean>) => Promise<void>;
+  onUpdatePermissions: (
+    permissions: Record<string, boolean>,
+    saveAsTemplate?: boolean,
+    templateName?: string
+  ) => Promise<void>;
   loading?: boolean;
 }
 
@@ -26,20 +39,38 @@ export function MemberDetails({
   loading = false,
 }: MemberDetailsProps) {
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
-  const [currentPermissions, setCurrentPermissions] = 
-    useState<Record<string, boolean>>(permissions);
+  const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>(permissions);
   const { hasPermission, role } = usePermissions();
   const [deleting, setDeleting] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
+  const [showSaveOptions, setShowSaveOptions] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
 
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
+  }, [tempPermissions, permissions]);
 
-  const canDelete = role === 'ADMIN' || 
-                   (hasPermission('user-delete') && member.role === 'AGENT');
+  useEffect(() => {
+    if (!isEditingPermissions && templates.length > 0) {
+      const permString = JSON.stringify(permissions);
+      const match = templates.find(t =>
+        JSON.stringify(t.policy) === permString
+      );
+      setMatchingTemplate(match || null);
+    }
+  }, [isEditingPermissions, templates, permissions]);
+
+  const canDelete = role === 'ADMIN' ||
+    (hasPermission('user-delete') && member.role === 'AGENT');
 
   const handleDelete = async (e: React.MouseEvent, memberId: string) => {
     e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this user?')) return;
-    
+
     try {
       setDeleting(true);
       const token = await getAccessTokenSilently();
@@ -47,30 +78,111 @@ export function MemberDetails({
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Refresh list or remove from UI
+      onClose();
     } catch (error) {
       console.error('Delete failed:', error);
+      toast("Delete failed", {
+        description: "Could not delete user",
+      });
     } finally {
       setDeleting(false);
     }
   };
 
-  // Reset permissions when member changes
   useEffect(() => {
-    setCurrentPermissions(permissions);
+    setTempPermissions(permissions);
     setIsEditingPermissions(false);
   }, [member.id, permissions]);
 
-  const handleSavePermissions = async (updatedPermissions: Record<string, boolean>) => {
+ 
+  const savePermissions = async (
+    perms: Record<string, boolean>, 
+    saveAsTemplate?: boolean, 
+    templateName?: string
+  ) => {
     try {
-      await onUpdatePermissions(updatedPermissions);
-      setCurrentPermissions(updatedPermissions);
-    } finally {
+      await onUpdatePermissions(perms, saveAsTemplate, templateName);
+      setTempPermissions(perms);
       setIsEditingPermissions(false);
+      
+      if (saveAsTemplate && templateName) {
+        toast.success("Template saved and applied", {
+          description: `"${templateName}" template created successfully`,
+        });
+      } else {
+        toast.success("Permissions updated", {
+          description: "Permissions saved successfully",
+        });
+      }
+    } catch (error: any) {
+      console.error('Save failed:', error);
+      toast.error("Error saving permissions", {
+        description: error.message || "An error occurred",
+      });
     }
   };
 
-  // Determine visibility of permission sections
+  const handleSaveClick = () => {
+    if (!hasChanges) {
+      savePermissions(tempPermissions);
+    } else {
+      setShowSaveOptions(true);
+    }
+  };
+
+  const handleSaveForUser = async () => {
+    await savePermissions(tempPermissions);
+  };
+
+  const handleSaveAsTemplate = async (templateName: string) => {
+    await savePermissions(tempPermissions, true, templateName);
+    fetchTemplates();
+  };
+
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch('http://localhost:3000/auth/permissions/templates', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      const data = await response.json();
+      setTemplates(data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      toast("Error loading templates", {
+        description: "Could not load policy templates",
+      });
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditingPermissions) {
+      fetchTemplates();
+    }
+  }, [isEditingPermissions]);
+
+  const handleTemplateClick = async (templateId: string) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`http://localhost:3000/auth/permissions/templates/${templateId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch template');
+      const data = await response.json();
+      setSelectedTemplate(data);
+      setShowTemplateModal(true);
+    } catch (error) {
+      console.error('Error fetching template:', error);
+      toast("Error loading template", {
+        description: "Could not load policy template details",
+      });
+    }
+  };
+
   const canViewPermissions = role === 'ADMIN' || hasPermission('permission-view');
   const canEditPermissions = role === 'ADMIN' || hasPermission('permission-edit');
 
@@ -82,7 +194,7 @@ export function MemberDetails({
           <X className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="flex-1 p-6 overflow-auto">
         <div className="flex flex-col items-center mb-6">
           <Avatar className="h-24 w-24 mb-4">
@@ -93,14 +205,14 @@ export function MemberDetails({
               {getInitials(member.name || member.email)}
             </AvatarFallback>
           </Avatar>
-          
+
           <h3 className="text-xl font-bold">{member.name || 'No name'}</h3>
           <p className="text-muted-foreground flex items-center mt-1">
             <Mail className="h-4 w-4 mr-2" />
             {member.email}
           </p>
-          
-          <Badge 
+
+          <Badge
             variant={member.role === 'ADMIN' ? 'destructive' : 'default'}
             className="mt-3"
           >
@@ -109,8 +221,8 @@ export function MemberDetails({
         </div>
         <div className="flex gap-2 justify-end">
           {canDelete && (
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               size="sm"
               onClick={(e) => handleDelete(e, member.id)}
               disabled={deleting}
@@ -123,20 +235,96 @@ export function MemberDetails({
         {canViewPermissions && (
           isEditingPermissions ? (
             <PermissionEdit
-              initialPermissions={currentPermissions}
-              onSave={handleSavePermissions}
+              value={tempPermissions}
+              onChange={setTempPermissions}
+              onSaveClick={handleSaveClick}
               onCancel={() => setIsEditingPermissions(false)}
               saving={loading}
+              templates={templates}
+              onTemplateClick={handleTemplateClick}
             />
           ) : (
-            <PermissionView
-              selectedPermissions={currentPermissions}
-              onEdit={() => canEditPermissions && setIsEditingPermissions(true)}
-              canEdit={canEditPermissions}
-            />
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Permissions</h2>
+                {canEditPermissions && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingPermissions(true)}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+
+              {matchingTemplate && (
+                <div className="mb-4 flex items-center">
+                  <span className="text-sm text-muted-foreground mr-2">
+                    Using template:
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-accent"
+                    onClick={() => handleTemplateClick(matchingTemplate.id)}
+                  >
+                    {matchingTemplate.policyName}
+                  </Badge>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {PERMISSION_GROUPS.map(group => {
+                  const groupPermissions = group.permissions.filter(p =>
+                    tempPermissions[p.value]
+                  );
+
+                  if (groupPermissions.length === 0) return null;
+
+                  return (
+                    <div key={group.id} className="border rounded-lg p-4">
+                      <h3 className="font-medium mb-3">{group.label}</h3>
+                      <div className="space-y-2">
+                        {groupPermissions.map(permission => (
+                          <div key={permission.id} className="flex items-center p-2 rounded bg-green-50">
+                            <Check className="h-4 w-4 text-green-500 mr-2" />
+                            <span>{permission.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )
         )}
       </div>
+
+    <TemplatePermissionsModal
+        template={selectedTemplate}
+        open={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onUse={(perms, action, templateName) => {
+          if (action === 'apply') {
+            savePermissions(perms);
+          } else if (action === 'saveAsTemplate' && templateName) {
+            savePermissions(perms, true, templateName);
+          }
+          setShowTemplateModal(false);
+        }}
+      />
+      
+      <SaveOptionsModal
+        open={showSaveOptions}
+        onClose={() => setShowSaveOptions(false)}
+        onSaveForUser={() => savePermissions(tempPermissions)}
+        onSaveAsTemplate={handleSaveAsTemplate}
+        templates={templates}
+        permissions={tempPermissions}
+        onViewTemplate={handleTemplateClick}
+      />
     </div>
   );
 }

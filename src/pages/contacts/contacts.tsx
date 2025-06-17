@@ -1,3 +1,4 @@
+// src/pages/contacts/contacts.tsx
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -12,6 +13,7 @@ import { MemberDetails } from './components/member-details';
 import { usePermissions } from '@/context/PermissionsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InactiveMembersTab } from './inactive-members-tab';
+
 export function Contacts() {
   const { user, getAccessTokenSilently } = useAuth0();
   const { hasPermission, role } = usePermissions();
@@ -23,7 +25,8 @@ export function Contacts() {
   const [panelMode, setPanelMode] = useState<'invite' | 'details' | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
- const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
+  const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
+
   useEffect(() => {
     if (user) fetchMembers();
   }, [user]);
@@ -68,14 +71,17 @@ export function Contacts() {
   };
 
   const handleMemberSelect = (member: Member) => {
-    // Check if user has permission to view details
     if (role === 'ADMIN' || hasPermission('member-details')) {
       setSelectedMember(member);
       setPanelMode('details');
     }
   };
 
-  const handleUpdatePermissions = async (permissions: Record<string, boolean>) => {
+  const handleUpdatePermissions = async (
+    permissions: Record<string, boolean>,
+    saveAsTemplate?: boolean,
+    templateName?: string
+  ) => {
     if (!selectedMember) return;
     
     setActionLoading(true);
@@ -89,7 +95,11 @@ export function Contacts() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ permissions }),
+          body: JSON.stringify({ 
+            permissions,
+            saveAsTemplate,
+            templateName 
+          }),
         }
       );
 

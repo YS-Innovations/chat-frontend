@@ -7,6 +7,7 @@ export interface Member {
   picture?: string | null;
   createdAt?: Date | null; 
  permissions: Record<string, boolean>; 
+ status: 'ACTIVE' | 'INACTIVE';
 }
 
 
