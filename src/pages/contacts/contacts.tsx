@@ -76,16 +76,16 @@ export function Contacts() {
       setPanelMode('details');
     }
   };
+
   const handleRoleUpdate = (memberId: string, newRole: Role) => {
-  setMembers(prev => prev.map(m => 
-    m.id === memberId ? { ...m, role: newRole } : m
-  ));
-  
-  // Update selected member if it's the same
-  if (selectedMember && selectedMember.id === memberId) {
-    setSelectedMember({ ...selectedMember, role: newRole });
-  }
-};
+    setMembers(prev => prev.map(m =>
+      m.id === memberId ? { ...m, role: newRole } : m
+    ));
+
+    if (selectedMember && selectedMember.id === memberId) {
+      setSelectedMember({ ...selectedMember, role: newRole });
+    }
+  };
 
   const handleUpdatePermissions = async (
     permissions: Record<string, boolean>,
@@ -93,7 +93,7 @@ export function Contacts() {
     templateName?: string
   ) => {
     if (!selectedMember) return;
-    
+
     setActionLoading(true);
     try {
       const token = await getAccessTokenSilently();
@@ -105,10 +105,10 @@ export function Contacts() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             permissions,
             saveAsTemplate,
-            templateName 
+            templateName
           }),
         }
       );
@@ -117,14 +117,14 @@ export function Contacts() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update permissions');
       }
-      
+
       // Update local state
-      setMembers(prev => prev.map(m => 
+      setMembers(prev => prev.map(m =>
         m.id === selectedMember.id ? { ...m, permissions } : m
       ));
-      
+
       // Update selected member if it's the same
-      setSelectedMember(prev => 
+      setSelectedMember(prev =>
         prev && prev.id === selectedMember.id ? { ...prev, permissions } : prev
       );
     } catch (err) {
@@ -215,7 +215,7 @@ export function Contacts() {
                         loading={actionLoading}
                         permissions={selectedMember.permissions || {}}
                         onUpdatePermissions={handleUpdatePermissions}
-                         onRoleUpdate={(newRole) => handleRoleUpdate(selectedMember!.id, newRole)}
+                        onRoleUpdate={(newRole) => handleRoleUpdate(selectedMember!.id, newRole)}
                       />
                     )
                   )}

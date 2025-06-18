@@ -155,16 +155,6 @@ export function MemberDetails({
         throw new Error(errorData.message || 'Failed to change role');
       }
 
-      // Create full permissions object
-      const fullPermissions = PERMISSION_GROUPS.reduce((acc, group) => {
-        group.permissions.forEach(p => {
-          acc[p.value] = true;
-        });
-        return acc;
-      }, {} as Record<string, boolean>);
-
-      // Update local state
-      onUpdatePermissions(fullPermissions);
       onRoleUpdate(newRole);
 
       toast.success("Role changed", {
@@ -179,6 +169,7 @@ export function MemberDetails({
       setChangingRole(false);
     }
   };
+
 
   const handleSaveAsTemplate = async (templateName: string) => {
     await savePermissions(tempPermissions, true, templateName);
@@ -230,8 +221,15 @@ export function MemberDetails({
   };
 
   const canViewPermissions = role === 'ADMIN' || hasPermission('permission-view');
-  const canEditPermissions = role === 'ADMIN' || hasPermission('permission-edit');
+  const canEditPermissions = useMemo(() => {
 
+
+    // Hide for admins viewing other admins
+    if (role === 'ADMIN' && member.role === 'ADMIN') return false;
+    if (role === 'COADMIN' && member.role === 'COADMIN') return false;
+    // Show for admins viewing non-admins
+    return role === 'ADMIN' || hasPermission('permission-edit');
+  }, [role, member.role, hasPermission]);
 
   return (
     <div className="h-full flex flex-col">
@@ -277,15 +275,29 @@ export function MemberDetails({
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           )}
-          {role === 'ADMIN' && member.role === 'AGENT' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleChangeRole('COADMIN')}
-              disabled={changingRole}
-            >
-              {changingRole ? 'Changing...' : 'Change to Co-Admin'}
-            </Button>
+          {role === 'ADMIN' && (
+            <>
+              {member.role === 'AGENT' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleChangeRole('COADMIN')}
+                  disabled={changingRole}
+                >
+                  {changingRole ? 'Changing...' : 'Change to Co-Admin'}
+                </Button>
+              )}
+              {member.role === 'COADMIN' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleChangeRole('AGENT')}
+                  disabled={changingRole}
+                >
+                  {changingRole ? 'Changing...' : 'Change to Agent'}
+                </Button>
+              )}
+            </>
           )}
         </div>
         {canViewPermissions && (

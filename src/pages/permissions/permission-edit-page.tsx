@@ -3,6 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useParams } from 'react-router-dom';
 import { PermissionEdit } from './components/permission-edit';
 import { Button } from '@/components/ui/button';
+import type { Role } from '../contacts/types';
 
 export function PermissionEditPage() {
   const { userId } = useParams();
@@ -11,20 +12,38 @@ export function PermissionEditPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
+  const [targetUserRole, setTargetUserRole] = useState<Role | null>(null);
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         const token = await getAccessTokenSilently();
-        const response = await fetch(
+
+        // Fetch target user info
+        const userResponse = await fetch(
+          `http://localhost:3000/auth/user/${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!userResponse.ok) throw new Error('Failed to fetch user');
+        const userData = await userResponse.json();
+        setTargetUserRole(userData.role);
+
+        // Prevent editing permissions for admin users
+        if (userData.role === 'ADMIN') {
+          setError('Cannot edit permissions for admin users');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch permissions
+        const permResponse = await fetch(
           `http://localhost:3000/auth/permissions/user/${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
-        if (!response.ok) throw new Error('Failed to fetch permissions');
-        
-        const data = await response.json();
-        setPermissions(data.permissions);
+
+        if (!permResponse.ok) throw new Error('Failed to fetch permissions');
+        const permData = await permResponse.json();
+        setPermissions(permData.permissions);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {

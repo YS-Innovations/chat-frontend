@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 interface PermissionsContextType {
   permissions: Record<string, boolean>;
-  role: 'ADMIN' | 'AGENT' | null;
+  role: 'ADMIN' | 'AGENT' | 'COADMIN' |null;
   isLoading: boolean;
   refreshPermissions: () => void;
   hasPermission: (key: string) => boolean;
@@ -20,7 +20,7 @@ const PermissionsContext = createContext<PermissionsContextType>({
 export const PermissionsProvider = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [role, setRole] = useState<'ADMIN' | 'AGENT' | null>(null);
+  const [role, setRole] = useState<'ADMIN' | 'AGENT' | 'COADMIN'|null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPermissions = async () => {
