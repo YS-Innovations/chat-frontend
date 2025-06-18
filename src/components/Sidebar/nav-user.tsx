@@ -1,4 +1,3 @@
-// NavUser.tsx
 "use client"
 
 import {
@@ -15,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useUserStatus } from "@/context/UserStatusContext";
+import { UserStatusIndicator } from "@/components/UserStatusIndicator";
 
 import {
   Avatar,
@@ -39,7 +40,8 @@ import { cn } from "@/lib/utils";
 
 export function NavUser() {
   const { isCollapsed } = useSidebar();
-  const { user, isLoading, logout } = useAuth0();
+  const { user: auth0User, isLoading, logout } = useAuth0();
+  const { statuses } = useUserStatus();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -65,7 +67,7 @@ export function NavUser() {
     );
   }
 
-  if (!user) {
+  if (!auth0User) {
     return (
       <button 
         className={cn(
@@ -80,10 +82,14 @@ export function NavUser() {
   }
 
   const currentUser = {
-    name: user.name ?? user.email ?? "Unknown User",
-    email: user.email ?? "No email",
-    avatar: user.picture ?? "/default-avatar.png",
+    name: auth0User.name ?? auth0User.email ?? "Unknown User",
+    email: auth0User.email ?? "No email",
+    avatar: auth0User.picture ?? "/default-avatar.png",
   };
+
+  const userStatus = auth0User.sub 
+    ? Object.values(statuses).find(s => s.user?.auth0Id === auth0User.sub)
+    : null;
 
   return (
     <SidebarMenu>
@@ -95,16 +101,26 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               aria-label="User account menu"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage 
-                  src={currentUser.avatar} 
-                  alt={currentUser.name} 
-                  className="object-cover"
-                />
-                <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                  {currentUser.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage 
+                    src={currentUser.avatar} 
+                    alt={currentUser.name} 
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                    {currentUser.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                {auth0User.sub && (
+                  <div className="absolute -bottom-1 -right-1">
+                    <UserStatusIndicator 
+                      userId={auth0User.sub} 
+                      size="sm"
+                    />
+                  </div>
+                )}
+              </div>
               {!isCollapsed && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -124,19 +140,38 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-2 py-1.5">
-                <Avatar className="h-10 w-10 rounded-lg">
-                  <AvatarImage 
-                    src={currentUser.avatar} 
-                    alt={currentUser.name} 
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                    {currentUser.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-10 w-10 rounded-lg">
+                    <AvatarImage 
+                      src={currentUser.avatar} 
+                      alt={currentUser.name} 
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                      {currentUser.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  {auth0User.sub && (
+                    <div className="absolute -bottom-1 -right-1">
+                      <UserStatusIndicator 
+                        userId={auth0User.sub} 
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{currentUser.name}</span>
                   <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                  {auth0User.sub && userStatus && (
+                    <div className="flex items-center mt-1">
+                      <UserStatusIndicator 
+                        userId={auth0User.sub} 
+                        size="sm" 
+                        showText
+                      />
+                    </div>
+                  )}
                 </div>
                 <Tooltip>
                   <TooltipTrigger asChild>

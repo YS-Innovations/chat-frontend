@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check } from "lucide-react";
-import type { Member } from "../types";
+import type { Member, Role } from "../types";
 import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
 import { usePermissions } from "@/context/PermissionsContext";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -29,6 +29,7 @@ interface MemberDetailsProps {
     templateName?: string
   ) => Promise<void>;
   loading?: boolean;
+  onRoleUpdate: (newRole: Role) => void;
 }
 
 export function MemberDetails({
@@ -37,6 +38,7 @@ export function MemberDetails({
   permissions,
   onUpdatePermissions,
   loading = false,
+  onRoleUpdate,
 }: MemberDetailsProps) {
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>(permissions);
@@ -49,6 +51,7 @@ export function MemberDetails({
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
+  const [changingRole, setChangingRole] = useState(false);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
@@ -94,17 +97,16 @@ export function MemberDetails({
     setIsEditingPermissions(false);
   }, [member.id, permissions]);
 
- 
   const savePermissions = async (
-    perms: Record<string, boolean>, 
-    saveAsTemplate?: boolean, 
+    perms: Record<string, boolean>,
+    saveAsTemplate?: boolean,
     templateName?: string
   ) => {
     try {
       await onUpdatePermissions(perms, saveAsTemplate, templateName);
       setTempPermissions(perms);
       setIsEditingPermissions(false);
-      
+
       if (saveAsTemplate && templateName) {
         toast.success("Template saved and applied", {
           description: `"${templateName}" template created successfully`,
@@ -130,8 +132,52 @@ export function MemberDetails({
     }
   };
 
-  const handleSaveForUser = async () => {
-    await savePermissions(tempPermissions);
+  const handleChangeRole = async (newRole: Role) => {
+    if (!member) return;
+
+    setChangingRole(true);
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `http://localhost:3000/auth/role/${member.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ newRole }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to change role');
+      }
+
+      // Create full permissions object
+      const fullPermissions = PERMISSION_GROUPS.reduce((acc, group) => {
+        group.permissions.forEach(p => {
+          acc[p.value] = true;
+        });
+        return acc;
+      }, {} as Record<string, boolean>);
+
+      // Update local state
+      onUpdatePermissions(fullPermissions);
+      onRoleUpdate(newRole);
+
+      toast.success("Role changed", {
+        description: `User is now ${newRole === 'COADMIN' ? 'Co-Admin' : 'Agent'}`,
+      });
+    } catch (err) {
+      console.error('Role change failed:', err);
+      toast.error("Failed to change role", {
+        description: err instanceof Error ? err.message : 'An error occurred',
+      });
+    } finally {
+      setChangingRole(false);
+    }
   };
 
   const handleSaveAsTemplate = async (templateName: string) => {
@@ -186,6 +232,7 @@ export function MemberDetails({
   const canViewPermissions = role === 'ADMIN' || hasPermission('permission-view');
   const canEditPermissions = role === 'ADMIN' || hasPermission('permission-edit');
 
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center p-4 border-b">
@@ -230,8 +277,17 @@ export function MemberDetails({
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           )}
+          {role === 'ADMIN' && member.role === 'AGENT' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleChangeRole('COADMIN')}
+              disabled={changingRole}
+            >
+              {changingRole ? 'Changing...' : 'Change to Co-Admin'}
+            </Button>
+          )}
         </div>
-
         {canViewPermissions && (
           isEditingPermissions ? (
             <PermissionEdit
@@ -302,7 +358,7 @@ export function MemberDetails({
         )}
       </div>
 
-    <TemplatePermissionsModal
+      <TemplatePermissionsModal
         template={selectedTemplate}
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
@@ -315,7 +371,7 @@ export function MemberDetails({
           setShowTemplateModal(false);
         }}
       />
-      
+
       <SaveOptionsModal
         open={showSaveOptions}
         onClose={() => setShowSaveOptions(false)}

@@ -5,6 +5,7 @@ import App from './App'
 import { Auth0Provider } from '@auth0/auth0-react'
 import './index.css'
 import { PermissionsProvider } from './context/PermissionsContext'
+import { UserStatusProvider } from './context/UserStatusContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -19,7 +20,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       useRefreshTokens={true}
     >
       <PermissionsProvider>
-      <App /></PermissionsProvider>
+        <UserStatusProvider>
+      <App />
+      </UserStatusProvider>
+      </PermissionsProvider>
     </Auth0Provider>
   </React.StrictMode>
 )

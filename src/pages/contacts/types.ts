@@ -2,7 +2,7 @@ export interface Member {
   id: string;
   name: string | null;
   email: string;
-  role: 'ADMIN' | 'AGENT';
+  role: 'ADMIN' | 'COADMIN' | 'AGENT';
   lastLogin: Date | null;
   picture?: string | null;
   createdAt?: Date | null; 
@@ -10,7 +10,7 @@ export interface Member {
  status: 'ACTIVE' | 'INACTIVE';
 }
 
-
+export type Role = 'ADMIN' | 'COADMIN' | 'AGENT';
 
 
 export interface InactiveMember {

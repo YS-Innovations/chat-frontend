@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Search, UserPlus } from 'lucide-react';
-import type { Member } from './types';
+import type { Member, Role } from './types';
 import { MemberList } from './components/member-list';
 import { InviteForm } from './components/invite-form';
 import { MemberDetails } from './components/member-details';
@@ -76,6 +76,16 @@ export function Contacts() {
       setPanelMode('details');
     }
   };
+  const handleRoleUpdate = (memberId: string, newRole: Role) => {
+  setMembers(prev => prev.map(m => 
+    m.id === memberId ? { ...m, role: newRole } : m
+  ));
+  
+  // Update selected member if it's the same
+  if (selectedMember && selectedMember.id === memberId) {
+    setSelectedMember({ ...selectedMember, role: newRole });
+  }
+};
 
   const handleUpdatePermissions = async (
     permissions: Record<string, boolean>,
@@ -205,6 +215,7 @@ export function Contacts() {
                         loading={actionLoading}
                         permissions={selectedMember.permissions || {}}
                         onUpdatePermissions={handleUpdatePermissions}
+                         onRoleUpdate={(newRole) => handleRoleUpdate(selectedMember!.id, newRole)}
                       />
                     )
                   )}

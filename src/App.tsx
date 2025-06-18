@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import {Contacts} from './pages/contacts/contacts.tsx';
+import { Contacts } from './pages/contacts/contacts.tsx';
 import AppLayout from './components/AppLayout';
 import ApplicationPage from './pages/ApplicationPage';
 import AllConversations from './pages/AllConversations';
@@ -38,46 +38,46 @@ function App() {
       </div>
     );
   }
-function AdminOnlyRoute({ children }: { children: JSX.Element }) {
-  const { isAuthenticated, user, isLoading,getAccessTokenSilently } = useAuth0();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
+  function AdminOnlyRoute({ children }: { children: JSX.Element }) {
+    const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const token = await getAccessTokenSilently();
-          const response = await fetch(`http://localhost:3000/auth/user/${user.sub}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (!response.ok) throw new Error('Failed to fetch user data');
-          
-          const userData = await response.json();
-          setIsAdmin(userData.role === 'ADMIN');
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-        } finally {
+    useEffect(() => {
+      const checkAdmin = async () => {
+        if (isAuthenticated && user) {
+          try {
+            const token = await getAccessTokenSilently();
+            const response = await fetch(`http://localhost:3000/auth/user/${user.sub}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user data');
+
+            const userData = await response.json();
+            setIsAdmin(userData.role === 'ADMIN');
+          } catch (error) {
+            console.error('Error checking admin status:', error);
+          } finally {
+            setChecking(false);
+          }
+        } else {
           setChecking(false);
         }
-      } else {
-        setChecking(false);
-      }
-    };
+      };
 
-    checkAdmin();
-  }, [isAuthenticated, user]);
+      checkAdmin();
+    }, [isAuthenticated, user]);
 
-  if (isLoading || checking) {
-    return <div>Loading...</div>;
+    if (isLoading || checking) {
+      return <div>Loading...</div>;
+    }
+
+    if (!isAdmin) {
+      return <Navigate to="/" />;
+    }
+
+    return children;
   }
-
-  if (!isAdmin) {
-    return <Navigate to="/" />;
-  }
-
-  return children;
-}
   return (
     <Router>
       <Routes>
@@ -86,29 +86,26 @@ function AdminOnlyRoute({ children }: { children: JSX.Element }) {
         <Route path="/app/*" element={<ProtectedRoutes />}>
           <Route index element={<ApplicationPage />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="contacts" element={<PermissionGuard permission="member-list">
-      <Contacts />
-    </PermissionGuard>} />
+          <Route path="contacts" element={<PermissionGuard permission="member-list"> <Contacts /> </PermissionGuard>} />
           <Route path="conversations" element={<AllConversations />} />
-           
         </Route>
-        
+
         <Route path="*" element={<Navigate to={isAuthenticated ? "/app" : "/"} replace />} />
-       <Route 
-          path="/permissions/edit/:userId" 
+        <Route
+          path="/permissions/edit/:userId"
           element={
             <AdminOnlyRoute>
               <PermissionEditPage />
             </AdminOnlyRoute>
-          } 
+          }
         />
-        <Route 
-          path="/permissions/view/:userId" 
+        <Route
+          path="/permissions/view/:userId"
           element={
             <AdminOnlyRoute>
               <PermissionViewPage />
             </AdminOnlyRoute>
-          } 
+          }
         />
       </Routes>
     </Router>
