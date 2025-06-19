@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 interface PermissionsContextType {
   permissions: Record<string, boolean>;
-  role: 'ADMIN' | 'AGENT' | 'COADMIN' |null;
+  role: 'ADMIN' | 'AGENT' | 'COADMIN' | null;
   isLoading: boolean;
   refreshPermissions: () => void;
   hasPermission: (key: string) => boolean;

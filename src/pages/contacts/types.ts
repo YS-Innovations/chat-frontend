@@ -2,7 +2,7 @@ export interface Member {
   id: string;
   name: string | null;
   email: string;
-  role: 'ADMIN' | 'COADMIN' | 'AGENT';
+  role: Role;
   lastLogin: Date | null;
   picture?: string | null;
   createdAt?: Date | null; 
