@@ -25,6 +25,7 @@ export function Contacts() {
   const [panelMode, setPanelMode] = useState<'invite' | 'details' | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
   const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
 
   useEffect(() => {
@@ -134,11 +135,37 @@ export function Contacts() {
     }
   };
 
+  // Close details panel when switching tabs or opening invite form
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (panelMode === 'details') {
+      setPanelMode(null);
+      setSelectedMember(null);
+    }
+  };
+
+  const handleInviteClick = () => {
+    if (panelMode === 'details') {
+      setPanelMode(null);
+      setSelectedMember(null);
+    }
+    setTimeout(() => {
+      setSelectedMember(null);
+      setPanelMode('invite');
+    }, 10);
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 p-6">
         <PanelGroup direction="horizontal" className="h-full rounded-lg border">
-          <Panel id="main-panel" order={1} defaultSize={panelMode ? 60 : 100} minSize={40} className="pr-4">
+          <Panel 
+            id="main-panel" 
+            order={1} 
+            defaultSize={panelMode ? 33 : 100} 
+            minSize={20} 
+            className="pr-4"
+          >
             <Card className="h-full">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -154,10 +181,7 @@ export function Contacts() {
                       />
                     </div>
                     {(role === 'ADMIN' || hasPermission('invite-form')) && (
-                      <Button onClick={() => {
-                        setSelectedMember(null);
-                        setPanelMode('invite');
-                      }}>
+                      <Button onClick={handleInviteClick}>
                         <UserPlus className="mr-2 h-4 w-4" />
                         Invite
                       </Button>
@@ -166,7 +190,7 @@ export function Contacts() {
                 </div>
               </CardHeader>
               <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
-                <Tabs defaultValue="active">
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                   <TabsList className="mb-4">
                     <TabsTrigger value="active">Active Members</TabsTrigger>
                     {canViewInactive && (
@@ -179,6 +203,7 @@ export function Contacts() {
                       loading={membersLoading}
                       error={error}
                       onSelect={handleMemberSelect}
+                      compact={panelMode === 'details'}
                     />
                   </TabsContent>
                   {canViewInactive && (
@@ -197,7 +222,13 @@ export function Contacts() {
                 <div className="absolute inset-0 bg-border transition-colors group-hover:bg-primary group-active:bg-primary w-1 mx-auto" />
               </PanelResizeHandle>
 
-              <Panel id="side-panel" order={2} defaultSize={40} minSize={30} className="pl-4">
+              <Panel 
+                id="side-panel" 
+                order={2} 
+                defaultSize={67} 
+                minSize={40} 
+                className="pl-4"
+              >
                 <Card className="h-full">
                   {panelMode === 'invite' ? (
                     <InviteForm

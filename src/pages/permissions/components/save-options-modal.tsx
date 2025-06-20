@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect, useMemo } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Check } from "lucide-react";
 
 interface SaveOptionsModalProps {
   open: boolean;
@@ -36,7 +37,6 @@ export function SaveOptionsModal({
   const [nameError, setNameError] = useState('');
   const [duplicateTemplate, setDuplicateTemplate] = useState<any>(null);
 
-  // Find matching template
   const matchingTemplate = useMemo(() => {
     if (!permissions) return null;
     const permString = JSON.stringify(permissions);
@@ -47,7 +47,6 @@ export function SaveOptionsModal({
 
   useEffect(() => {
     if (mode === 'template') {
-      // Check for duplicate permissions
       const permString = JSON.stringify(permissions);
       const duplicate = templates.find(t => 
         JSON.stringify(t.policy) === permString
@@ -57,13 +56,11 @@ export function SaveOptionsModal({
   }, [mode, templates, permissions]);
 
   const handleSaveTemplate = () => {
-    // Validate template name
     if (!templateName.trim()) {
       setNameError('Template name is required');
       return;
     }
     
-    // Check for duplicate name
     const nameExists = templates.some(t => 
       t.policyName.toLowerCase() === templateName.toLowerCase()
     );
@@ -80,7 +77,7 @@ export function SaveOptionsModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         {mode === 'select' ? (
           <>
             <DialogHeader>
@@ -108,16 +105,21 @@ export function SaveOptionsModal({
               </div>
             )}
             
-            <div className="grid gap-4 py-4">
-              <Button onClick={() => {
-                onSaveForUser();
-                onClose();
-              }}>
+            <div className="grid gap-3 py-4">
+              <Button 
+                onClick={() => {
+                  onSaveForUser();
+                  onClose();
+                }}
+                className="justify-start"
+              >
+                <Check className="h-4 w-4 mr-2" />
                 Save only for this user
               </Button>
               <Button 
                 variant="secondary" 
                 onClick={() => setMode('template')}
+                className="justify-start"
               >
                 Save as policy template
               </Button>

@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check } from "lucide-react";
-import type { Member, Role } from "../types";
+import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types";
 import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
 import { usePermissions } from "@/context/PermissionsContext";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -15,9 +15,12 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { PERMISSION_GROUPS } from "@/pages/permissions/types";
 import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
 import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ✅ Sonner toast import
 import { toast } from "sonner";
+import { LoginHistory } from "./login-history";
+import { PermissionHistorys } from "./permission-history";
 
 interface MemberDetailsProps {
   member: Member;
@@ -52,11 +55,45 @@ export function MemberDetails({
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
   const [changingRole, setChangingRole] = useState(false);
+  const [activeTab, setActiveTab] = useState('permissions');
+  const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
+const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
+
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
 
+useEffect(() => {
+    if (!member) return;
+    
+    const fetchHistories = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        
+        // Fetch login history
+        const loginRes = await fetch(
+          `http://localhost:3000/auth/user/${member.id}/login-history`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const loginData = await loginRes.json();
+        setLoginHistory(loginData);
+        
+        // Fetch permission history
+        const permRes = await fetch(
+          `http://localhost:3000/auth/permissions/${member.id}/history`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const permData = await permRes.json();
+        setPermissionHistory(permData);
+      } catch (error) {
+        console.error('Error fetching histories:', error);
+      }
+    };
+
+    fetchHistories();
+  }, [member, getAccessTokenSilently]);
+  
   useEffect(() => {
     if (!isEditingPermissions && templates.length > 0) {
       const permString = JSON.stringify(permissions);
@@ -222,8 +259,6 @@ export function MemberDetails({
 
   const canViewPermissions = role === 'ADMIN' || hasPermission('permission-view');
   const canEditPermissions = useMemo(() => {
-
-
     // Hide for admins viewing other admins
     if (role === 'ADMIN' && member.role === 'ADMIN') return false;
     if (role === 'COADMIN' && member.role === 'COADMIN') return false;
@@ -240,135 +275,202 @@ export function MemberDetails({
         </Button>
       </div>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <div className="flex flex-col items-center mb-6">
-          <Avatar className="h-24 w-24 mb-4">
-            {member.picture && (
-              <AvatarImage src={member.picture} alt={member.name || member.email} />
-            )}
-            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-3xl">
-              {getInitials(member.name || member.email)}
-            </AvatarFallback>
-          </Avatar>
+      <div className="flex flex-col items-center mb-4 pt-4">
+        <Avatar className="h-24 w-24 mb-4">
+          {member.picture && (
+            <AvatarImage src={member.picture} alt={member.name || member.email} />
+          )}
+          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-3xl">
+            {getInitials(member.name || member.email)}
+          </AvatarFallback>
+        </Avatar>
 
-          <h3 className="text-xl font-bold">{member.name || 'No name'}</h3>
-          <p className="text-muted-foreground flex items-center mt-1">
-            <Mail className="h-4 w-4 mr-2" />
-            {member.email}
-          </p>
+        <h3 className="text-xl font-bold">{member.name || 'No name'}</h3>
+        <p className="text-muted-foreground flex items-center mt-1">
+          <Mail className="h-4 w-4 mr-2" />
+          {member.email}
+        </p>
 
-          <Badge
-            variant={member.role === 'ADMIN' ? 'destructive' : 'default'}
-            className="mt-3"
+        <Badge
+          variant={member.role === 'ADMIN' ? 'destructive' : 'default'}
+          className="mt-3"
+        >
+          {member.role}
+        </Badge>
+      </div>
+        <div className="space-y-6">
+    <LoginHistory history={loginHistory} />
+    <PermissionHistorys history={permissionHistory} />
+  </div>
+      <div className="flex gap-2 justify-end px-4 mb-4">
+        {canDelete && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={(e) => handleDelete(e, member.id)}
+            disabled={deleting}
           >
-            {member.role}
-          </Badge>
-        </div>
-        <div className="flex gap-2 justify-end">
-          {canDelete && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={(e) => handleDelete(e, member.id)}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          )}
-          {role === 'ADMIN' && (
-            <>
-              {member.role === 'AGENT' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleChangeRole('COADMIN')}
-                  disabled={changingRole}
-                >
-                  {changingRole ? 'Changing...' : 'Change to Co-Admin'}
-                </Button>
-              )}
-              {member.role === 'COADMIN' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleChangeRole('AGENT')}
-                  disabled={changingRole}
-                >
-                  {changingRole ? 'Changing...' : 'Change to Agent'}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-        {canViewPermissions && (
-          isEditingPermissions ? (
-            <PermissionEdit
-              value={tempPermissions}
-              onChange={setTempPermissions}
-              onSaveClick={handleSaveClick}
-              onCancel={() => setIsEditingPermissions(false)}
-              saving={loading}
-              templates={templates}
-              onTemplateClick={handleTemplateClick}
-            />
-          ) : (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Permissions</h2>
-                {canEditPermissions && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingPermissions(true)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                )}
-              </div>
-
-              {matchingTemplate && (
-                <div className="mb-4 flex items-center">
-                  <span className="text-sm text-muted-foreground mr-2">
-                    Using template:
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => handleTemplateClick(matchingTemplate.id)}
-                  >
-                    {matchingTemplate.policyName}
-                  </Badge>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {PERMISSION_GROUPS.map(group => {
-                  const groupPermissions = group.permissions.filter(p =>
-                    tempPermissions[p.value]
-                  );
-
-                  if (groupPermissions.length === 0) return null;
-
-                  return (
-                    <div key={group.id} className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-3">{group.label}</h3>
-                      <div className="space-y-2">
-                        {groupPermissions.map(permission => (
-                          <div key={permission.id} className="flex items-center p-2 rounded bg-green-50">
-                            <Check className="h-4 w-4 text-green-500 mr-2" />
-                            <span>{permission.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )
+            {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        )}
+        {role === 'ADMIN' && (
+          <>
+            {member.role === 'AGENT' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleChangeRole('COADMIN')}
+                disabled={changingRole}
+              >
+                {changingRole ? 'Changing...' : 'Change to Co-Admin'}
+              </Button>
+            )}
+            {member.role === 'COADMIN' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleChangeRole('AGENT')}
+                disabled={changingRole}
+              >
+                {changingRole ? 'Changing...' : 'Change to Agent'}
+              </Button>
+            )}
+          </>
         )}
       </div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="px-4 flex flex-col flex-1"
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
+          <TabsTrigger value="permissions" className="flex-1">Permissions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="details" className="flex-1 overflow-auto pt-4">
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-4">Member Information</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p>{member.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Role</p>
+                <p>{member.role}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <p>{member.status}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Last Login</p>
+                <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Last Login</p>
+                <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Phone Number</p>
+                <p>{member.phoneNumber || 'Not provided'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Account Status</p>
+                <p>{member.blocked ? 'Blocked' : 'Active'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Created At</p>
+               <p>{member.createdAt ? new Date(member.createdAt).toLocaleString() : 'Unknown'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Last Updated</p>
+               <p>{member.updatedAt ? new Date(member.updatedAt).toLocaleString() : 'Unknown'}</p>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="permissions" className="flex-1 overflow-auto pt-4">
+          {canViewPermissions && (
+            isEditingPermissions ? (
+              <PermissionEdit
+                value={tempPermissions}
+                onChange={setTempPermissions}
+                onSaveClick={handleSaveClick}
+                onCancel={() => setIsEditingPermissions(false)}
+                saving={loading}
+                templates={templates}
+                onTemplateClick={handleTemplateClick}
+              />
+            ) : (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Permissions</h2>
+                  {canEditPermissions && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingPermissions(true)}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+
+                {matchingTemplate && (
+                  <div className="mb-4 flex items-center">
+                    <span className="text-sm text-muted-foreground mr-2">
+                      Using template:
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => handleTemplateClick(matchingTemplate.id)}
+                    >
+                      {matchingTemplate.policyName}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {PERMISSION_GROUPS.map(group => {
+                    const groupPermissions = group.permissions.filter(p =>
+                      tempPermissions[p.value]
+                    );
+
+                    if (groupPermissions.length === 0) return null;
+
+                    return (
+                      <div key={group.id} className="border rounded-lg p-4">
+                        <h3 className="font-medium mb-3">{group.label}</h3>
+                        <div className="space-y-2">
+                          {groupPermissions.map(permission => (
+                            <div key={permission.id} className="flex items-center p-2 rounded bg-green-50">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span>{permission.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )
+          )}
+        </TabsContent>
+        <TabsContent value="history">
+
+</TabsContent>
+      </Tabs>
 
       <TemplatePermissionsModal
         template={selectedTemplate}
