@@ -11,31 +11,47 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import axios from 'axios';
 
 export default function AppLayout() {
   const { user, isLoading, error } = useAuth0();
 
-  useEffect(() => {
-    if (user) {
-      const userAgent = navigator.userAgent;
-      const controller = new AbortController();
+useEffect(() => {
+    const fetchClientIp = async () => {
+      try {
+        const ipResponse = await axios.get('https://api.ipify.org?format=json');
+        const clientIp = ipResponse.data.ip;
+        const userAgent = navigator.userAgent;
+        const loginTime = new Date();
 
-      fetch("http://localhost:3000/auth/save-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...user,
-          browser: userAgent,
-        }),
-        signal: controller.signal
-      }).catch((error) => {
-        if (error.name !== 'AbortError') {
-          console.error("Failed to save user:", error);
+        if (user) {
+          fetch("http://localhost:3000/auth/save-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...user,
+              clientInfo: {   // Send accurate client info
+                browser: userAgent,
+                ip: clientIp,
+                loginTime: loginTime.toISOString()
+              }
+            }),
+          }).catch(console.error);
         }
-      });
+      } catch (ipError) {
+        console.error("Failed to get client IP:", ipError);
+        // Fallback to server-side detection
+        if (user) {
+          fetch("http://localhost:3000/auth/save-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...user }),
+          }).catch(console.error);
+        }
+      }
+    };
 
-      return () => controller.abort();
-    }
+    if (user) fetchClientIp();
   }, [user]);
 
   if (isLoading) {
