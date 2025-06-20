@@ -11,18 +11,32 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import axios from 'axios';
+import {UAParser }from 'ua-parser-js';
 
 export default function AppLayout() {
   const { user, isLoading, error } = useAuth0();
 
 useEffect(() => {
-    const fetchClientIp = async () => {
+    const fetchClientInfo = async () => {
       try {
-        const ipResponse = await axios.get('https://api.ipify.org?format=json');
-        const clientIp = ipResponse.data.ip;
-        const userAgent = navigator.userAgent;
-        const loginTime = new Date();
+        // Get accurate IP
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        const clientIp = ipData.ip;
+        
+        // Parse browser details with enhanced accuracy
+        const parser = new UAParser();
+        const result = parser.getResult();
+        
+        const clientInfo = {
+          browser: `${result.browser.name} ${result.browser.version}`,
+          os: `${result.os.name} ${result.os.version || ''}`.trim(),
+          deviceType: result.device.type || 'desktop',
+          ip: clientIp,
+          rawUA: navigator.userAgent,
+          loginTime: new Date().toISOString(),
+      
+        };
 
         if (user) {
           fetch("http://localhost:3000/auth/save-user", {
@@ -30,30 +44,40 @@ useEffect(() => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...user,
-              clientInfo: {   // Send accurate client info
-                browser: userAgent,
-                ip: clientIp,
-                loginTime: loginTime.toISOString()
-              }
+              clientInfo
             }),
           }).catch(console.error);
         }
-      } catch (ipError) {
-        console.error("Failed to get client IP:", ipError);
-        // Fallback to server-side detection
+      } catch (error) {
+        console.error("Error getting client info:", error);
+        // Enhanced fallback
+        const parser = new UAParser();
+        const result = parser.getResult();
+        
+        const clientInfo = {
+          browser: `${result.browser.name} ${result.browser.version}`,
+          os: `${result.os.name} ${result.os.version || ''}`.trim(),
+          deviceType: result.device.type || 'desktop',
+          ip: 'unknown',
+          rawUA: navigator.userAgent,
+          loginTime: new Date().toISOString()
+        };
+        
         if (user) {
           fetch("http://localhost:3000/auth/save-user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...user }),
+            body: JSON.stringify({
+              ...user,
+              clientInfo
+            }),
           }).catch(console.error);
         }
       }
     };
 
-    if (user) fetchClientIp();
+    if (user) fetchClientInfo();
   }, [user]);
-
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
