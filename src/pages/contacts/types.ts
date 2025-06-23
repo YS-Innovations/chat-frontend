@@ -18,7 +18,9 @@ export interface Member {
 export interface UserLoginHistory {
   id: string;
   lastIp: string;
-  browser: string;
+  browserName: string;
+  os: string;
+  deviceType:string;
   lastLogin: Date;
   lastLogoutAt: Date | null;
 }

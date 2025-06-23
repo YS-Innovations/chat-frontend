@@ -12,6 +12,8 @@ export function LoginHistory({ history }: { history: UserLoginHistory[] }) {
             <TableHead>Logout Time</TableHead>
             <TableHead>IP Address</TableHead>
             <TableHead>Browser</TableHead>
+            <TableHead>os</TableHead>
+            <TableHead>device Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -24,7 +26,9 @@ export function LoginHistory({ history }: { history: UserLoginHistory[] }) {
                   : 'Active session'}
               </TableCell>
               <TableCell>{entry.lastIp}</TableCell>
-              <TableCell>{entry.browser}</TableCell>
+              <TableCell>{entry.browserName}</TableCell>
+              <TableCell>{entry.os}</TableCell>
+              <TableCell>{entry.deviceType}</TableCell>
             </TableRow>
           ))}
         </TableBody>
