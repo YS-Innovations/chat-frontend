@@ -24,7 +24,7 @@ interface UserStatusContextType {
 const UserStatusContext = createContext<UserStatusContextType>({
   statuses: {},
   loading: true,
-  socket: null
+  socket: null,
 });
 
 export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -35,61 +35,87 @@ export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (!isAuthenticated) {
+      // If user is not authenticated, clean up socket and reset states
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      setLoading(false);
       return;
     }
 
+    let isMounted = true;
+
+    // Function to connect socket with retry and proper error handling
     const connectSocket = async () => {
       try {
+        // Wait for the Auth0 token
         const token = await getAccessTokenSilently();
+
+        // Create socket connection
         const newSocket = io('http://localhost:3000/user-status', {
           query: { token },
           transports: ['websocket'],
           reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
+          reconnectionAttempts: 10,   // Increase attempts
+          reconnectionDelay: 10000,    // Wait 2 seconds between retries
         });
 
         socketRef.current = newSocket;
 
+        // When connected
         newSocket.on('connect', () => {
-          setLoading(false);
+          console.log('Socket connected');
+          if (isMounted) setLoading(false);
         });
 
+        // Handle connection errors and try to reconnect
+        newSocket.on('connect_error', (error) => {
+          console.error('Socket connection error:', error);
+          if (isMounted) setLoading(true); // Keep loading true during retry
+        });
+
+        // Initial user statuses event from server
         newSocket.on('initialStatuses', (data: any[]) => {
+          if (!isMounted) return;
           const statusMap: Record<string, UserStatus> = {};
           data.forEach(status => {
             statusMap[status.userId] = {
               ...status,
-              lastSeen: status.lastSeen ? new Date(status.lastSeen) : undefined
+              lastSeen: status.lastSeen ? new Date(status.lastSeen) : undefined,
             };
           });
           setStatuses(statusMap);
           setLoading(false);
         });
 
+        // Real-time updates for user status
         newSocket.on('statusUpdate', (update: { userId: string; isOnline: boolean }) => {
+          if (!isMounted) return;
           setStatuses(prev => ({
             ...prev,
             [update.userId]: {
               ...prev[update.userId],
               isOnline: update.isOnline,
-              lastSeen: update.isOnline ? undefined : new Date()
+              lastSeen: update.isOnline ? undefined : new Date(),
             }
           }));
         });
 
       } catch (error) {
-        setLoading(false);
+        console.error('Failed to get token or connect socket:', error);
+        if (isMounted) setLoading(false);
       }
     };
 
-    connectSocket();
+    // Delay connection by 1 second to give backend time to start (optional but recommended)
+    const timer = setTimeout(() => {
+      if (isMounted) connectSocket();
+    }, 1000);
 
     return () => {
+      isMounted = false;
+      clearTimeout(timer);
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -98,11 +124,7 @@ export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [isAuthenticated, getAccessTokenSilently]);
 
   return (
-    <UserStatusContext.Provider value={{ 
-      statuses, 
-      loading,
-      socket: socketRef.current
-    }}>
+    <UserStatusContext.Provider value={{ statuses, loading, socket: socketRef.current }}>
       {children}
     </UserStatusContext.Provider>
   );
