@@ -12,7 +12,7 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         redirect_uri: window.location.origin,
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       }}
-      cacheLocation="localstorage"
+      // cacheLocation="localstorage"
       useRefreshTokens={true}
     >
       <PermissionsProvider>
