@@ -11,6 +11,8 @@ import { PermissionGuard } from '../components/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
+import { TeamStatusList } from '@/pages/TeamStatusList';
+import { PermissionTemplates } from '@/pages/PermissionTemplates';
 
 function AppRoutes() {
     return (
@@ -20,6 +22,8 @@ function AppRoutes() {
             <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
                 <Route index element={<ApplicationPage />} />
                 <Route path="profile" element={<Profile />} />
+                 <Route path="team/status" element={<TeamStatusList />} />
+                 <Route path="team/permission-templates" element={<PermissionTemplates />} />
                 <Route path="contacts" element={<PermissionGuard permission="member-list"> <Contacts /> </PermissionGuard>} />
                 <Route path="conversations" element={<AllConversations />} />
                 <Route path="*" element={<ErrorPage statusCode={404} />} />

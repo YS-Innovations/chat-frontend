@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
-import { Mail, X, Pencil, Check } from "lucide-react";
+import { Mail, X, Pencil, Check, Clock } from "lucide-react";
 import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types";
 import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
 import { usePermissions } from "@/context/PermissionsContext";
@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LoginHistory } from "./login-history";
 import { PermissionHistorys } from "./permission-history";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;
@@ -57,20 +57,20 @@ export function MemberDetails({
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
-const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
-
+  const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
+  const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
 
-useEffect(() => {
+  useEffect(() => {
     if (!member) return;
-    
+
     const fetchHistories = async () => {
       try {
         const token = await getAccessTokenSilently();
-        
+
         // Fetch login history
         const loginRes = await fetch(
           `http://localhost:3000/auth/user/${member.id}/login-history`,
@@ -78,7 +78,7 @@ useEffect(() => {
         );
         const loginData = await loginRes.json();
         setLoginHistory(loginData);
-        
+
         // Fetch permission history
         const permRes = await fetch(
           `http://localhost:3000/auth/permissions/${member.id}/history`,
@@ -93,7 +93,7 @@ useEffect(() => {
 
     fetchHistories();
   }, [member, getAccessTokenSilently]);
-  
+
   useEffect(() => {
     if (!isEditingPermissions && templates.length > 0) {
       const permString = JSON.stringify(permissions);
@@ -298,10 +298,6 @@ useEffect(() => {
           {member.role}
         </Badge>
       </div>
-        <div className="space-y-6">
-    <LoginHistory history={loginHistory} />
-    <PermissionHistorys history={permissionHistory} />
-  </div>
       <div className="flex gap-2 justify-end px-4 mb-4">
         {canDelete && (
           <Button
@@ -386,15 +382,16 @@ useEffect(() => {
 
               <div>
                 <p className="text-sm text-muted-foreground">Created At</p>
-               <p>{member.createdAt ? new Date(member.createdAt).toLocaleString() : 'Unknown'}</p>
+                <p>{member.createdAt ? new Date(member.createdAt).toLocaleString() : 'Unknown'}</p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Last Updated</p>
-               <p>{member.updatedAt ? new Date(member.updatedAt).toLocaleString() : 'Unknown'}</p>
+                <p>{member.updatedAt ? new Date(member.updatedAt).toLocaleString() : 'Unknown'}</p>
               </div>
             </div>
           </div>
+          <LoginHistory history={loginHistory} />
         </TabsContent>
 
         <TabsContent value="permissions" className="flex-1 overflow-auto pt-4">
@@ -413,18 +410,38 @@ useEffect(() => {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">Permissions</h2>
+
                   {canEditPermissions && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingPermissions(true)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPermissionHistoryModal(true)}
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                       permission changes History
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditingPermissions(true)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </div>
                   )}
                 </div>
 
+                <Dialog open={showPermissionHistoryModal} onOpenChange={setShowPermissionHistoryModal}>
+                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+                    <DialogHeader>
+                      <DialogTitle>Permission History</DialogTitle>
+                    </DialogHeader>
+                    <PermissionHistorys history={permissionHistory} />
+                  </DialogContent>
+                </Dialog>
                 {matchingTemplate && (
                   <div className="mb-4 flex items-center">
                     <span className="text-sm text-muted-foreground mr-2">
@@ -469,7 +486,7 @@ useEffect(() => {
         </TabsContent>
         <TabsContent value="history">
 
-</TabsContent>
+        </TabsContent>
       </Tabs>
 
       <TemplatePermissionsModal

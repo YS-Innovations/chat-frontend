@@ -38,8 +38,9 @@ export const navMainItems = [
     icon: Users,
     permission: "team-access",
     items: [
-      { title: "Members", url: "/app/team/members", permission: "member-list" },
-      { title: "Permissions", url: "/app/team/permissions", permission: "permission-view" },
+      { title: "Members", url: "/app/contacts", permission: "member-list" },
+      { title: "Permission Templates", url: "/app/team/permission-templates", permission: "permission-view" },
+       { title: "Status", url: "/app/team/status", permission: "team-status-view" },
     ],
   },
   {
