@@ -13,26 +13,49 @@ import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
+import { InviteFormWrapper } from '../pages/contacts/routes/InviteFormWrapper';
 
 function AppRoutes() {
-    return (
-        <Routes>
-            <Route path="/" element={<Home />} errorElement={<ErrorPage />} />
-            <Route path="/accept-invite" element={<AcceptInvite />} errorElement={<ErrorPage />} />
-            <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
-                <Route index element={<ApplicationPage />} />
-                <Route path="profile" element={<Profile />} />
-                 <Route path="team/status" element={<TeamStatusList />} />
-                 <Route path="team/permission-templates" element={<PermissionTemplates />} />
-                <Route path="contacts" element={<PermissionGuard permission="member-list"> <Contacts /> </PermissionGuard>} />
-                <Route path="conversations" element={<AllConversations />} />
-                <Route path="*" element={<ErrorPage statusCode={404} />} />
-            </Route>
-            <Route path="/permissions/edit/:userId" element={<AdminOnlyRoute> <PermissionEditPage /> </AdminOnlyRoute>} errorElement={<ErrorPage />} />
-            <Route path="/permissions/view/:userId" element={<AdminOnlyRoute> <PermissionViewPage /> </AdminOnlyRoute>} errorElement={<ErrorPage />} />
-            <Route path="*" element={<ErrorPage statusCode={404} />} />
-        </Routes>
-    );
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} errorElement={<ErrorPage />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} errorElement={<ErrorPage />} />
+      <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
+        <Route index element={<ApplicationPage />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="team/status" element={<TeamStatusList />} />
+        <Route path="team/permission-templates" element={<PermissionTemplates />} />
+
+        <Route
+          path="contacts"
+          element={<PermissionGuard permission="member-list"><Contacts /></PermissionGuard>}
+        >
+          <Route path="invite" element={<InviteFormWrapper />} />
+          <Route path="active" element={<Contacts />}>
+            <Route path="memberdetails/:memberId" element={<Contacts />} />
+          </Route>
+          <Route path="inactive" element={<Contacts />}>
+            <Route path="memberdetails/:memberId" element={<Contacts />} />
+          </Route>
+        </Route>
+
+        <Route path="conversations" element={<AllConversations />} />
+        <Route path="*" element={<ErrorPage statusCode={404} />} />
+      </Route>
+
+      <Route
+        path="/permissions/edit/:userId"
+        element={<AdminOnlyRoute><PermissionEditPage /></AdminOnlyRoute>}
+        errorElement={<ErrorPage />}
+      />
+      <Route
+        path="/permissions/view/:userId"
+        element={<AdminOnlyRoute><PermissionViewPage /></AdminOnlyRoute>}
+        errorElement={<ErrorPage />}
+      />
+      <Route path="*" element={<ErrorPage statusCode={404} />} />
+    </Routes>
+  );
 }
 
 export default AppRoutes;

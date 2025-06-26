@@ -1,21 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import type { Member, Role } from './types';
-import { InviteForm } from './components/invite-form';
 import { MemberDetails } from './components/member-details';
 import { usePermissions } from '@/context/PermissionsContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InactiveMembersTab } from './inactive-members-tab';
 import { useMembers } from './hooks/useMembers';
 import { MemberDataTable } from './components/member-data-table';
+import { Outlet, useNavigate, useParams, useMatch } from 'react-router-dom';
 
 export function Contacts() {
   const { getAccessTokenSilently } = useAuth0();
   const { hasPermission, role } = usePermissions();
+  const navigate = useNavigate();
+
+  const { memberId } = useParams<{ memberId?: string }>();
+  const activeTabMatch = useMatch('/app/contacts/active/*');
+  const inactiveTabMatch = useMatch('/app/contacts/inactive/*');
+  const inviteRouteMatch = useMatch('/app/contacts/invite');
+
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
+    activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
+  );
 
   const {
     members,
@@ -29,21 +39,36 @@ export function Contacts() {
     fetchMembers
   } = useMembers();
 
-  const [panelMode, setPanelMode] = useState<'invite' | 'details' | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [panelMode, setPanelMode] = useState<'details' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('active');
+
   const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
 
-  const handleInviteSuccess = () => {
-    setPanelMode(null);
-    fetchMembers(); // Refresh members after invite
-  };
+  useEffect(() => {
+    if (activeTabMatch) setActiveTab('active');
+    else if (inactiveTabMatch) setActiveTab('inactive');
+  }, [activeTabMatch, inactiveTabMatch]);
+
+  useEffect(() => {
+    if (memberId && members.length > 0) {
+      const member = members.find(m => m.id === memberId);
+      if (member) {
+        setSelectedMember(member);
+        setPanelMode('details');
+      } else {
+        setSelectedMember(null);
+        setPanelMode(null);
+      }
+    } else {
+      setSelectedMember(null);
+      setPanelMode(null);
+    }
+  }, [memberId, members]);
 
   const handleMemberSelect = (member: Member) => {
     if (role === 'ADMIN' || hasPermission('member-details')) {
-      setSelectedMember(member);
-      setPanelMode('details');
+      navigate(`/app/contacts/${activeTab}/memberdetails/${member.id}`);
     }
   };
 
@@ -67,10 +92,9 @@ export function Contacts() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update role');
       }
-      
-      fetchMembers(); // Refresh members after role update
-      
-      // Update selected member if it's the one being updated
+
+      await fetchMembers();
+
       if (selectedMember && selectedMember.id === memberId) {
         setSelectedMember({ ...selectedMember, role: newRole });
       }
@@ -102,7 +126,7 @@ export function Contacts() {
           body: JSON.stringify({
             permissions,
             saveAsTemplate,
-            templateName
+            templateName,
           }),
         }
       );
@@ -112,10 +136,9 @@ export function Contacts() {
         throw new Error(errorData.message || 'Failed to update permissions');
       }
 
-      fetchMembers(); // Refresh members after permission update
-      
-      // Update selected member
-      setSelectedMember(prev => prev ? { ...prev, permissions } : null);
+      await fetchMembers();
+
+      setSelectedMember(prev => (prev ? { ...prev, permissions } : null));
     } catch (err) {
       console.error(err);
     } finally {
@@ -123,34 +146,34 @@ export function Contacts() {
     }
   };
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    if (panelMode === 'details') {
-      setPanelMode(null);
-      setSelectedMember(null);
-    }
-  };
+const handleTabChange = (value: string) => {
+  if (value === 'active' || value === 'inactive') {
+    setActiveTab(value);
+    setPanelMode(null);
+    setSelectedMember(null);
+    navigate(`/app/contacts/${value}`);
+  }
+};
 
   const handleInviteClick = () => {
-    if (panelMode === 'details') {
-      setPanelMode(null);
-      setSelectedMember(null);
-    }
-    setTimeout(() => {
-      setSelectedMember(null);
-      setPanelMode('invite');
-    }, 10);
+    navigate('/app/contacts/invite');
+  };
+
+  const closeDetailsPanel = () => {
+    setSelectedMember(null);
+    setPanelMode(null);
+    navigate(`/app/contacts/${activeTab}`);
   };
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 p-6">
         <PanelGroup direction="horizontal" className="h-full rounded-lg border">
-          <Panel 
-            id="main-panel" 
-            order={1} 
-            defaultSize={panelMode ? 33 : 100} 
-            minSize={20} 
+          <Panel
+            id="main-panel"
+            order={1}
+            defaultSize={panelMode || inviteRouteMatch ? 33 : 100}
+            minSize={20}
             className="pr-4"
           >
             <Card className="h-full">
@@ -188,7 +211,7 @@ export function Contacts() {
                   </TabsContent>
                   {canViewInactive && (
                     <TabsContent value="inactive">
-                      <InactiveMembersTab />
+                      <InactiveMembersTab/>
                     </TabsContent>
                   )}
                 </Tabs>
@@ -196,39 +219,33 @@ export function Contacts() {
             </Card>
           </Panel>
 
-          {panelMode && (
+          {(panelMode === 'details' || inviteRouteMatch) && (
             <>
               <PanelResizeHandle className="w-2 group relative">
                 <div className="absolute inset-0 bg-border transition-colors group-hover:bg-primary group-active:bg-primary w-1 mx-auto" />
               </PanelResizeHandle>
 
-              <Panel 
-                id="side-panel" 
-                order={2} 
-                defaultSize={67} 
-                minSize={40} 
+              <Panel
+                id="side-panel"
+                order={2}
+                defaultSize={67}
+                minSize={40}
                 className="pl-4"
               >
                 <Card className="h-full">
-                  {panelMode === 'invite' ? (
-                    <InviteForm
-                      onClose={() => setPanelMode(null)}
-                      onInviteSuccess={handleInviteSuccess}
+                  {panelMode === 'details' && selectedMember ? (
+                    <MemberDetails
+                      member={selectedMember}
+                      onClose={closeDetailsPanel}
+                      loading={actionLoading}
+                      permissions={selectedMember.permissions || {}}
+                      onUpdatePermissions={handleUpdatePermissions}
+                      onRoleUpdate={(newRole) =>
+                        handleRoleUpdate(selectedMember.id, newRole)
+                      }
                     />
                   ) : (
-                    selectedMember && (
-                      <MemberDetails
-                        member={selectedMember}
-                        onClose={() => {
-                          setSelectedMember(null);
-                          setPanelMode(null);
-                        }}
-                        loading={actionLoading}
-                        permissions={selectedMember.permissions || {}}
-                        onUpdatePermissions={handleUpdatePermissions}
-                        onRoleUpdate={(newRole) => handleRoleUpdate(selectedMember.id, newRole)}
-                      />
-                    )
+                    <Outlet />
                   )}
                 </Card>
               </Panel>
