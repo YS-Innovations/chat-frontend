@@ -68,7 +68,7 @@ export function Contacts() {
 
   const handleMemberSelect = (member: Member) => {
     if (role === 'ADMIN' || hasPermission('member-details')) {
-      navigate(`/app/contacts/${activeTab}/memberdetails/${member.id}`);
+      navigate(`/app/contacts/${activeTab}/user/${member.id}`);
     }
   };
 
