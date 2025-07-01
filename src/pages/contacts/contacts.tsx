@@ -2,82 +2,116 @@ import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Search, UserPlus } from 'lucide-react';
-import type { Member } from './types';
-import { MemberList } from './components/member-list';
-import { InviteForm } from './components/invite-form';
+import { UserPlus } from 'lucide-react';
+import type { Member, Role } from './types';
 import { MemberDetails } from './components/member-details';
 import { usePermissions } from '@/context/PermissionsContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InactiveMembersTab } from './inactive-members-tab';
+import { useMembers } from './hooks/useMembers';
+import { MemberDataTable } from './components/member-data-table';
+import { Outlet, useNavigate, useParams, useMatch } from 'react-router-dom';
+
 export function Contacts() {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   const { hasPermission, role } = usePermissions();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
-  const [error, setError] = useState('');
-  const [membersLoading, setMembersLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [panelMode, setPanelMode] = useState<'invite' | 'details' | null>(null);
+  const navigate = useNavigate();
+
+  const { memberId } = useParams<{ memberId?: string }>();
+  const activeTabMatch = useMatch('/app/contacts/active/*');
+  const inactiveTabMatch = useMatch('/app/contacts/inactive/*');
+  const inviteRouteMatch = useMatch('/app/contacts/invite');
+
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
+    activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
+  );
+
+  const {
+    members,
+    totalCount,
+    error,
+    loading: membersLoading,
+    pageIndex,
+    setPageIndex,
+    pageSize,
+    setPageSize,
+    fetchMembers
+  } = useMembers();
+
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [panelMode, setPanelMode] = useState<'details' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
- const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
-  useEffect(() => {
-    if (user) fetchMembers();
-  }, [user]);
+
+  const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
 
   useEffect(() => {
-    const results = members.filter(member =>
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    setFilteredMembers(results);
-  }, [searchTerm, members]);
+    if (activeTabMatch) setActiveTab('active');
+    else if (inactiveTabMatch) setActiveTab('inactive');
+  }, [activeTabMatch, inactiveTabMatch]);
 
-  const fetchMembers = async () => {
-    setMembersLoading(true);
-    try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        },
-      });
-
-      const response = await fetch('http://localhost:3000/auth/members', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch members');
-
-      const membersData = await response.json();
-      setMembers(membersData);
-      setFilteredMembers(membersData);
-    } catch (err) {
-      console.error('Error fetching members:', err);
-      setError('Failed to fetch organization members');
-    } finally {
-      setMembersLoading(false);
+  useEffect(() => {
+    if (memberId && members.length > 0) {
+      const member = members.find(m => m.id === memberId);
+      if (member) {
+        setSelectedMember(member);
+        setPanelMode('details');
+      } else {
+        setSelectedMember(null);
+        setPanelMode(null);
+      }
+    } else {
+      setSelectedMember(null);
+      setPanelMode(null);
     }
-  };
-
-  const handleInviteSuccess = () => {
-    fetchMembers();
-    setTimeout(() => setPanelMode(null), 2000);
-  };
+  }, [memberId, members]);
 
   const handleMemberSelect = (member: Member) => {
-    // Check if user has permission to view details
     if (role === 'ADMIN' || hasPermission('member-details')) {
-      setSelectedMember(member);
-      setPanelMode('details');
+      navigate(`/app/contacts/${activeTab}/memberdetails/${member.id}`);
     }
   };
 
-  const handleUpdatePermissions = async (permissions: Record<string, boolean>) => {
+  const handleRoleUpdate = async (memberId: string, newRole: Role) => {
+    setActionLoading(true);
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `http://localhost:3000/auth/members/${memberId}/role`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update role');
+      }
+
+      await fetchMembers();
+
+      if (selectedMember && selectedMember.id === memberId) {
+        setSelectedMember({ ...selectedMember, role: newRole });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdatePermissions = async (
+    permissions: Record<string, boolean>,
+    saveAsTemplate?: boolean,
+    templateName?: string
+  ) => {
     if (!selectedMember) return;
-    
+
     setActionLoading(true);
     try {
       const token = await getAccessTokenSilently();
@@ -89,7 +123,11 @@ export function Contacts() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ permissions }),
+          body: JSON.stringify({
+            permissions,
+            saveAsTemplate,
+            templateName,
+          }),
         }
       );
 
@@ -97,56 +135,61 @@ export function Contacts() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update permissions');
       }
-      
-      // Update local state
-      setMembers(prev => prev.map(m => 
-        m.id === selectedMember.id ? { ...m, permissions } : m
-      ));
-      
-      // Update selected member if it's the same
-      setSelectedMember(prev => 
-        prev && prev.id === selectedMember.id ? { ...prev, permissions } : prev
-      );
+
+      await fetchMembers();
+
+      setSelectedMember(prev => (prev ? { ...prev, permissions } : null));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update permissions');
+      console.error(err);
     } finally {
       setActionLoading(false);
     }
+  };
+
+const handleTabChange = (value: string) => {
+  if (value === 'active' || value === 'inactive') {
+    setActiveTab(value);
+    setPanelMode(null);
+    setSelectedMember(null);
+    navigate(`/app/contacts/${value}`);
+  }
+};
+
+  const handleInviteClick = () => {
+    navigate('/app/contacts/invite');
+  };
+
+  const closeDetailsPanel = () => {
+    setSelectedMember(null);
+    setPanelMode(null);
+    navigate(`/app/contacts/${activeTab}`);
   };
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 p-6">
         <PanelGroup direction="horizontal" className="h-full rounded-lg border">
-          <Panel id="main-panel" order={1} defaultSize={panelMode ? 60 : 100} minSize={40} className="pr-4">
+          <Panel
+            id="main-panel"
+            order={1}
+            defaultSize={panelMode || inviteRouteMatch ? 33 : 100}
+            minSize={20}
+            className="pr-4"
+          >
             <Card className="h-full">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-lg">Team Members</CardTitle>
-                  <div className="flex gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search members..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    {(role === 'ADMIN' || hasPermission('invite-form')) && (
-                      <Button onClick={() => {
-                        setSelectedMember(null);
-                        setPanelMode('invite');
-                      }}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Invite
-                      </Button>
-                    )}
-                  </div>
+                  {(role === 'ADMIN' || hasPermission('invite-form')) && (
+                    <Button onClick={handleInviteClick}>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Invite
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
-                <Tabs defaultValue="active">
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                   <TabsList className="mb-4">
                     <TabsTrigger value="active">Active Members</TabsTrigger>
                     {canViewInactive && (
@@ -154,16 +197,21 @@ export function Contacts() {
                     )}
                   </TabsList>
                   <TabsContent value="active">
-                    <MemberList
-                      members={filteredMembers}
+                    <MemberDataTable
+                      members={members}
+                      totalCount={totalCount}
                       loading={membersLoading}
                       error={error}
                       onSelect={handleMemberSelect}
+                      pageIndex={pageIndex}
+                      pageSize={pageSize}
+                      setPageIndex={setPageIndex}
+                      setPageSize={setPageSize}
                     />
                   </TabsContent>
                   {canViewInactive && (
                     <TabsContent value="inactive">
-                      <InactiveMembersTab />
+                      <InactiveMembersTab/>
                     </TabsContent>
                   )}
                 </Tabs>
@@ -171,32 +219,33 @@ export function Contacts() {
             </Card>
           </Panel>
 
-          {panelMode && (
+          {(panelMode === 'details' || inviteRouteMatch) && (
             <>
               <PanelResizeHandle className="w-2 group relative">
                 <div className="absolute inset-0 bg-border transition-colors group-hover:bg-primary group-active:bg-primary w-1 mx-auto" />
               </PanelResizeHandle>
 
-              <Panel id="side-panel" order={2} defaultSize={40} minSize={30} className="pl-4">
+              <Panel
+                id="side-panel"
+                order={2}
+                defaultSize={67}
+                minSize={40}
+                className="pl-4"
+              >
                 <Card className="h-full">
-                  {panelMode === 'invite' ? (
-                    <InviteForm
-                      onClose={() => setPanelMode(null)}
-                      onInviteSuccess={handleInviteSuccess}
+                  {panelMode === 'details' && selectedMember ? (
+                    <MemberDetails
+                      member={selectedMember}
+                      onClose={closeDetailsPanel}
+                      loading={actionLoading}
+                      permissions={selectedMember.permissions || {}}
+                      onUpdatePermissions={handleUpdatePermissions}
+                      onRoleUpdate={(newRole) =>
+                        handleRoleUpdate(selectedMember.id, newRole)
+                      }
                     />
                   ) : (
-                    selectedMember && (
-                      <MemberDetails
-                        member={selectedMember}
-                        onClose={() => {
-                          setSelectedMember(null);
-                          setPanelMode(null);
-                        }}
-                        loading={actionLoading}
-                        permissions={selectedMember.permissions || {}}
-                        onUpdatePermissions={handleUpdatePermissions}
-                      />
-                    )
+                    <Outlet />
                   )}
                 </Card>
               </Panel>

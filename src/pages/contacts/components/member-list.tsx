@@ -1,3 +1,4 @@
+// src/pages/contacts/components/member-list.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +13,16 @@ interface MemberListProps {
   loading: boolean;
   error: string | null;
   onSelect: (member: Member) => void;
+  compact?: boolean;
 }
 
-export function MemberList({ members, loading, error, onSelect }: MemberListProps) {
+export function MemberList({
+  members,
+  loading,
+  error,
+  onSelect,
+  compact = false
+}: MemberListProps) {
   const { hasPermission, role } = usePermissions();
 
   if (error) {
@@ -43,21 +51,26 @@ export function MemberList({ members, loading, error, onSelect }: MemberListProp
 
   return (
     <Table>
-      <TableHeader className="sticky top-0 bg-background z-10">
-        <TableRow>
-          <TableHead className="w-12"></TableHead>
-          <TableHead>Member</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Last Login</TableHead>
-        </TableRow>
-      </TableHeader>
+      {!compact && (
+        <TableHeader className="sticky top-0 bg-background z-10">
+          <TableRow>
+            <TableHead className="w-12"></TableHead>
+            <TableHead>Member</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Last Login</TableHead>
+            <TableHead>Status</TableHead>
+
+          </TableRow>
+        </TableHeader>
+      )}
       <TableBody>
         {members.map((member) => (
-          <MemberRow 
-            key={member.id} 
-            member={member} 
-            onSelect={onSelect} 
+          <MemberRow
+            key={member.id}
+            member={member}
+            onSelect={onSelect}
             canViewDetails={role === 'ADMIN' || hasPermission('member-details')}
+            compact={compact}
           />
         ))}
       </TableBody>
@@ -69,12 +82,36 @@ interface MemberRowProps {
   member: Member;
   onSelect: (member: Member) => void;
   canViewDetails: boolean;
+  compact: boolean;
 }
 
-function MemberRow({ member, onSelect, canViewDetails }: MemberRowProps) {
+function MemberRow({ member, onSelect, canViewDetails, compact }: MemberRowProps) {
+  if (compact) {
+    return (
+      <TableRow
+        className={`${canViewDetails ? 'hover:bg-muted/50 cursor-pointer' : ''}`}
+        onClick={() => canViewDetails && onSelect(member)}
+      >
+        <TableCell className="flex items-center space-x-3">
+          <Avatar className="h-8 w-8">
+            {member.picture && (
+              <AvatarImage src={member.picture} alt={member.name || member.email} />
+            )}
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {getInitials(member.name || member.email)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium">{member.name || 'No name'}</div>
+            <div className="text-sm text-muted-foreground">{member.email}</div>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
 
   return (
-    <TableRow 
+    <TableRow
       className={`${canViewDetails ? 'hover:bg-muted/50 cursor-pointer' : ''}`}
       onClick={() => canViewDetails && onSelect(member)}
     >
@@ -100,9 +137,14 @@ function MemberRow({ member, onSelect, canViewDetails }: MemberRowProps) {
         </Badge>
       </TableCell>
       <TableCell>
-        {member.lastLogin 
-          ? new Date(member.lastLogin).toLocaleDateString() 
+        {member.lastLogin
+          ? new Date(member.lastLogin).toLocaleDateString()
           : 'Never'}
+      </TableCell>
+      <TableCell>
+        <Badge variant={member.blocked ? "destructive" : "default"}>
+          {member.blocked ? "Blocked" : "Active"}
+        </Badge>
       </TableCell>
     </TableRow>
   );

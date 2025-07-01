@@ -26,5 +26,16 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: 'inactive-members-view', label: 'View Inactive Members', value: 'inactive-members-view' },
       { id: 'resend-invitation', label: 'Resend Invitations', value: 'resend-invitation' },
     ],
+  },
+   {
+    id: 'conversation',
+    label: 'coversation Page',
+    value: 'conversation',
+    permissions: [
+      { id: 'all', label: 'all Page Allow', value: 'all-list' },
+      { id: 'mention-details', label: 'metion Details Page Allow', value: 'mention-details' },
+      { id: 'unread-form', label: 'unread Page Allow', value: 'unread' },
+      { id: 'read-view', label: 'read View Page Allow', value: 'read-view' },
+    ],
   }
 ];

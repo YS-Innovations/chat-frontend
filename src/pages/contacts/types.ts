@@ -2,14 +2,38 @@ export interface Member {
   id: string;
   name: string | null;
   email: string;
-  role: 'ADMIN' | 'AGENT';
+  role: Role;
   lastLogin: Date | null;
   picture?: string | null;
-  createdAt?: Date | null; 
- permissions: Record<string, boolean>; 
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  blocked: boolean;
+  phoneNumber: string | null;
+  identities: any | null;
+  metadata: any | null;
+  permissions: Record<string, boolean>;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
+export interface UserLoginHistory {
+  id: string;
+  lastIp: string;
+  browserName: string;
+  os: string;
+  deviceType:string;
+  lastLogin: Date;
+  lastLogoutAt: Date | null;
+}
 
+export interface PermissionHistory {
+  id: string;
+  changes: {
+    previous: Record<string, boolean>;
+    current: Record<string, boolean>;
+  };
+  changedAt: Date;
+}
+export type Role = 'ADMIN' | 'COADMIN' | 'AGENT';
 
 
 export interface InactiveMember {
