@@ -32,10 +32,10 @@ function AppRoutes() {
         >
           <Route path="invite" element={<InviteFormWrapper />} />
           <Route path="active" element={<Contacts />}>
-            <Route path="memberdetails/:memberId" element={<Contacts />} />
+            <Route path="user/:memberId" element={<Contacts />} />
           </Route>
           <Route path="inactive" element={<Contacts />}>
-            <Route path="memberdetails/:memberId" element={<Contacts />} />
+            <Route path="user/:memberId" element={<Contacts />} />
           </Route>
         </Route>
 
