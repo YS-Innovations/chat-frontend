@@ -44,15 +44,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
   }
 ];
 
-export interface SaveOptionsModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSaveForUser: () => void;
-  onSaveAsTemplate: (templateName: string) => void;
-  templates: any[];
-  permissions: Record<string, boolean>;
-  onViewTemplate: (templateId: string) => void;
-}
+
 
 export interface TemplatePermissionsModalProps {
   template: any;

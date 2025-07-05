@@ -1,18 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
-import { useSaveOptionsModal } from "./useSaveOptionsModal";
-import type { SaveOptionsModalProps } from "../../types";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useSaveOptionsModal } from "./hooks/useSaveOptionsModal";
+import type { SaveOptionsModalProps } from "./types/types";
+import { SaveOptionsSelect } from "./components/SaveOptionsSelect";
+import { SaveOptionsTemplate } from "./components/SaveOptionsTemplate";
 
 export function SaveOptionsModal({
   open,
@@ -21,7 +11,7 @@ export function SaveOptionsModal({
   onSaveAsTemplate,
   templates,
   permissions,
-  onViewTemplate
+  onViewTemplate,
 }: SaveOptionsModalProps) {
   const {
     templateName,
@@ -32,120 +22,38 @@ export function SaveOptionsModal({
     handleSaveTemplate,
     setTemplateName,
     setMode,
-    setNameError // Add the error setter
+    setNameError,
   } = useSaveOptionsModal({
     open,
     templates,
     permissions,
     onSaveAsTemplate,
-    onClose
+    onClose,
   });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        {mode === 'select' ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Save Options</DialogTitle>
-              <DialogDescription>
-                Choose how to save these permissions
-              </DialogDescription>
-            </DialogHeader>
-            
-            {matchingTemplate && (
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Permissions match existing template:
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => {
-                    onViewTemplate(matchingTemplate.id);
-                    onClose();
-                  }}
-                >
-                  {matchingTemplate.policyName}
-                </Button>
-              </div>
-            )}
-            
-            <div className="grid gap-3 py-4">
-              <Button 
-                onClick={() => {
-                  onSaveForUser();
-                  onClose();
-                }}
-                className="justify-start"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Save only for this user
-              </Button>
-              <Button 
-                variant="secondary" 
-                onClick={() => setMode('template')}
-                className="justify-start"
-              >
-                Save as policy template
-              </Button>
-            </div>
-          </>
+        {mode === "select" ? (
+          <SaveOptionsSelect
+            onSaveForUser={onSaveForUser}
+            onSaveAsTemplateMode={() => setMode("template")}
+            onClose={onClose}
+            matchingTemplate={matchingTemplate}
+            onViewTemplate={onViewTemplate}
+          />
         ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Save as Policy Template</DialogTitle>
-              <DialogDescription>
-                Create a reusable permission template
-              </DialogDescription>
-            </DialogHeader>
-            
-            {duplicateTemplate && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertTitle>Duplicate Permissions Detected</AlertTitle>
-                <AlertDescription className="flex flex-col gap-2">
-                  <p>
-                    A template with the same permissions already exists:
-                  </p>
-                  <Badge variant="outline" className="w-fit">
-                    {duplicateTemplate.policyName}
-                  </Badge>
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="grid gap-4 py-4">
-              <div>
-                <Input
-                  placeholder="Template name"
-                  value={templateName}
-                  onChange={(e) => {
-                    setTemplateName(e.target.value);
-                    if (nameError) setNameError('');
-                  }}
-                  className={nameError ? 'border-red-500' : ''}
-                />
-                {nameError && (
-                  <p className="text-red-500 text-sm mt-1">{nameError}</p>
-                )}
-              </div>
-              
-              <DialogFooter className="sm:justify-start">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setMode('select')}
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleSaveTemplate}
-                  disabled={!templateName.trim()}
-                >
-                  Save Template
-                </Button>
-              </DialogFooter>
-            </div>
-          </>
+          <SaveOptionsTemplate
+            templateName={templateName}
+            setTemplateName={(name) => {
+              setTemplateName(name);
+              if (nameError) setNameError("");
+            }}
+            nameError={nameError}
+            duplicateTemplate={duplicateTemplate}
+            onBack={() => setMode("select")}
+            onSaveTemplate={handleSaveTemplate}
+          />
         )}
       </DialogContent>
     </Dialog>
