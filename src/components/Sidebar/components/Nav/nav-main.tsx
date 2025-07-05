@@ -1,10 +1,7 @@
 "use client";
 
-import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/ui/sidebar";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,35 +16,15 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-
-type NavItem = {
-  title: string;
-  url: string;
-  icon?: LucideIcon;
-  badge?: string;
-  permission?: string;
-  items?: {
-    title: string;
-    url: string;
-    badge?: string;
-    permission?: string;
-  }[];
-};
+import { type NavItem } from "./types/nav-types";
+import { useNavMain } from "./hooks/use-nav-main";
 
 interface NavMainProps {
   items: NavItem[];
 }
 
 export function NavMain({ items }: NavMainProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isCollapsed } = useSidebar();
-
-  const isActive = (item: NavItem) => {
-    if (location.pathname === item.url) return true;
-    if (item.items?.some(sub => location.pathname === sub.url)) return true;
-    return false;
-  };
+  const { isActive, handleNavigate, isCollapsed, location } = useNavMain();
 
   return (
     <SidebarGroup>
@@ -106,7 +83,7 @@ export function NavMain({ items }: NavMainProps) {
                                   href="#"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    navigate(subItem.url);
+                                    handleNavigate(subItem.url);
                                   }}
                                 >
                                   <span className="truncate">{subItem.title}</span>
@@ -136,7 +113,7 @@ export function NavMain({ items }: NavMainProps) {
                   "transition-colors hover:bg-accent hover:text-accent-foreground",
                   active && "bg-sidebar-accent text-sidebar-accent-foreground"
                 )}
-                onClick={() => navigate(item.url)}
+                onClick={() => handleNavigate(item.url)}
               >
                 {item.icon && <item.icon className="size-4" />}
                 {!isCollapsed && (
