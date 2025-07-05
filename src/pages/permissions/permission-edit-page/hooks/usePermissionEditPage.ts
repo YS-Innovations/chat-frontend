@@ -3,6 +3,12 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import type { PermissionValue, PermissionTemplate } from "../types";
 import { arrayToPermissionObject } from '../../utils';
+import { 
+  fetchTemplates, 
+  fetchUser, 
+  fetchUserPermissions, 
+  saveUserPermissions 
+} from './api';
 
 export function usePermissionEditPage(userId?: string) {
   const { getAccessTokenSilently } = useAuth0();
@@ -21,29 +27,18 @@ export function usePermissionEditPage(userId?: string) {
       setLoading(true);
       const token = await getAccessTokenSilently();
 
-      // Fetch templates
-      const templatesRes = await fetch('http://localhost:3000/templates', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const templatesData = await templatesRes.json();
+      const templatesData = await fetchTemplates(token);
       setTemplates(templatesData);
 
-      // Fetch user permissions
       if (userId) {
-        const userRes = await fetch(`http://localhost:3000/auth/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const userData = await userRes.json();
+        const userData = await fetchUser(token, userId);
 
         if (userData.role === 'ADMIN') {
           setError('Cannot edit permissions for admin users');
           return;
         }
 
-        const permRes = await fetch(`http://localhost:3000/auth/permissions/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const permData = await permRes.json();
+        const permData = await fetchUserPermissions(token, userId);
         setPermissions(arrayToPermissionObject(permData.permissions));
       }
     } catch (err) {
@@ -65,17 +60,7 @@ export function usePermissionEditPage(userId?: string) {
         .filter(([_, value]) => value)
         .map(([key]) => key);
 
-      const res = await fetch(`http://localhost:3000/auth/permissions/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ permissions: permissionsArray }),
-      });
-
-      if (!res.ok) throw new Error('Failed to save permissions');
-      
+      await saveUserPermissions(token, userId!, permissionsArray);
       setPermissions(updatedPermissions);
       navigate(-1);
     } catch (err) {
@@ -102,7 +87,7 @@ export function usePermissionEditPage(userId?: string) {
       setPermissions(perms);
       setSaveOptionsOpen(true);
     } else if (action === 'saveAsTemplate' && name) {
-      // Save template logic
+      // Save template logic here
     }
   }, []);
 

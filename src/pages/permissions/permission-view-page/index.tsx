@@ -1,31 +1,31 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { PermissionView } from "./components";
 import { usePermissionViewPage } from "./usePermissionViewPage";
-import { PermissionView } from "./components/permission-view";
+import { ViewPageSkeleton } from "./components/view-page-skeleton";
 
 export function PermissionViewPage() {
-  const { userId } = useParams();
-  const navigate = useNavigate();
   const {
     permissions,
     loading,
-    error
-  } = usePermissionViewPage(userId);
+    error,
+    handleEdit,
+    handleBack
+  } = usePermissionViewPage();
 
-  if (loading) return <div className="text-center py-8">Loading permissions...</div>;
-  if (error) return <div className="text-center py-8 text-red-500">Error: {error}</div>;
+  if (loading) return <ViewPageSkeleton />;
+  if (error) return <div className="error-view">Error: {error}</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">View Permissions</h1>
-        <Button variant="outline" onClick={() => navigate(-1)}>
+    <div className="permission-view-page">
+      <div className="page-header">
+        <h1>View Permissions</h1>
+        <Button variant="outline" onClick={handleBack}>
           Back
         </Button>
       </div>
       <PermissionView 
         selectedPermissions={permissions} 
-        onEdit={() => navigate(`/permissions/edit/${userId}`)}
+        onEdit={handleEdit}
         canEdit={true}
       />
     </div>

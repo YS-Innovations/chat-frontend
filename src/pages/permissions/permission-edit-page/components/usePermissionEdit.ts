@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { PERMISSION_GROUPS } from "@/pages/permissions/types";
-import type { PermissionEditProps, PermissionGroup } from "../../types";
+import type { PermissionEditProps } from "../types";
 
 export function usePermissionEdit(props: PermissionEditProps) {
   const [isDirty, setIsDirty] = useState(false);

@@ -8,7 +8,11 @@ export type PermissionGroup = {
   id: string;
   label: string;
   value: string;
-  permissions: Permission[];
+  permissions: {
+    id: string;
+    value: string;
+    label: string;
+  }[];
 };
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
@@ -39,23 +43,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   }
 ];
-
-// Component props
-export interface PermissionEditProps {
-  value: Record<string, boolean>;
-  onChange: (permissions: Record<string, boolean>) => void;
-  onSaveClick: () => void;
-  onCancel: () => void;
-  saving: boolean;
-  templates: any[];
-  onTemplateClick: (templateId: string) => void;
-}
-
-export interface PermissionViewProps {
-  selectedPermissions: Record<string, boolean>;
-  onEdit: () => void;
-  canEdit: boolean;
-}
 
 export interface SaveOptionsModalProps {
   open: boolean;

@@ -4,7 +4,8 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import type { PermissionGroup, PermissionValue } from "../../types";
+import type { PermissionValue } from "../types";
+import type { PermissionGroup } from "../../types";
 
 interface PermissionGroupItemProps {
   group: PermissionGroup;
@@ -17,7 +18,6 @@ interface PermissionGroupItemProps {
 export function PermissionGroupItem({
   group,
   permissionsValue,
-  isExpanded,
   onGroupToggle,
   onPermissionToggle,
 }: PermissionGroupItemProps) {

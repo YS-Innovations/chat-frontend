@@ -1,11 +1,11 @@
 import { Accordion } from "@/components/ui/accordion";
-import { usePermissionEdit } from "./usePermissionEdit";
-import type { PermissionEditProps } from "../../types";
+import type { PermissionEditProps } from "../types";
 import { PermissionEditHeader } from "./PermissionEditHeader";
-import { PermissionSearchBar } from "./PermissionSearchBar";
-import { TemplatesSection } from "./TemplatesSection";
 import { PermissionGroupItem } from "./PermissionGroupItem";
 import { PermissionEditActions } from "./PermissionEditActions";
+import { TemplatesSection } from "./TemplatesSection";
+import { PermissionSearchBar } from "./PermissionSearchBar";
+import { usePermissionEdit } from "./usePermissionEdit";
 
 export function PermissionEdit(props: PermissionEditProps) {
   const {

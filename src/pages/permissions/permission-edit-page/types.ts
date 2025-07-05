@@ -6,15 +6,6 @@ export interface PermissionTemplate {
   permissions?: string[];
 }
 
-export interface PermissionGroup {
-  id: string;
-  label: string;
-  permissions: {
-    id: string;
-    value: string;
-    label: string;
-  }[];
-}
 
 export interface PermissionEditProps {
   value: PermissionValue;
