@@ -1,8 +1,7 @@
-// UserStatusIndicator.tsx
-import React, { useMemo } from 'react';
-import { useUserStatus } from '@/context/UserStatusContext';
-import { formatDistanceToNow } from 'date-fns';
-import type { UserStatus, UserStatusIndicatorProps } from './types';
+// src/components/UserStatusIndicator/UserStatusIndicator.tsx
+import React from 'react';
+import { useUserStatusIndicator } from './hooks/useUserStatusIndicator';
+import type { UserStatusIndicatorProps } from './types/types';
 
 const sizeClasses = {
   sm: 'w-2 h-2',
@@ -18,14 +17,7 @@ export const UserStatusIndicator: React.FC<UserStatusIndicatorProps> = ({
   onlineColor = 'bg-green-500',
   offlineColor = 'bg-gray-400',
 }) => {
-  const { statuses } = useUserStatus();
-
-  const status: UserStatus | undefined = useMemo(() => {
-    if (statuses[userId]) {
-      return statuses[userId];
-    }
-    return Object.values(statuses).find((s) => s.user?.auth0Id === userId);
-  }, [statuses, userId]);
+  const { status, titleText, isOnline } = useUserStatusIndicator(userId);
 
   if (!status) {
     return (
@@ -35,15 +27,6 @@ export const UserStatusIndicator: React.FC<UserStatusIndicatorProps> = ({
       </span>
     );
   }
-
-  const { isOnline, lastSeen } = status;
-  const lastSeenDate = lastSeen ? new Date(lastSeen) : null;
-
-  const titleText = isOnline
-    ? 'Online'
-    : lastSeenDate
-    ? `Last seen: ${formatDistanceToNow(lastSeenDate, { addSuffix: true })}`
-    : 'Offline';
 
   return (
     <span

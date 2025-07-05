@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useUserStatus } from "@/context/UserStatusContext";
-import { UserStatusIndicator } from "@/components/status/UserStatusIndicator";
+import { UserStatusIndicator } from "@/components/UserStatusIndicator/UserStatusIndicator";
 
 import {
   Avatar,
