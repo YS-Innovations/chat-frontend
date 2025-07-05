@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Sidebar, SidebarRail } from "@/components/ui/sidebar";
-import { usePermissions } from "@/context/PermissionsContext";
+import { usePermissions } from "@/context/permissions";
 import { SidebarContentArea } from "./components/Sidebar/SidebarContentArea";
 import { SidebarEmptyState } from "./components/Sidebar/SidebarEmptyState";
 import { SidebarFooterArea } from "./components/Sidebar/SidebarFooterArea";

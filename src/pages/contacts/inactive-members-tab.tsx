@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import type { InactiveMember } from './types';
-import { usePermissions } from '@/context/PermissionsContext';
+import { usePermissions } from '@/context/permissions';
 
 export function InactiveMembersTab() {
   const { getAccessTokenSilently } = useAuth0();

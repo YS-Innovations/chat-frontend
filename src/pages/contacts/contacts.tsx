@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import type { Member, Role } from './types';
 import { MemberDetails } from './components/member-details';
-import { usePermissions } from '@/context/PermissionsContext';
+import { usePermissions } from '@/context/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InactiveMembersTab } from './inactive-members-tab';
 import { useMembers } from './hooks/useMembers';

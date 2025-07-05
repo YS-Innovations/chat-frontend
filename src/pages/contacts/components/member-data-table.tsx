@@ -48,7 +48,7 @@ import {
   IconChevronsRight,
   IconLayoutColumns,
 } from "@tabler/icons-react"
-import { usePermissions } from "@/context/PermissionsContext"
+import { usePermissions } from "@/context/permissions"
 import { getInitials } from "@/lib/utils"
 import type { Member } from "../types"
 import { Checkbox } from "@/components/ui/checkbox"

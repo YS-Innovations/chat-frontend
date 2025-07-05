@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { usePermissions } from '@/context/PermissionsContext';
+import { usePermissions } from '@/context/permissions';
 import { Navigate, useLocation } from 'react-router-dom';
 
 export const PermissionGuard = ({

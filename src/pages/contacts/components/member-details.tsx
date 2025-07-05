@@ -9,7 +9,7 @@ import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check, Clock } from "lucide-react";
 import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types";
 import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
-import { usePermissions } from "@/context/PermissionsContext";
+import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
 
 import { PERMISSION_GROUPS } from "@/pages/permissions/types";

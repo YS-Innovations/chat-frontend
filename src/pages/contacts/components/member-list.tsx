@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import type { Member } from "../types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { usePermissions } from "@/context/PermissionsContext";
+import { usePermissions } from "@/context/permissions";
 
 interface MemberListProps {
   members: Member[];
