@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { PermissionTemplate } from "../types";
+import type { PermissionTemplate } from "../types/types";
 
 interface TemplatesSectionProps {
   templates: PermissionTemplate[];

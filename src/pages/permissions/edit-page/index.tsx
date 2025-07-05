@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PermissionEdit } from "./components";
-import type { PermissionEditPageProps } from "./types";
+import type { PermissionEditPageProps } from "./types/types";
 import { usePermissionEditPage } from "./hooks/usePermissionEditPage";
 import { SaveOptionsModal } from "../components/save-options-modal";
 import { TemplatePermissionsModal } from "../components/template-permissions-modal";

@@ -1,4 +1,4 @@
-import type { PermissionValue, PermissionTemplate } from "../types";
+import type { PermissionValue, PermissionTemplate } from "../types/types";
 
 export async function fetchTemplates(token: string): Promise<PermissionTemplate[]> {
   const res = await fetch('http://localhost:3000/templates', {

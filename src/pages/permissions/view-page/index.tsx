@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { PermissionView } from "./components";
-import { usePermissionViewPage } from "./usePermissionViewPage";
-import { ViewPageSkeleton } from "./components/view-page-skeleton";
+import { usePermissionViewPage } from "./hooks/usePermissionPageData";
+import LoadingScreen from "@/components/Loading/LoadingScreen";
 
 export function PermissionViewPage() {
   const {
@@ -12,7 +12,7 @@ export function PermissionViewPage() {
     handleBack
   } = usePermissionViewPage();
 
-  if (loading) return <ViewPageSkeleton />;
+  if (loading) return <LoadingScreen />;
   if (error) return <div className="error-view">Error: {error}</div>;
 
   return (

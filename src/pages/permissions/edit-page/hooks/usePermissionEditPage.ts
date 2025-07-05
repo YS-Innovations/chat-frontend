@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import type { PermissionValue, PermissionTemplate } from "../types";
+import type { PermissionValue, PermissionTemplate } from "../types/types";
 import { arrayToPermissionObject } from '../../utils';
 import { 
   fetchTemplates, 

@@ -1,5 +1,5 @@
 import { Accordion } from "@/components/ui/accordion";
-import type { PermissionEditProps } from "../types";
+import type { PermissionEditProps } from "../types/types";
 import { PermissionEditHeader } from "./PermissionEditHeader";
 import { PermissionGroupItem } from "./PermissionGroupItem";
 import { PermissionEditActions } from "./PermissionEditActions";
