@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Navigate, useLocation } from 'react-router-dom';
-import AppLayout from '../components/layouts/AppLayout';
+import AppLayout from '../layouts/AppLayout';
 import LoadingSpinner from '../components/Loading/LoadingSpinner';
 import ErrorPage from '@/pages/ErrorPage';
 
