@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { PermissionEdit } from "../components/permission-edit";
+import { Button } from "@/components/ui/button";
+import { PermissionEdit } from "./components/permission-edit";
+import type { PermissionEditPageProps } from "./types";
+import { usePermissionEditPage } from "./hooks/usePermissionEditPage";
 import { SaveOptionsModal } from "../components/save-options-modal";
 import { TemplatePermissionsModal } from "../components/template-permissions-modal";
-import { usePermissionEditPage } from "./usePermissionEditPage";
-import { Button } from "@/components/ui/button";
 
-export function PermissionEditPage() {
-  const { userId } = useParams();
+export function PermissionEditPage({ userId }: PermissionEditPageProps) {
   const navigate = useNavigate();
   const {
     permissions,
@@ -22,11 +22,11 @@ export function PermissionEditPage() {
     setTemplateModalOpen,
     handleSave,
     handleTemplateClick,
-    handleUseTemplate
+    handleUseTemplate,
   } = usePermissionEditPage(userId);
 
-  if (loading) return <div className="text-center py-8">Loading permissions...</div>;
-  if (error) return <div className="text-center py-8 text-red-500">Error: {error}</div>;
+  if (loading) return <div>Loading permissions...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -36,7 +36,7 @@ export function PermissionEditPage() {
           Back
         </Button>
       </div>
-      
+
       <PermissionEdit
         value={permissions}
         onChange={setPermissions}
@@ -46,8 +46,8 @@ export function PermissionEditPage() {
         templates={templates}
         onTemplateClick={handleTemplateClick}
       />
-      
-      <SaveOptionsModal
+
+        <SaveOptionsModal
         open={saveOptionsOpen}
         onClose={() => setSaveOptionsOpen(false)}
         onSaveForUser={() => handleSave(permissions)}
@@ -56,7 +56,7 @@ export function PermissionEditPage() {
         permissions={permissions}
         onViewTemplate={handleTemplateClick}
       />
-      
+
       <TemplatePermissionsModal
         template={selectedTemplate}
         open={templateModalOpen}

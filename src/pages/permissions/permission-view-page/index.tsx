@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { PermissionView } from "../components/permission-view";
 import { Button } from "@/components/ui/button";
 import { usePermissionViewPage } from "./usePermissionViewPage";
+import { PermissionView } from "./components/permission-view";
 
 export function PermissionViewPage() {
   const { userId } = useParams();

@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check, Clock } from "lucide-react";
 import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types";
-import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
 import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -22,6 +21,7 @@ import { toast } from "sonner";
 import { LoginHistory } from "./login-history";
 import { PermissionHistorys } from "./permission-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PermissionEdit } from "@/pages/permissions/permission-edit-page/components/permission-edit";
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;

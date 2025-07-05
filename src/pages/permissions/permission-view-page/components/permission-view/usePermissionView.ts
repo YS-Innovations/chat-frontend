@@ -1,6 +1,5 @@
+import { PERMISSION_GROUPS, type PermissionViewProps } from "@/pages/permissions/types";
 import { useState, useMemo } from "react";
-import { PERMISSION_GROUPS } from "../../types";
-import type { PermissionViewProps } from "../../types";
 
 export function usePermissionView({ selectedPermissions }: Pick<PermissionViewProps, "selectedPermissions">) {
   const [searchTerm, setSearchTerm] = useState("");

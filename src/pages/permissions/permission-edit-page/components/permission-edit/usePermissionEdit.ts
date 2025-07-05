@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { PERMISSION_GROUPS } from "../../types";
-import type { PermissionEditProps } from "../../types";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import type { PermissionEditProps, PermissionGroup } from "../../types";
 
 export function usePermissionEdit(props: PermissionEditProps) {
   const [isDirty, setIsDirty] = useState(false);
@@ -11,19 +11,21 @@ export function usePermissionEdit(props: PermissionEditProps) {
     if (!searchTerm) return PERMISSION_GROUPS;
 
     const term = searchTerm.toLowerCase();
-    return PERMISSION_GROUPS
-      .map(group => ({
-        ...group,
-        permissions: group.permissions.filter(
-          p => p.label.toLowerCase().includes(term) ||
-            p.value.toLowerCase().includes(term)
-        )
-      }))
-      .filter(group => group.permissions.length > 0);
+    return PERMISSION_GROUPS.map((group) => ({
+      ...group,
+      permissions: group.permissions.filter(
+        (p) =>
+          p.label.toLowerCase().includes(term) ||
+          p.value.toLowerCase().includes(term)
+      ),
+    })).filter((group) => group.permissions.length > 0);
   }, [searchTerm]);
 
-  const handleTogglePermission = (permissionValue: string, checked: boolean) => {
-    let newPermissions = { ...props.value, [permissionValue]: checked };
+  const handleTogglePermission = (
+    permissionValue: string,
+    checked: boolean
+  ) => {
+    const newPermissions = { ...props.value, [permissionValue]: checked };
 
     if (permissionValue === "permission-edit" && checked) {
       newPermissions["permission-view"] = true;
@@ -34,10 +36,10 @@ export function usePermissionEdit(props: PermissionEditProps) {
   };
 
   const handleGroupToggle = (permissions: string[]) => {
-    const allChecked = permissions.every(perm => props.value[perm]);
+    const allChecked = permissions.every((perm) => props.value[perm]);
     const newPermissions = { ...props.value };
 
-    permissions.forEach(perm => {
+    permissions.forEach((perm) => {
       newPermissions[perm] = !allChecked;
     });
 
@@ -48,8 +50,8 @@ export function usePermissionEdit(props: PermissionEditProps) {
   const handleSelectAll = () => {
     const newPermissions = { ...props.value };
 
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
+    PERMISSION_GROUPS.forEach((group) => {
+      group.permissions.forEach((permission) => {
         newPermissions[permission.value] = true;
       });
     });
@@ -61,8 +63,8 @@ export function usePermissionEdit(props: PermissionEditProps) {
   const handleClearAll = () => {
     const newPermissions = { ...props.value };
 
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
+    PERMISSION_GROUPS.forEach((group) => {
+      group.permissions.forEach((permission) => {
         newPermissions[permission.value] = false;
       });
     });
@@ -74,13 +76,12 @@ export function usePermissionEdit(props: PermissionEditProps) {
   return {
     isDirty,
     expandedGroups,
-    searchTerm,
     filteredGroups,
     handleTogglePermission,
     handleGroupToggle,
     handleSelectAll,
     handleClearAll,
     setSearchTerm,
-    setExpandedGroups
+    setExpandedGroups,
   };
 }
