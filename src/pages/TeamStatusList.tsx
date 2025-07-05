@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserStatus } from '../context/UserStatusContext';
+import { useUserStatus } from '../context/userStatus';
 
 export const TeamStatusList: React.FC = () => {
   const { statuses, loading } = useUserStatus();

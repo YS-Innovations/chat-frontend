@@ -2,7 +2,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
-import { useUserStatus } from "@/context/UserStatusContext";
+import { useUserStatus } from "@/context/userStatus";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function useNavUser() {

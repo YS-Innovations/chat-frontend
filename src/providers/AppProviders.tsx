@@ -1,7 +1,7 @@
 import React from 'react'
 import { Auth0Provider } from '@auth0/auth0-react'
 import { PermissionsProvider } from '../context/permissions'
-import { UserStatusProvider } from '../context/UserStatusContext'
+import { UserStatusProvider } from '../context/userStatus'
 
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (

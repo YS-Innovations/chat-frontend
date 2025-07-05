@@ -1,6 +1,6 @@
 // src/components/UserStatusIndicator/useUserStatusIndicator.ts
 import { useMemo } from 'react';
-import { useUserStatus } from '@/context/UserStatusContext';
+import { useUserStatus } from '@/context/userStatus';
 import { formatDistanceToNow } from 'date-fns';
 import type { UserStatus } from '../types/types';
 
