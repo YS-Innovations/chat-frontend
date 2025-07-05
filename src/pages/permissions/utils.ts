@@ -9,10 +9,3 @@ export const arrayToPermissionObject = (permissionsArray: string[]): Record<stri
     return acc;
   }, {});
 };
-
-// Convert permission object to array
-export const permissionObjectToArray = (permissionsObj: Record<string, boolean>): string[] => {
-  return Object.entries(permissionsObj)
-    .filter(([_, value]) => value)
-    .map(([key]) => key);
-};
