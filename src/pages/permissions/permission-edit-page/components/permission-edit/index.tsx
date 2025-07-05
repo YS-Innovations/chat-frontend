@@ -1,11 +1,11 @@
 import { Accordion } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
 import { usePermissionEdit } from "./usePermissionEdit";
 import type { PermissionEditProps } from "../../types";
 import { PermissionEditHeader } from "./PermissionEditHeader";
 import { PermissionSearchBar } from "./PermissionSearchBar";
 import { TemplatesSection } from "./TemplatesSection";
 import { PermissionGroupItem } from "./PermissionGroupItem";
+import { PermissionEditActions } from "./PermissionEditActions";
 
 export function PermissionEdit(props: PermissionEditProps) {
   const {
@@ -26,12 +26,12 @@ export function PermissionEdit(props: PermissionEditProps) {
         onSelectAll={handleSelectAll}
         onClearAll={handleClearAll}
       />
-      
+
       <PermissionSearchBar
         searchTerm={""}
         onSearchChange={setSearchTerm}
       />
-      
+
       <TemplatesSection
         templates={props.templates}
         onTemplateClick={props.onTemplateClick}
@@ -55,21 +55,12 @@ export function PermissionEdit(props: PermissionEditProps) {
         ))}
       </Accordion>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
-        <Button
-          variant="outline"
-          onClick={props.onCancel}
-          disabled={props.saving}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={props.onSaveClick}
-          disabled={props.saving || !isDirty}
-        >
-          {props.saving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
+      <PermissionEditActions
+        onCancel={props.onCancel}
+        onSaveClick={props.onSaveClick}
+        saving={props.saving}
+        isDirty={isDirty}
+      />
     </div>
   );
 }
