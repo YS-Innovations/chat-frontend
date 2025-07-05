@@ -7,7 +7,7 @@ import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionEditPage } from '../pages/permissions/permission-edit-page';
 import { PermissionViewPage } from '../pages/permissions/permission-view-page';
-import { PermissionGuard } from '../components/PermissionGuard';
+import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
