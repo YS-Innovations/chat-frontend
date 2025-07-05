@@ -1,4 +1,4 @@
-import { PERMISSION_GROUPS } from "./types";
+import { PERMISSION_GROUPS } from "../types/types";
 
 // Convert permission array to object
 export const arrayToPermissionObject = (permissionsArray: string[]): Record<string, boolean> => {

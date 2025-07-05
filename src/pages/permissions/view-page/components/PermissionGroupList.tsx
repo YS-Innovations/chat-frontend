@@ -1,4 +1,4 @@
-import type { PermissionGroup } from "@/pages/permissions/types";
+import type { PermissionGroup } from "@/pages/permissions/types/types";
 
 interface PermissionGroupListProps {
   filteredGroups: PermissionGroup[];

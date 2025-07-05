@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 import type { Role } from "../types";
 import { usePermissions } from "@/context/permissions";
 

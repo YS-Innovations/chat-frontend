@@ -5,7 +5,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import type { PermissionValue } from "../types/types";
-import type { PermissionGroup } from "../../types";
+import type { PermissionGroup } from "../../types/types";
 
 interface PermissionGroupItemProps {
   group: PermissionGroup;

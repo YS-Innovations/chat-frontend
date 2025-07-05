@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 import type { PermissionEditProps } from "../types/types";
 
 export function usePermissionEdit(props: PermissionEditProps) {

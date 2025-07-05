@@ -43,12 +43,3 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   }
 ];
-
-
-
-export interface TemplatePermissionsModalProps {
-  template: any;
-  open: boolean;
-  onClose: () => void;
-  onUse: (permissions: Record<string, boolean>, action: 'apply' | 'saveAsTemplate', templateName?: string) => void;
-}

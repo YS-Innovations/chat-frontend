@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PERMISSION_GROUPS, type PermissionGroup } from "@/pages/permissions/types";
+import { PERMISSION_GROUPS, type PermissionGroup } from "@/pages/permissions/types/types";
 import type { PermissionViewProps } from "../types/types";
 
 export function usePermissionView({ 

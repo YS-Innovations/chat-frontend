@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { arrayToPermissionObject } from "../../utils";
+import { arrayToPermissionObject } from "../../helper/utils";
 
 export function usePermissionViewPage() {
   const { userId } = useParams();

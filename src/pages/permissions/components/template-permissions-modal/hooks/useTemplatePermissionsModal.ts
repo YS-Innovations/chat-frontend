@@ -1,30 +1,38 @@
+// src/pages/permissions/components/template-permissions-modal/useTemplatePermissionsModal.ts
+
 import { useState, useEffect, useMemo } from "react";
-import { PERMISSION_GROUPS } from "../../types";
-import type { TemplatePermissionsModalProps } from "../../types";
+import { PERMISSION_GROUPS, type PermissionGroup } from "../../../types/types"; // Make sure this is imported correctly
+import type { TemplatePermissionsModalProps } from "../types/types";
+
+interface UseTemplatePermissionsModalParams
+  extends Pick<TemplatePermissionsModalProps, "template" | "onUse" | "onClose"> {}
 
 export function useTemplatePermissionsModal({
   template,
-}: Pick<TemplatePermissionsModalProps, "template" | "onUse" | "onClose">) {
+}: UseTemplatePermissionsModalParams) {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [mode, setMode] = useState<'use' | 'saveAsTemplate'>('use');
-  const [originalPermissions, setOriginalPermissions] = useState<Record<string, boolean>>({});
+  const [templateName, setTemplateName] = useState("");
+  const [mode, setMode] = useState<"use" | "saveAsTemplate">("use");
+  const [originalPermissions, setOriginalPermissions] = useState<
+    Record<string, boolean>
+  >({});
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredGroups = useMemo(() => {
+  const filteredGroups: PermissionGroup[] = useMemo(() => {
     if (!searchTerm) return PERMISSION_GROUPS;
 
     const term = searchTerm.toLowerCase();
     return PERMISSION_GROUPS
-      .map(group => ({
+      .map((group) => ({
         ...group,
         permissions: group.permissions.filter(
-          p => p.label.toLowerCase().includes(term) ||
+          (p) =>
+            p.label.toLowerCase().includes(term) ||
             p.value.toLowerCase().includes(term)
-        )
+        ),
       }))
-      .filter(group => group.permissions.length > 0);
+      .filter((group) => group.permissions.length > 0);
   }, [searchTerm]);
 
   useEffect(() => {
@@ -33,32 +41,32 @@ export function useTemplatePermissionsModal({
       setPermissions(templatePerms);
       setOriginalPermissions(templatePerms);
       setHasChanges(false);
-      setTemplateName('');
-      setMode('use');
+      setTemplateName("");
+      setMode("use");
     }
   }, [template]);
 
   useEffect(() => {
     if (template && Object.keys(originalPermissions).length > 0) {
-      const changed = Object.keys(permissions).some(key =>
-        permissions[key] !== originalPermissions[key]
+      const changed = Object.keys(permissions).some(
+        (key) => permissions[key] !== originalPermissions[key]
       );
       setHasChanges(changed);
     }
   }, [permissions, template, originalPermissions]);
 
   const handleTogglePermission = (permissionValue: string, checked: boolean) => {
-    setPermissions(prev => ({
+    setPermissions((prev) => ({
       ...prev,
-      [permissionValue]: checked
+      [permissionValue]: checked,
     }));
   };
 
   const handleGroupToggle = (permissionsList: string[]) => {
-    const allChecked = permissionsList.every(perm => permissions[perm]);
+    const allChecked = permissionsList.every((perm) => permissions[perm]);
     const newPermissions = { ...permissions };
 
-    permissionsList.forEach(perm => {
+    permissionsList.forEach((perm) => {
       newPermissions[perm] = !allChecked;
     });
 
@@ -68,8 +76,8 @@ export function useTemplatePermissionsModal({
   const handleSelectAll = () => {
     const newPermissions = { ...permissions };
 
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
+    PERMISSION_GROUPS.forEach((group) => {
+      group.permissions.forEach((permission) => {
         newPermissions[permission.value] = true;
       });
     });
@@ -88,6 +96,6 @@ export function useTemplatePermissionsModal({
     handleSelectAll,
     setTemplateName,
     setMode,
-    setSearchTerm
+    setSearchTerm,
   };
 }

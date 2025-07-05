@@ -11,7 +11,7 @@ import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types
 import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
 
-import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
 import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
