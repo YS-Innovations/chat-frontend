@@ -1,123 +1,40 @@
 import { Button } from "@/components/ui/button";
-import { PERMISSION_GROUPS } from "../types";
 import { Checkbox } from "@/components/ui/indeterminate-checkbox";
-import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Info, Search, Check } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
+import { usePermissionEdit } from "./usePermissionEdit";
+import type { PermissionEditProps } from "../../types";
 
-interface PermissionEditProps {
-  value: Record<string, boolean>;
-  onChange: (permissions: Record<string, boolean>) => void;
-  onSaveClick: () => void;
-  onCancel: () => void;
-  saving: boolean;
-  templates: any[];
-  onTemplateClick: (templateId: string) => void;
-}
-
-export function PermissionEdit({
-  value,
-  onChange,
-  onSaveClick,
-  onCancel,
-  saving,
-  templates,
-  onTemplateClick,
-}: PermissionEditProps) {
-  const [isDirty, setIsDirty] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Filter groups and permissions based on search term
-  const filteredGroups = useMemo(() => {
-    if (!searchTerm) return PERMISSION_GROUPS;
-
-    const term = searchTerm.toLowerCase();
-    return PERMISSION_GROUPS
-      .map(group => ({
-        ...group,
-        permissions: group.permissions.filter(
-          p => p.label.toLowerCase().includes(term) ||
-            p.value.toLowerCase().includes(term)
-        )
-      }))
-      .filter(group => group.permissions.length > 0);
-  }, [searchTerm]);
-
-  const handleTogglePermission = (permissionValue: string, checked: boolean) => {
-    let newPermissions = { ...value, [permissionValue]: checked };
-
-    // Enforce dependency: permission-edit implies permission-view
-    if (permissionValue === "permission-edit" && checked) {
-      newPermissions["permission-view"] = true;
-    }
-
-    onChange(newPermissions);
-    setIsDirty(true);
-  };
-
-  const handleGroupToggle = (permissions: string[]) => { // Removed groupId
-    const allChecked = permissions.every(perm => value[perm]);
-    const newPermissions = { ...value };
-
-    permissions.forEach(perm => {
-      newPermissions[perm] = !allChecked;
-    });
-
-    onChange(newPermissions);
-    setIsDirty(true);
-  };
-
-  const handleSelectAll = () => {
-    const newPermissions = { ...value };
-
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
-        newPermissions[permission.value] = true;
-      });
-    });
-
-    onChange(newPermissions);
-    setIsDirty(true);
-  };
-
-  const handleClearAll = () => {
-    const newPermissions = { ...value };
-
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
-        newPermissions[permission.value] = false;
-      });
-    });
-
-    onChange(newPermissions);
-    setIsDirty(true);
-  };
+export function PermissionEdit(props: PermissionEditProps) {
+  const {
+    isDirty,
+    expandedGroups,
+    searchTerm,
+    filteredGroups,
+    handleTogglePermission,
+    handleGroupToggle,
+    handleSelectAll,
+    handleClearAll,
+    setSearchTerm,
+    setExpandedGroups
+  } = usePermissionEdit(props);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Edit Permissions</h2>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSelectAll}
-          >
+          <Button variant="outline" size="sm" onClick={handleSelectAll}>
             <Check className="h-4 w-4 mr-2" /> Select All
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearAll}
-          >
+          <Button variant="outline" size="sm" onClick={handleClearAll}>
             Clear All
           </Button>
         </div>
@@ -133,7 +50,7 @@ export function PermissionEdit({
         />
       </div>
 
-      {templates.length > 0 && (
+      {props.templates.length > 0 && (
         <div className="border rounded-lg p-4 bg-muted/50">
           <div className="flex items-center mb-2">
             <h3 className="font-medium">Suggestions</h3>
@@ -143,12 +60,12 @@ export function PermissionEdit({
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {templates.map(template => (
+            {props.templates.map(template => (
               <Badge
                 key={template.id}
                 variant="secondary"
                 className="cursor-pointer px-3 py-1 hover:bg-accent"
-                onClick={() => onTemplateClick(template.id)}
+                onClick={() => props.onTemplateClick(template.id)}
               >
                 {template.policyName}
               </Badge>
@@ -165,8 +82,8 @@ export function PermissionEdit({
       >
         {filteredGroups.map(group => {
           const groupPermissions = group.permissions.map(p => p.value);
-          const allChecked = groupPermissions.every(perm => value[perm]);
-          const someChecked = groupPermissions.some(perm => value[perm]);
+          const allChecked = groupPermissions.every(perm => props.value[perm]);
+          const someChecked = groupPermissions.some(perm => props.value[perm]);
 
           return (
             <AccordionItem
@@ -179,9 +96,7 @@ export function PermissionEdit({
                   <Checkbox
                     checked={allChecked}
                     indeterminate={someChecked && !allChecked}
-                    onCheckedChange={() =>
-                      handleGroupToggle(groupPermissions)
-                    }
+                    onCheckedChange={() => handleGroupToggle(groupPermissions)}
                     className="mr-2"
                     onClick={e => e.stopPropagation()}
                   />
@@ -192,12 +107,12 @@ export function PermissionEdit({
                 <div className="space-y-2">
                   {group.permissions.map(permission => {
                     const isViewPermission = permission.value === "permission-view";
-                    const isDisabled = isViewPermission && value["permission-edit"];
+                    const isDisabled = isViewPermission && props.value["permission-edit"];
 
                     return (
                       <div key={permission.id} className="flex items-center pl-6">
                         <Checkbox
-                          checked={value[permission.value] || false}
+                          checked={props.value[permission.value] || false}
                           onCheckedChange={checked =>
                             handleTogglePermission(permission.value, !!checked)
                           }
@@ -218,11 +133,11 @@ export function PermissionEdit({
       </Accordion>
 
       <div className="flex justify-end space-x-3 pt-4 border-t">
-        <Button variant="outline" onClick={onCancel} disabled={saving}>
+        <Button variant="outline" onClick={props.onCancel} disabled={props.saving}>
           Cancel
         </Button>
-        <Button onClick={onSaveClick} disabled={saving || !isDirty}>
-          {saving ? "Saving..." : "Save Changes"}
+        <Button onClick={props.onSaveClick} disabled={props.saving || !isDirty}>
+          {props.saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

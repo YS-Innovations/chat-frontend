@@ -29,13 +29,47 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
   },
    {
     id: 'conversation',
-    label: 'coversation Page',
+    label: 'Conversation Page',
     value: 'conversation',
     permissions: [
-      { id: 'all', label: 'all Page Allow', value: 'all-list' },
-      { id: 'mention-details', label: 'metion Details Page Allow', value: 'mention-details' },
-      { id: 'unread-form', label: 'unread Page Allow', value: 'unread' },
-      { id: 'read-view', label: 'read View Page Allow', value: 'read-view' },
+      { id: 'all', label: 'All Page Allow', value: 'all-list' },
+      { id: 'mention-details', label: 'Mention Details Page Allow', value: 'mention-details' },
+      { id: 'unread-form', label: 'Unread Page Allow', value: 'unread' },
+      { id: 'read-view', label: 'Read View Page Allow', value: 'read-view' },
     ],
   }
 ];
+
+// Component props
+export interface PermissionEditProps {
+  value: Record<string, boolean>;
+  onChange: (permissions: Record<string, boolean>) => void;
+  onSaveClick: () => void;
+  onCancel: () => void;
+  saving: boolean;
+  templates: any[];
+  onTemplateClick: (templateId: string) => void;
+}
+
+export interface PermissionViewProps {
+  selectedPermissions: Record<string, boolean>;
+  onEdit: () => void;
+  canEdit: boolean;
+}
+
+export interface SaveOptionsModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSaveForUser: () => void;
+  onSaveAsTemplate: (templateName: string) => void;
+  templates: any[];
+  permissions: Record<string, boolean>;
+  onViewTemplate: (templateId: string) => void;
+}
+
+export interface TemplatePermissionsModalProps {
+  template: any;
+  open: boolean;
+  onClose: () => void;
+  onUse: (permissions: Record<string, boolean>, action: 'apply' | 'saveAsTemplate', templateName?: string) => void;
+}

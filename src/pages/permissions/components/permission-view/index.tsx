@@ -1,5 +1,5 @@
-import { PERMISSION_GROUPS } from "../types";
-import { Check } from "lucide-react";
+
+import { Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import {
@@ -9,45 +9,24 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { usePermissionView } from "./usePermissionView";
+import type { PermissionViewProps } from "../../types";
 
-interface PermissionViewProps {
-  selectedPermissions: Record<string, boolean>;
-  onEdit: () => void;
-  canEdit: boolean;
-}
-
-export function PermissionView({ selectedPermissions, onEdit, canEdit }: PermissionViewProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // Filter groups and permissions based on search term
-  const filteredGroups = useMemo(() => {
-    if (!searchTerm) return PERMISSION_GROUPS;
-    
-    const term = searchTerm.toLowerCase();
-    return PERMISSION_GROUPS
-      .map(group => ({
-        ...group,
-        permissions: group.permissions.filter(
-          p => (p.label.toLowerCase().includes(term) || 
-                p.value.toLowerCase().includes(term)) && 
-                selectedPermissions[p.value]
-        )
-      }))
-      .filter(group => group.permissions.length > 0);
-  }, [searchTerm, selectedPermissions]);
+export function PermissionView({ 
+  selectedPermissions, 
+  onEdit, 
+  canEdit 
+}: PermissionViewProps) {
+  const { searchTerm, filteredGroups, setSearchTerm } = usePermissionView({
+    selectedPermissions
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Permissions</h2>
         {canEdit && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={onEdit}
-          >
+          <Button variant="outline" size="sm" onClick={onEdit}>
             <Pencil className="h-4 w-4 mr-2" />
             Edit
           </Button>

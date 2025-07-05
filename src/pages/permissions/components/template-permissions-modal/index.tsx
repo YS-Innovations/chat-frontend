@@ -6,9 +6,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { PERMISSION_GROUPS } from "../types";
 import { Checkbox } from "@/components/ui/indeterminate-checkbox";
-import { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Accordion,
@@ -17,13 +15,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Check, Search } from "lucide-react";
-
-interface TemplatePermissionsModalProps {
-  template: any;
-  open: boolean;
-  onClose: () => void;
-  onUse: (permissions: Record<string, boolean>, action: 'apply' | 'saveAsTemplate', templateName?: string) => void;
-}
+import { useTemplatePermissionsModal } from "./useTemplatePermissionsModal";
+import type { TemplatePermissionsModalProps } from "../../types";
 
 export function TemplatePermissionsModal({
   template,
@@ -31,78 +24,23 @@ export function TemplatePermissionsModal({
   onClose,
   onUse,
 }: TemplatePermissionsModalProps) {
-  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [hasChanges, setHasChanges] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [mode, setMode] = useState<'use' | 'saveAsTemplate'>('use');
-  const [originalPermissions, setOriginalPermissions] = useState<Record<string, boolean>>({});
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Filter groups and permissions based on search term
-  const filteredGroups = useMemo(() => {
-    if (!searchTerm) return PERMISSION_GROUPS;
-
-    const term = searchTerm.toLowerCase();
-    return PERMISSION_GROUPS
-      .map(group => ({
-        ...group,
-        permissions: group.permissions.filter(
-          p => p.label.toLowerCase().includes(term) ||
-            p.value.toLowerCase().includes(term)
-        )
-      }))
-      .filter(group => group.permissions.length > 0);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (template) {
-      const templatePerms = { ...template.policy };
-      setPermissions(templatePerms);
-      setOriginalPermissions(templatePerms);
-      setHasChanges(false);
-      setTemplateName('');
-      setMode('use');
-    }
-  }, [template]);
-
-  useEffect(() => {
-    if (template && Object.keys(originalPermissions).length > 0) {
-      const changed = Object.keys(permissions).some(key =>
-        permissions[key] !== originalPermissions[key]
-      );
-      setHasChanges(changed);
-    }
-  }, [permissions, template, originalPermissions]);
-
-  const handleTogglePermission = (permissionValue: string, checked: boolean) => {
-    setPermissions(prev => ({
-      ...prev,
-      [permissionValue]: checked
-    }));
-  };
-
-  const handleGroupToggle = (permissionsList: string[]) => { // Removed groupId
-    const allChecked = permissionsList.every(perm => permissions[perm]);
-    const newPermissions = { ...permissions };
-
-    permissionsList.forEach(perm => {
-      newPermissions[perm] = !allChecked;
-    });
-
-    setPermissions(newPermissions);
-  };
-
-  const handleSelectAll = () => {
-    const newPermissions = { ...permissions };
-
-    PERMISSION_GROUPS.forEach(group => {
-      group.permissions.forEach(permission => {
-        newPermissions[permission.value] = true;
-      });
-    });
-
-    setPermissions(newPermissions);
-  };
+  const {
+    permissions,
+    hasChanges,
+    templateName,
+    mode,
+    filteredGroups,
+    handleTogglePermission,
+    handleGroupToggle,
+    handleSelectAll,
+    setTemplateName,
+    setMode,
+    setSearchTerm
+  } = useTemplatePermissionsModal({
+    template,
+    onUse,
+    onClose
+  });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -123,7 +61,6 @@ export function TemplatePermissionsModal({
           <Input
             placeholder="Search permissions..."
             className="pl-10"
-            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>

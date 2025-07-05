@@ -8,20 +8,11 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useMemo } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-
-interface SaveOptionsModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSaveForUser: () => void;
-  onSaveAsTemplate: (templateName: string) => void;
-  templates: any[];
-  permissions: Record<string, boolean>;
-  onViewTemplate: (templateId: string) => void;
-}
+import { useSaveOptionsModal } from "./useSaveOptionsModal";
+import type { SaveOptionsModalProps } from "../../types";
 
 export function SaveOptionsModal({
   open,
@@ -32,48 +23,23 @@ export function SaveOptionsModal({
   permissions,
   onViewTemplate
 }: SaveOptionsModalProps) {
-  const [templateName, setTemplateName] = useState('');
-  const [mode, setMode] = useState<'select' | 'template'>('select');
-  const [nameError, setNameError] = useState('');
-  const [duplicateTemplate, setDuplicateTemplate] = useState<any>(null);
-
-  const matchingTemplate = useMemo(() => {
-    if (!permissions) return null;
-    const permString = JSON.stringify(permissions);
-    return templates.find(t => 
-      JSON.stringify(t.policy) === permString
-    );
-  }, [templates, permissions]);
-
-  useEffect(() => {
-    if (mode === 'template') {
-      const permString = JSON.stringify(permissions);
-      const duplicate = templates.find(t => 
-        JSON.stringify(t.policy) === permString
-      );
-      setDuplicateTemplate(duplicate);
-    }
-  }, [mode, templates, permissions]);
-
-  const handleSaveTemplate = () => {
-    if (!templateName.trim()) {
-      setNameError('Template name is required');
-      return;
-    }
-    
-    const nameExists = templates.some(t => 
-      t.policyName.toLowerCase() === templateName.toLowerCase()
-    );
-    
-    if (nameExists) {
-      setNameError('Template name already exists');
-      return;
-    }
-    
-    setNameError('');
-    onSaveAsTemplate(templateName);
-    onClose();
-  };
+  const {
+    templateName,
+    mode,
+    nameError,
+    duplicateTemplate,
+    matchingTemplate,
+    handleSaveTemplate,
+    setTemplateName,
+    setMode,
+    setNameError // Add the error setter
+  } = useSaveOptionsModal({
+    open,
+    templates,
+    permissions,
+    onSaveAsTemplate,
+    onClose
+  });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
