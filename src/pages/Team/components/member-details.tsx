@@ -18,8 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ✅ Sonner toast import
 import { toast } from "sonner";
-import { LoginHistory } from "./login-history";
-import { PermissionHistorys } from "./permission-history";
+import { LoginHistory } from "../login-history/login-history";
+import { PermissionHistorys } from "../permission-history/permission-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PermissionEdit } from "@/pages/permissions/edit-page/components";
 interface MemberDetailsProps {

@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Profile from '../pages/Profile';
-import { Contacts } from '../pages/contacts/contacts';
+import { Contacts } from '../pages/Team/contacts';
 import ApplicationPage from '../pages/ApplicationPage';
 import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
@@ -13,7 +13,7 @@ import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
-import { InviteFormWrapper } from '../pages/contacts/routes/InviteFormWrapper';
+import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 
 function AppRoutes() {
   return (

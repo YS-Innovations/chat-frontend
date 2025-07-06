@@ -1,6 +1,6 @@
 // src/pages/contacts/components/InviteFormWrapper.tsx
 import { useNavigate } from 'react-router-dom';
-import { InviteForm } from '../components/invite-form'; // adjust path if needed
+import { InviteForm } from '../invite/invite-form'; // adjust path if needed
 
 export function InviteFormWrapper() {
   const navigate = useNavigate();
