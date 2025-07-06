@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import type { Member, Role } from './types';
-import { MemberDetails } from './components/member-details';
+import { MemberDetails } from './member-details-page/member-details';
 import { usePermissions } from '@/context/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InactiveMembersTab } from './inactive-members-tab';
 import { useMembers } from './hooks/useMembers';
-import { MemberDataTable } from './components/member-data-table';
+import { MemberDataTable } from './member-table/member-data-table';
 import { Outlet, useNavigate, useParams, useMatch } from 'react-router-dom';
 
 export function Contacts() {
