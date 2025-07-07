@@ -27,13 +27,6 @@ export const navMainItems: NavItem[] = [
     ],
   },
   {
-    title: "Contacts",
-    url: "/app/contacts",
-    icon: SquareTerminal,
-    isActive: false,
-    permission: "member-list",
-  },
-  {
     title: "Team",
     url: "#",
     icon: Users,
