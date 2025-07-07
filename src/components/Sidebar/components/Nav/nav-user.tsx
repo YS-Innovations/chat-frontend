@@ -9,14 +9,9 @@ import {
   Pencil,
   Sparkles,
 } from "lucide-react"
-import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSidebar } from "@/components/ui/sidebar";
-import { useUserStatus } from "@/context/UserStatusContext";
-import { UserStatusIndicator } from "@/components/status/UserStatusIndicator";
-
+import { UserStatusIndicator } from "@/components/UserStatusIndicator/UserStatusIndicator";
 import {
   Avatar,
   AvatarFallback,
@@ -37,20 +32,18 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils";
+import { useNavUser } from "./hooks/use-nav-user";
 
 export function NavUser() {
-  const { isCollapsed } = useSidebar();
-  const { user: auth0User, isLoading, logout } = useAuth0();
-  const { statuses } = useUserStatus();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout({ 
-      logoutParams: { 
-        returnTo: window.location.origin 
-      } 
-    });
-  };
+  const { 
+    isCollapsed,
+    auth0User,
+    isLoading,
+    navigate,
+    handleLogout,
+    currentUser,
+    userStatus
+  } = useNavUser();
 
   if (isLoading) {
     return (
@@ -81,16 +74,6 @@ export function NavUser() {
     );
   }
 
-  const currentUser = {
-    name: auth0User.name ?? auth0User.email ?? "Unknown User",
-    email: auth0User.email ?? "No email",
-    avatar: auth0User.picture ?? "/default-avatar.png",
-  };
-
-  const userStatus = auth0User.sub 
-    ? Object.values(statuses).find(s => s.user?.auth0Id === auth0User.sub)
-    : null;
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -104,12 +87,12 @@ export function NavUser() {
               <div className="relative">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage 
-                    src={currentUser.avatar} 
-                    alt={currentUser.name} 
+                    src={currentUser!.avatar} 
+                    alt={currentUser!.name} 
                     className="object-cover"
                   />
                   <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                    {currentUser.name.split(' ').map(n => n[0]).join('')}
+                    {currentUser!.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 {auth0User.sub && (
@@ -124,8 +107,8 @@ export function NavUser() {
               {!isCollapsed && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{currentUser.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                    <span className="truncate font-medium">{currentUser!.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">{currentUser!.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </>
@@ -143,12 +126,12 @@ export function NavUser() {
                 <div className="relative">
                   <Avatar className="h-10 w-10 rounded-lg">
                     <AvatarImage 
-                      src={currentUser.avatar} 
-                      alt={currentUser.name} 
+                      src={currentUser!.avatar} 
+                      alt={currentUser!.name} 
                       className="object-cover"
                     />
                     <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                      {currentUser.name.split(' ').map(n => n[0]).join('')}
+                      {currentUser!.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   {auth0User.sub && (
@@ -161,8 +144,8 @@ export function NavUser() {
                   )}
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{currentUser.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                  <span className="truncate font-medium">{currentUser!.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">{currentUser!.email}</span>
                   {auth0User.sub && userStatus && (
                     <div className="flex items-center mt-1">
                       <UserStatusIndicator 

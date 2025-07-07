@@ -1,19 +1,19 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Profile from '../pages/Profile';
-import { Contacts } from '../pages/contacts/contacts';
+import { Teams } from '../pages/Team/Members';
 import ApplicationPage from '../pages/ApplicationPage';
 import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
-import { PermissionEditPage } from '../pages/permissions/permission-edit-page';
-import { PermissionViewPage } from '../pages/permissions/permission-view-page';
-import { PermissionGuard } from '../components/PermissionGuard';
+import { PermissionEditPage } from '../pages/permissions/edit-page';
+import { PermissionViewPage } from '../pages/permissions/view-page';
+import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
-import { InviteFormWrapper } from '../pages/contacts/routes/InviteFormWrapper';
+import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 
 function AppRoutes() {
   return (
@@ -25,17 +25,24 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="team/status" element={<TeamStatusList />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
-
         <Route
-          path="contacts"
-          element={<PermissionGuard permission="member-list"><Contacts /></PermissionGuard>}
+          path="team/invite"
+          element={
+            <PermissionGuard permission="member-list">
+              <InviteFormWrapper />
+            </PermissionGuard>
+          }
+        />
+        <Route
+          path="team"
+          element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
         >
-          <Route path="invite" element={<InviteFormWrapper />} />
-          <Route path="active" element={<Contacts />}>
-            <Route path="user/:memberId" element={<Contacts />} />
+
+          <Route path="active" element={<Teams />}>
+            <Route path="user/:memberId" element={<Teams />} />
           </Route>
-          <Route path="inactive" element={<Contacts />}>
-            <Route path="user/:memberId" element={<Contacts />} />
+          <Route path="inactive" element={<Teams />}>
+            <Route path="user/:memberId" element={<Teams />} />
           </Route>
         </Route>
 

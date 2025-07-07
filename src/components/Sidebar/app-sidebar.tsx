@@ -1,11 +1,12 @@
 import * as React from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Sidebar, SidebarRail } from "@/components/ui/sidebar";
-import { usePermissions } from "@/context/PermissionsContext";
+import { usePermissions } from "@/context/permissions";
 import { SidebarContentArea } from "./components/Sidebar/SidebarContentArea";
 import { SidebarEmptyState } from "./components/Sidebar/SidebarEmptyState";
 import { SidebarFooterArea } from "./components/Sidebar/SidebarFooterArea";
 import { navMainItems } from "./components/Nav/nav-items";
+
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { isCollapsed } = useSidebar();
   const { hasPermission, isLoading, role } = usePermissions();
@@ -25,7 +26,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         return item;
       })
       .filter(item => !(item.items && item.items.length === 0));
-  }, [hasPermission, isLoading, navMainItems]);
+  }, [hasPermission, isLoading]);
 
   if (role === "AGENT" && filteredItems.length === 0) {
     return (

@@ -5,8 +5,9 @@ import {
   SquareTerminal,
   Users,
 } from "lucide-react";
+import { type NavItem } from "./types/nav-types";
 
-export const navMainItems = [
+export const navMainItems: NavItem[] = [
   {
     title: "Inbox",
     url: "/app",
@@ -26,21 +27,15 @@ export const navMainItems = [
     ],
   },
   {
-    title: "Contacts",
-    url: "/app/contacts",
-    icon: SquareTerminal,
-    isActive: false,
-    permission: "member-list",
-  },
-  {
     title: "Team",
     url: "#",
     icon: Users,
     permission: "team-access",
     items: [
-      { title: "Members", url: "/app/contacts", permission: "member-list" },
+      { title: "Members", url: "/app/team", permission: "member-list" },
+      { title: "Invite", url: "/app/team/invite", permission: "member-list" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "permission-view" },
-       { title: "Status", url: "/app/team/status", permission: "team-status-view" },
+      { title: "Status", url: "/app/team/status", permission: "team-status-view" },
     ],
   },
   {
