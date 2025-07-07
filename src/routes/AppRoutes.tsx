@@ -27,7 +27,7 @@ function AppRoutes() {
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
 
         <Route
-          path="contacts"
+          path="team"
           element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
         >
           <Route path="invite" element={<InviteFormWrapper />} />

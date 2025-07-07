@@ -12,9 +12,9 @@ export function useContactsLogic() {
   const navigate = useNavigate();
 
   const { memberId } = useParams<{ memberId?: string }>();
-  const activeTabMatch = useMatch('/app/contacts/active/*');
-  const inactiveTabMatch = useMatch('/app/contacts/inactive/*');
-  const inviteRouteMatch = useMatch('/app/contacts/invite');
+  const activeTabMatch = useMatch('/app/team/active/*');
+  const inactiveTabMatch = useMatch('/app/team/inactive/*');
+  const inviteRouteMatch = useMatch('/app/team/invite');
 
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
     activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
@@ -56,7 +56,7 @@ export function useContactsLogic() {
 
   const handleMemberSelect = (member: Member) => {
     if (role === 'ADMIN' || hasPermission('member-details')) {
-      navigate(`/app/contacts/${activeTab}/user/${member.id}`);
+      navigate(`/app/team/${activeTab}/user/${member.id}`);
     }
   };
 
@@ -65,18 +65,18 @@ export function useContactsLogic() {
       setActiveTab(value);
       setPanelMode(null);
       setSelectedMember(null);
-      navigate(`/app/contacts/${value}`);
+      navigate(`/app/team/${value}`);
     }
   };
 
   const handleInviteClick = () => {
-    navigate('/app/contacts/invite');
+    navigate('/app/team/invite');
   };
 
   const closeDetailsPanel = () => {
     setSelectedMember(null);
     setPanelMode(null);
-    navigate(`/app/contacts/${activeTab}`);
+    navigate(`/app/team/${activeTab}`);
   };
 
   const handleRoleUpdate = async (memberId: string, newRole: Role) => {
