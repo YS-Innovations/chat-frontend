@@ -47,9 +47,9 @@ export function MembersPanel() {
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
-              <TabsTrigger value="active">Active Members</TabsTrigger>
+              <TabsTrigger value="active">Members</TabsTrigger>
               {canViewInactive && (
-                <TabsTrigger value="inactive">Inactive Members</TabsTrigger>
+                <TabsTrigger value="inactive">Pending Invite</TabsTrigger>
               )}
             </TabsList>
             <TabsContent value="active">
