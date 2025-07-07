@@ -3,7 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import type { Role } from "../types";
 import { usePermissions } from "@/context/permissions";
 
-import { togglePermission } from "../invite/utils/helpers";
+import { togglePermission } from "../utils/invite-helpers";
 import { sendInvite } from "../api/invite";
 
 interface UseInviteFormProps {
