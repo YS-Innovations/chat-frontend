@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import type { Member } from "../types";
+import type { Member } from "../types/types";
 
 export function useTemplates(member: Member, getAccessTokenSilently: () => Promise<string>, isEditing: boolean) {
   const [templates, setTemplates] = useState<any[]>([]);

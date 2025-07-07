@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { getInitials } from "@/lib/utils"
-import type { Member } from "../../types"
+import type { Member } from "../../types/types"
 
 export const columns: ColumnDef<Member>[] = [
     {

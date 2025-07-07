@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { PermissionHistory } from "../types";
+import type { PermissionHistory } from "../types/types";
 
 export function PermissionHistorys({ history }: { history: PermissionHistory[] }) {
   return (

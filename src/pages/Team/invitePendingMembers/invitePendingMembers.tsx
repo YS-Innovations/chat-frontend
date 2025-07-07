@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
-import { useInactiveMembers } from './useInactiveMembers';
+import { useInactiveMembers } from '../hooks/useInactiveMembers';
 
-export function InactiveMembersTab() {
+export function Invitepending() {
   const {
     loading,
     error,

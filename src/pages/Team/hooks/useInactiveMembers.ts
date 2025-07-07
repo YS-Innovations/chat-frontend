@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { usePermissions } from '@/context/permissions';
-import type { InactiveMember } from './types';
+import type { InactiveMember } from '../types/types';
 
 export function useInactiveMembers() {
   const { getAccessTokenSilently } = useAuth0();

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth0 } from '@auth0/auth0-react';
-import type { Member } from '../types';
+import type { Member } from '../types/types';
 import { fetchMembersFromApi } from '../api/fetchMembers';
 
 export function useMemberFetcher(pageIndex: number, pageSize: number) {

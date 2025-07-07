@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail } from "lucide-react";
 import { getInitials } from "@/lib/utils";
-import type { Member } from "../../types";
+import type { Member } from "../../types/types";
 
 interface MemberProfileProps {
   member: Member;

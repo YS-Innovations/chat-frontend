@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-table"
 import { Table } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import type { Member } from "../types"
+import type { Member } from "../types/types"
 import { columns } from "./components/table-column"
 import { TablePagination } from "./components/table-pagination"
 import { MemberTableHeader } from "./components/table-header"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { toast } from "sonner";
-import type { Member } from "../../types";
+import type { Member } from "../../types/types";
 import { usePermissions } from "@/context/permissions";
 import { useHistories } from "../../hooks/useHistories";
 import { useTemplates } from "../../hooks/useTemplates";

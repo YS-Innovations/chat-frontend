@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
-import type { Role } from "../types";
+import type { Role } from "../types/types";
 
 interface InviteFormUIProps {
   email: string;

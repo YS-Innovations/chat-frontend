@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Profile from '../pages/Profile';
-import { Contacts } from '../pages/Team/contacts';
+import { Teams } from '../pages/Team/Members';
 import ApplicationPage from '../pages/ApplicationPage';
 import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
@@ -28,14 +28,14 @@ function AppRoutes() {
 
         <Route
           path="contacts"
-          element={<PermissionGuard permission="member-list"><Contacts /></PermissionGuard>}
+          element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
         >
           <Route path="invite" element={<InviteFormWrapper />} />
-          <Route path="active" element={<Contacts />}>
-            <Route path="user/:memberId" element={<Contacts />} />
+          <Route path="active" element={<Teams />}>
+            <Route path="user/:memberId" element={<Teams />} />
           </Route>
-          <Route path="inactive" element={<Contacts />}>
-            <Route path="user/:memberId" element={<Contacts />} />
+          <Route path="inactive" element={<Teams />}>
+            <Route path="user/:memberId" element={<Teams />} />
           </Route>
         </Route>
 

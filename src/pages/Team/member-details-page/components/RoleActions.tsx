@@ -1,6 +1,6 @@
 // src/pages/Team/member-details-page/components/MemberActions.tsx
 import { Button } from "@/components/ui/button";
-import type { Role } from "../../types";
+import type { Role } from "../../types/types";
 
 interface MemberActionsProps {
   canDelete: boolean;

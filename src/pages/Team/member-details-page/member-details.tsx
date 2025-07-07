@@ -4,7 +4,7 @@
 import { useMemberDetails } from "./hooks/useMemberDetails";
 import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
 import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
-import type { Member, Role } from "../types";
+import type { Member, Role } from "../types/types";
 import { MemberDetailsHeader } from "./components/MemberDetailsHeader";
 import { MemberProfile } from "./components/MemberProfile";
 import { MemberActions } from "./components/RoleActions";

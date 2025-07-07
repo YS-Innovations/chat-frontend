@@ -3,7 +3,7 @@
 import { TableBody, TableCell, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePermissions } from "@/context/permissions"
-import type { Member } from "../../types"
+import type { Member } from "../../types/types"
 import { flexRender, type Table } from "@tanstack/react-table"
 
 interface TableBodyProps {

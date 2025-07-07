@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import type { UserLoginHistory, PermissionHistory } from "../types";
+import type { UserLoginHistory, PermissionHistory } from "../types/types";
 
 export function useHistories(memberId: string) {
   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);

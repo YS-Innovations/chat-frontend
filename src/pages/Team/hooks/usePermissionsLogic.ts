@@ -1,4 +1,4 @@
-import type { Member } from "../types";
+import type { Member } from "../types/types";
 
 export function usePermissionsLogic(
   role: string,

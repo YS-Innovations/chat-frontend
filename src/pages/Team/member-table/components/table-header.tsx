@@ -3,7 +3,7 @@
 import { TableHeader, TableHead, TableRow } from "@/components/ui/table"
 import { flexRender } from "@tanstack/react-table"
 import type { Table } from "@tanstack/react-table"
-import type { Member } from "../../types"
+import type { Member } from "../../types/types"
 
 interface TableHeaderProps {
   table: Table<Member>

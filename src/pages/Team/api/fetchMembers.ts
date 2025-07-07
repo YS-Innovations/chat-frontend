@@ -1,4 +1,4 @@
-import type { Member } from '../types';
+import type { Member } from '../types/types';
 
 interface FetchMembersResponse {
   members: Member[];

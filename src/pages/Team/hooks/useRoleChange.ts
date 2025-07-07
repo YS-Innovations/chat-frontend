@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import type { Role } from "../types";
+import type { Role } from "../types/types";
 import { useAuth0 } from "@auth0/auth0-react";
 
 export function useRoleChange(memberId: string, onRoleUpdate: (newRole: Role) => void) {
