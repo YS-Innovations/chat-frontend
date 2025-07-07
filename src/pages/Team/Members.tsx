@@ -6,7 +6,6 @@ import { DetailsPanel } from './panel/DetailsPanel';
 export function Teams() {
   const {
     panelMode,
-    inviteRouteMatch,
     selectedMember,
     actionLoading,
   } = useContactsLogic();
@@ -16,7 +15,7 @@ export function Teams() {
       <div className="flex-1 p-6">
         <PanelGroup direction="horizontal" className="h-full rounded-lg border">
           <MembersPanel />
-          {(panelMode === 'details' || inviteRouteMatch) && (
+          {panelMode === 'details' && (
             <>
               <PanelResizeHandle className="w-2 group relative">
                 <div className="absolute inset-0 bg-border transition-colors group-hover:bg-primary group-active:bg-primary w-1 mx-auto" />

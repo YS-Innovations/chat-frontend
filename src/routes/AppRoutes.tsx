@@ -25,12 +25,19 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="team/status" element={<TeamStatusList />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
-
+        <Route
+          path="team/invite"
+          element={
+            <PermissionGuard permission="member-list">
+              <InviteFormWrapper />
+            </PermissionGuard>
+          }
+        />
         <Route
           path="team"
           element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
         >
-          <Route path="invite" element={<InviteFormWrapper />} />
+
           <Route path="active" element={<Teams />}>
             <Route path="user/:memberId" element={<Teams />} />
           </Route>
