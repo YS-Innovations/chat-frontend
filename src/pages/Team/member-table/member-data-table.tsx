@@ -1,27 +1,33 @@
-"use client";
-
-import * as React from "react";
-import {
-  type ColumnFiltersState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-  type VisibilityState,
-} from "@tanstack/react-table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "./empty-state";
+import { Button } from "@/components/ui/button";
 import { Table } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { X } from "lucide-react";
 import type { Member } from "../types/types";
 import { columns } from "./components/table-column";
 import { TablePagination } from "./components/table-pagination";
 import { MemberTableHeader } from "./components/table-header";
 import { MemberTableBody } from "./components/table-body";
 import { SelectionStatus } from "./components/selection-status";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getSortedRowModel,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import React from "react";
+
+const ROLE_OPTIONS = [
+  { value: 'ADMIN', display: 'Admin' },
+  { value: 'COADMIN', display: 'Co-admin' },
+  { value: 'AGENT', display: 'Agent' },
+];
 
 interface MemberDataTableProps {
   members: Member[];
@@ -38,14 +44,22 @@ interface MemberDataTableProps {
   setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
   selectedRoles: string[];
   setSelectedRoles: React.Dispatch<React.SetStateAction<string[]>>;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>; // Added this
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  clearAllFilters: () => void;
 }
 
-const ROLE_OPTIONS = [
-  { display: 'Admin', value: 'ADMIN' },
-  { display: 'Co-admin', value: 'COADMIN' },
-  { display: 'Agent', value: 'AGENT' },
-];
+const FilterChip = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
+  <div className="flex items-center gap-1 px-3 py-1 bg-white border rounded-full text-sm shadow-xs">
+    <span>{label}</span>
+    <button 
+      onClick={onRemove}
+      className="p-0.5 rounded-full hover:bg-gray-100"
+      aria-label="Remove filter"
+    >
+      <X className="h-3 w-3" />
+    </button>
+  </div>
+);
 
 export function MemberDataTable({
   members,
@@ -62,7 +76,9 @@ export function MemberDataTable({
   setSorting,
   selectedRoles,
   setSelectedRoles,
-  setSearchQuery, // Added this
+  setSearchQuery,
+  clearAllFilters,
+  
 }: MemberDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -77,7 +93,7 @@ export function MemberDataTable({
       rowSelection,
       columnFilters,
     },
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: (newSorting) => {
@@ -99,11 +115,6 @@ export function MemberDataTable({
 
   const pageCount = Math.ceil(totalCount / pageSize);
 
-  const removeRole = (role: string) => {
-    setSelectedRoles(prev => prev.filter(r => r !== role));
-    setPageIndex(0);
-  };
-
   if (error) {
     return (
       <Alert variant="destructive" className="mb-4">
@@ -112,95 +123,101 @@ export function MemberDataTable({
     );
   }
 
-  if (!loading && members.length === 0) {
-    return (
-      <Alert className="mb-4">
-        <AlertDescription>
-          No results{searchQuery ? ` found for "${searchQuery}"` : ""}.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <div className="w-full flex-col justify-start gap-6">
       {/* Active filters section */}
-      {(searchQuery || selectedRoles.length > 0) && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-sm font-medium text-muted-foreground">Active filters:</span>
+      {(searchQuery || selectedRoles.length > 0 || sorting.length > 0) && (
+        <div className="flex flex-wrap items-center gap-2 mb-4 p-2 bg-gray-50 rounded-lg">
+          <span className="text-sm font-medium">Filters:</span>
           
           {searchQuery && (
-            <div className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center">
-              Search: {searchQuery}
-              <X 
-                className="ml-2 h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setSearchQuery('');
-                  setPageIndex(0);
-                }}
-              />
-            </div>
-          )}
-          
-          {selectedRoles.map(role => {
-            const displayName = ROLE_OPTIONS.find(r => r.value === role)?.display || role;
-            return (
-              <div 
-                key={role} 
-                className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center"
-              >
-                Role: {displayName}
-                <X 
-                  className="ml-2 h-3 w-3 cursor-pointer" 
-                  onClick={() => removeRole(role)}
-                />
-              </div>
-            );
-          })}
-          
-          {(searchQuery || selectedRoles.length > 0) && (
-            <Button 
-              variant="link" 
-              size="sm"
-              onClick={() => {
+            <FilterChip 
+              label={`Search: "${searchQuery}"`}
+              onRemove={() => {
                 setSearchQuery('');
-                setSelectedRoles([]);
                 setPageIndex(0);
               }}
-              className="text-destructive"
-            >
-              Clear all
-            </Button>
+            />
           )}
+          
+          {selectedRoles.map(role => (
+            <FilterChip
+              key={role}
+              label={`Role: ${ROLE_OPTIONS.find(r => r.value === role)?.display || role}`}
+              onRemove={() => {
+                setSelectedRoles(prev => prev.filter(r => r !== role));
+                setPageIndex(0);
+              }}
+            />
+          ))}
+          
+          {sorting.length > 0 && (
+            <FilterChip
+              label={`Sorted by: ${sorting[0].id} (${sorting[0].desc ? 'Desc' : 'Asc'})`}
+              onRemove={() => {
+                setSorting([]);
+                setPageIndex(0);
+              }}
+            />
+          )}
+          
+          <Button 
+            variant="ghost"
+            size="sm"
+            onClick={clearAllFilters}
+            className="text-primary hover:text-primary"
+          >
+            Clear all
+          </Button>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
-          <MemberTableHeader table={table} searchQuery={searchQuery} />
-          <MemberTableBody
-            table={table}
-            loading={loading}
-            onSelect={onSelect}
-            searchQuery={searchQuery}
-          />
-        </Table>
-      </div>
+      {/* Loading Skeletons */}
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Empty State */}
+          {members.length === 0 ? (
+            <EmptyState 
+              hasSearch={!!searchQuery}
+              hasFilters={selectedRoles.length > 0 || sorting.length > 0}
+              onClearFilters={clearAllFilters}
+            />
+          ) : (
+            <>
+              <div className="overflow-hidden rounded-lg border">
+                <Table>
+                  <MemberTableHeader table={table} />
+                  <MemberTableBody
+                  loading={loading}
+                    table={table}
+                    onSelect={onSelect}
+                  />
+                </Table>
+              </div>
 
-      <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
-        <SelectionStatus
-          selectedCount={table.getFilteredSelectedRowModel().rows.length}
-          totalCount={table.getFilteredRowModel().rows.length}
-        />
-
-        <TablePagination
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          pageCount={pageCount}
-          setPageIndex={setPageIndex}
-          setPageSize={setPageSize}
-        />
-      </div>
+              <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
+                <SelectionStatus
+                  selectedCount={table.getFilteredSelectedRowModel().rows.length}
+                  totalCount={table.getFilteredRowModel().rows.length}
+                />
+                <TablePagination
+                  pageIndex={pageIndex}
+                  pageSize={pageSize}
+                  pageCount={pageCount}
+                  setPageIndex={setPageIndex}
+                  setPageSize={setPageSize}
+                />
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

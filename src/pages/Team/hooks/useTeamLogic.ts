@@ -36,6 +36,7 @@ export function useContactsLogic() {
     fetchMembers,
     selectedRoles,
     setSelectedRoles,
+    clearAllFilters
   } = useMembers();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -187,6 +188,7 @@ export function useContactsLogic() {
     actionLoading,
     sortLoading,
     selectedRoles,
-    setSelectedRoles
+    setSelectedRoles,
+    clearAllFilters
   };
 }
