@@ -1,12 +1,15 @@
+import { useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
-import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
 
 export function MembersPanel() {
   const {
@@ -29,6 +32,35 @@ export function MembersPanel() {
     setSearchQuery,
   } = useContactsLogic();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const { search: urlSearch } = useLocation();
+
+  // Load query from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(urlSearch);
+    const q = params.get('search') || '';
+    if (q !== searchQuery) {
+      setSearchQuery(q);
+    }
+    inputRef.current?.focus();
+  }, []);
+
+  const [debounced] = useDebounce(searchQuery, 300);
+
+  // Persist to URL
+  useEffect(() => {
+    const params = new URLSearchParams(urlSearch);
+    if (debounced) params.set('search', debounced);
+    else params.delete('search');
+    navigate({ search: params.toString() }, { replace: true });
+  }, [debounced]);
+
+  const handleClear = () => {
+    setSearchQuery('');
+    inputRef.current?.focus();
+  };
+
   return (
     <Panel
       id="main-panel"
@@ -42,13 +74,26 @@ export function MembersPanel() {
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg">Team Members</CardTitle>
             <div className="flex items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Search members"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9"
-              />
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search members"
+                  value={searchQuery}
+                  onChange={(e) => { setPageIndex(0); setSearchQuery(e.target.value); }}
+                  className="h-9 pr-8"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1"
+                    onClick={handleClear}
+                  >
+                    <X />
+                  </Button>
+                )}
+              </div>
               <Button onClick={handleInviteClick}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Invite
@@ -56,7 +101,6 @@ export function MembersPanel() {
             </div>
           </div>
         </CardHeader>
-
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
@@ -72,6 +116,7 @@ export function MembersPanel() {
                 loading={membersLoading}
                 error={error}
                 onSelect={handleMemberSelect}
+                searchQuery={searchQuery}
                 pageIndex={pageIndex}
                 pageSize={pageSize}
                 setPageIndex={setPageIndex}
