@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
+import { Input } from '@/components/ui/input';
 
 export function MembersPanel() {
   const {
@@ -24,6 +25,8 @@ export function MembersPanel() {
     pageSize,
     setPageSize,
     handleMemberSelect,
+    searchQuery,
+    setSearchQuery,
   } = useContactsLogic();
 
   return (
@@ -38,12 +41,22 @@ export function MembersPanel() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg">Team Members</CardTitle>
-            <Button onClick={handleInviteClick}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Invite
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="text"
+                placeholder="Search members"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9"
+              />
+              <Button onClick={handleInviteClick}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Invite
+              </Button>
+            </div>
           </div>
         </CardHeader>
+
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">

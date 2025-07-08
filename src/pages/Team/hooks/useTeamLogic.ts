@@ -1,4 +1,4 @@
-// useContactsLogic.ts
+// src/pages/Team/hooks/useContactsLogic.ts
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useMatch } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -29,7 +29,9 @@ export function useContactsLogic() {
     setPageIndex,
     pageSize,
     setPageSize,
-    fetchMembers
+    searchQuery,
+    setSearchQuery,
+    fetchMembers,
   } = useMembers();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -174,6 +176,8 @@ export function useContactsLogic() {
     setPageIndex,
     pageSize,
     setPageSize,
+    searchQuery,
+    setSearchQuery,
     actionLoading,
   };
 }
