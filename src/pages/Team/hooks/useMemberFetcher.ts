@@ -1,11 +1,14 @@
-// src/pages/Team/hooks/useMemberFetcher.ts
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth0 } from '@auth0/auth0-react';
 import type { Member } from '../types/types';
 import { fetchMembersFromApi } from '../api/fetchMembers';
-
-export function useMemberFetcher(pageIndex: number, pageSize: number, searchQuery = '') {
+import type { SortingState } from "@tanstack/react-table";
+export function useMemberFetcher(
+  pageIndex: number,
+  pageSize: number,
+  searchQuery = '',
+  sorting: SortingState = []
+) {
   const { user, getAccessTokenSilently } = useAuth0();
   const [members, setMembers] = useState<Member[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -21,7 +24,23 @@ export function useMemberFetcher(pageIndex: number, pageSize: number, searchQuer
         authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE },
       });
 
-      const { members: membersData, totalCount } = await fetchMembersFromApi(token, pageIndex, pageSize, searchQuery);
+      // Convert sorting state to API parameters
+      let sortBy, sortOrder;
+      if (sorting.length > 0) {
+        sortBy = sorting[0].id;
+        sortOrder = sorting[0].desc ? 'desc' : 'asc' as 'desc' | 'asc';
+
+      }
+
+      const { members: membersData, totalCount } = await fetchMembersFromApi(
+        token,
+        pageIndex,
+        pageSize,
+        searchQuery,
+        sortBy,
+        sortOrder
+      );
+      
       setMembers(membersData);
       setTotalCount(totalCount);
       setError(null);
@@ -30,7 +49,7 @@ export function useMemberFetcher(pageIndex: number, pageSize: number, searchQuer
     } finally {
       setLoading(false);
     }
-  }, [user, getAccessTokenSilently, pageIndex, pageSize, searchQuery]);
+  }, [user, getAccessTokenSilently, pageIndex, pageSize, searchQuery, sorting]);
 
   useEffect(() => {
     fetchMembers();
@@ -44,4 +63,3 @@ export function useMemberFetcher(pageIndex: number, pageSize: number, searchQuer
     fetchMembers,
   };
 }
-

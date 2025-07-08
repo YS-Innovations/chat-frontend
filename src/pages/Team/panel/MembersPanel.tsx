@@ -30,6 +30,8 @@ export function MembersPanel() {
     handleMemberSelect,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +123,8 @@ export function MembersPanel() {
                 pageSize={pageSize}
                 setPageIndex={setPageIndex}
                 setPageSize={setPageSize}
+                sorting={sorting}
+                setSorting={setSorting}
               />
             </TabsContent>
             {canViewInactive && (

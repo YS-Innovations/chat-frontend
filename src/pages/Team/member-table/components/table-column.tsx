@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { getInitials } from "@/lib/utils"
 import type { Member } from "../../types/types"
-import { ArrowUpDown } from "lucide-react" // icon for sorting UI
+import { ArrowUpDown } from "lucide-react"
 
 export const columns: ColumnDef<Member>[] = [
   {
@@ -52,8 +52,11 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "name",
-    header: () => (
-      <div className="flex items-center space-x-1 cursor-pointer select-none">
+    header: ({ column }) => (
+      <div 
+        className="flex items-center space-x-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         <span>Member</span>
         <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -68,8 +71,11 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "role",
-    header: () => (
-      <div className="flex items-center space-x-1 cursor-pointer select-none">
+    header: ({ column }) => (
+      <div 
+        className="flex items-center space-x-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         <span>Role</span>
         <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -82,8 +88,11 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "lastLogin",
-    header: () => (
-      <div className="flex items-center space-x-1 cursor-pointer select-none">
+    header: ({ column }) => (
+      <div 
+        className="flex items-center space-x-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         <span>Last Login</span>
         <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -95,8 +104,11 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "status",
-    header: () => (
-      <div className="flex items-center space-x-1 cursor-pointer select-none">
+    header: ({ column }) => (
+      <div 
+        className="flex items-center space-x-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         <span>Status</span>
         <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -107,4 +119,4 @@ export const columns: ColumnDef<Member>[] = [
       </Badge>
     ),
   },
-]
+];

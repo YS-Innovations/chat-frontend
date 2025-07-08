@@ -9,14 +9,18 @@ export async function fetchMembersFromApi(
   token: string,
   pageIndex: number,
   pageSize: number,
-  searchQuery?: string
+  searchQuery?: string,
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
 ): Promise<FetchMembersResponse> {
   const url = new URL(`http://localhost:3000/auth/members`);
+  
   url.searchParams.append('page', pageIndex.toString());
   url.searchParams.append('pageSize', pageSize.toString());
-  if (searchQuery) {
-    url.searchParams.append('search', searchQuery);
-  }
+  
+  if (searchQuery) url.searchParams.append('search', searchQuery);
+  if (sortBy) url.searchParams.append('sortBy', sortBy);
+  if (sortOrder) url.searchParams.append('sortOrder', sortOrder);
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -31,4 +35,3 @@ export async function fetchMembersFromApi(
 
   return await response.json();
 }
-

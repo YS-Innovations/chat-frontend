@@ -32,6 +32,8 @@ interface MemberDataTableProps {
   pageSize: number;
   setPageIndex: (index: number) => void;
   setPageSize: (size: number) => void;
+  sorting: SortingState;
+  setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
 }
 
 export function MemberDataTable({
@@ -45,11 +47,12 @@ export function MemberDataTable({
   pageSize,
   setPageIndex,
   setPageSize,
+  sorting,
+  setSorting,
 }: MemberDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const table = useReactTable({
     data: members,
@@ -76,6 +79,11 @@ export function MemberDataTable({
   React.useEffect(() => {
     setRowSelection({});
   }, [pageIndex, pageSize]);
+
+  // Reset page index when sorting changes
+  React.useEffect(() => {
+    setPageIndex(0);
+  }, [sorting]);
 
   const pageCount = Math.ceil(totalCount / pageSize);
 

@@ -1,4 +1,3 @@
-// src/pages/Team/hooks/useContactsLogic.ts
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useMatch } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -31,6 +30,8 @@ export function useContactsLogic() {
     setPageSize,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
     fetchMembers,
   } = useMembers();
 
@@ -178,6 +179,8 @@ export function useContactsLogic() {
     setPageSize,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
     actionLoading,
   };
 }
