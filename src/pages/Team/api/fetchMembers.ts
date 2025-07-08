@@ -8,17 +8,22 @@ interface FetchMembersResponse {
 export async function fetchMembersFromApi(
   token: string,
   pageIndex: number,
-  pageSize: number
+  pageSize: number,
+  searchQuery?: string
 ): Promise<FetchMembersResponse> {
-  const response = await fetch(
-    `http://localhost:3000/auth/members?page=${pageIndex}&pageSize=${pageSize}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+  const url = new URL(`http://localhost:3000/auth/members`);
+  url.searchParams.append('page', pageIndex.toString());
+  url.searchParams.append('pageSize', pageSize.toString());
+  if (searchQuery) {
+    url.searchParams.append('search', searchQuery);
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch members');
@@ -26,3 +31,4 @@ export async function fetchMembersFromApi(
 
   return await response.json();
 }
+

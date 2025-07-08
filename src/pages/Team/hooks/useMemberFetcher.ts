@@ -5,7 +5,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import type { Member } from '../types/types';
 import { fetchMembersFromApi } from '../api/fetchMembers';
 
-export function useMemberFetcher(pageIndex: number, pageSize: number) {
+export function useMemberFetcher(pageIndex: number, pageSize: number, searchQuery = '') {
   const { user, getAccessTokenSilently } = useAuth0();
   const [members, setMembers] = useState<Member[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -21,7 +21,7 @@ export function useMemberFetcher(pageIndex: number, pageSize: number) {
         authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE },
       });
 
-      const { members: membersData, totalCount } = await fetchMembersFromApi(token, pageIndex, pageSize);
+      const { members: membersData, totalCount } = await fetchMembersFromApi(token, pageIndex, pageSize, searchQuery);
       setMembers(membersData);
       setTotalCount(totalCount);
       setError(null);
@@ -30,7 +30,7 @@ export function useMemberFetcher(pageIndex: number, pageSize: number) {
     } finally {
       setLoading(false);
     }
-  }, [user, getAccessTokenSilently, pageIndex, pageSize]);
+  }, [user, getAccessTokenSilently, pageIndex, pageSize, searchQuery]);
 
   useEffect(() => {
     fetchMembers();
@@ -44,3 +44,4 @@ export function useMemberFetcher(pageIndex: number, pageSize: number) {
     fetchMembers,
   };
 }
+

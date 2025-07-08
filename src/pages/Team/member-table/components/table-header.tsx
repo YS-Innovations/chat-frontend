@@ -7,6 +7,7 @@ import type { Member } from "../../types/types"
 
 interface TableHeaderProps {
   table: Table<Member>
+  searchQuery?: string;
 }
 
 export function MemberTableHeader({ table }: TableHeaderProps) {

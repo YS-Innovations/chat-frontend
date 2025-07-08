@@ -9,6 +9,7 @@ import { flexRender, type Table } from "@tanstack/react-table"
 interface TableBodyProps {
   table: Table<Member>
   loading: boolean
+  searchQuery?: string;
   onSelect: (member: Member) => void
 }
 
