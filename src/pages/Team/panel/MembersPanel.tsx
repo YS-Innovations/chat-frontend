@@ -1,16 +1,20 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect,useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { UserPlus, X, Loader2 } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
-import type { SortField } from '../types/types';
+
+const rolesData = {
+  Role: ['Admin', 'Co-admin', 'Agent'],
+  name: ['yo','ge','sh']
+};
 
 export function MembersPanel() {
   const {
@@ -24,7 +28,6 @@ export function MembersPanel() {
     totalCount,
     error,
     membersLoading,
-    sortLoading,
     pageIndex,
     setPageIndex,
     pageSize,
@@ -37,49 +40,59 @@ export function MembersPanel() {
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { search: urlSearch } = useLocation();
 
-  // Load state from URL on mount
+
+    const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+
+  // Close popup if clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setFilterOpen(false);
+      }
+    }
+    if (filterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [filterOpen]);
+
+
+  // Load query from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     const q = params.get('search') || '';
-    const sort = params.get('sort') || '';
-    const order = params.get('order') || '';
-
-    if (q !== searchQuery) setSearchQuery(q);
-    if (sort && order) {
-      setSorting([{ id: sort as SortField, desc: order === 'desc' }]);
+    if (q !== searchQuery) {
+      setSearchQuery(q);
     }
     inputRef.current?.focus();
   }, []);
 
-  const [debouncedSearch] = useDebounce(searchQuery, 300);
-  const [debouncedSorting] = useDebounce(sorting, 200);
+  const [debounced] = useDebounce(searchQuery, 300);
 
-  // Persist state to URL
+  // Persist to URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
-    
-    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (debounced) params.set('search', debounced);
     else params.delete('search');
-
-    if (debouncedSorting.length > 0) {
-      params.set('sort', debouncedSorting[0].id);
-      params.set('order', debouncedSorting[0].desc ? 'desc' : 'asc');
-    } else {
-      params.delete('sort');
-      params.delete('order');
-    }
-
     navigate({ search: params.toString() }, { replace: true });
-  }, [debouncedSearch, debouncedSorting]);
+  }, [debounced]);
 
   const handleClear = () => {
     setSearchQuery('');
     inputRef.current?.focus();
   };
-
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
   return (
     <Panel
       id="main-panel"
@@ -89,7 +102,7 @@ export function MembersPanel() {
       className="pr-4"
     >
       <Card className="h-full">
-        <CardHeader>
+         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg">Team Members</CardTitle>
             <div className="flex items-center space-x-2">
@@ -99,7 +112,10 @@ export function MembersPanel() {
                   type="text"
                   placeholder="Search members"
                   value={searchQuery}
-                  onChange={(e) => { setPageIndex(0); setSearchQuery(e.target.value); }}
+                  onChange={(e) => {
+                    setPageIndex(0);
+                    setSearchQuery(e.target.value);
+                  }}
                   className="h-9 pr-8"
                 />
                 {searchQuery && (
@@ -113,6 +129,39 @@ export function MembersPanel() {
                   </Button>
                 )}
               </div>
+
+              {/* Filter button and popup */}
+              <div className="relative" ref={filterRef}>
+                <Button onClick={() => setFilterOpen((open) => !open)}>
+                  Filter
+                </Button>
+                {filterOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                    {Object.entries(rolesData).map(([category, roles]) => (
+                      <div key={category} className="p-2 border-b last:border-b-0">
+                        <h3 className="font-semibold mb-1">{category}</h3>
+                        <div className="flex flex-col space-y-1">
+                          {roles.map((role) => (
+                            <label
+                              key={role}
+                              className="inline-flex items-center space-x-2 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedRoles.includes(role)}
+                                onChange={() => toggleRole(role)}
+                                className="form-checkbox"
+                              />
+                              <span>{role}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button onClick={handleInviteClick}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Invite
@@ -129,27 +178,20 @@ export function MembersPanel() {
               )}
             </TabsList>
             <TabsContent value="active">
-              <div className="relative">
-                {sortLoading && (
-                  <div className="absolute inset-0 bg-background/50 z-10 flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                )}
-                <MemberDataTable
-                  members={members}
-                  totalCount={totalCount}
-                  loading={membersLoading}
-                  error={error}
-                  onSelect={handleMemberSelect}
-                  searchQuery={searchQuery}
-                  pageIndex={pageIndex}
-                  pageSize={pageSize}
-                  setPageIndex={setPageIndex}
-                  setPageSize={setPageSize}
-                  sorting={sorting}
-                  setSorting={setSorting}
-                />
-              </div>
+              <MemberDataTable
+                members={members}
+                totalCount={totalCount}
+                loading={membersLoading}
+                error={error}
+                onSelect={handleMemberSelect}
+                searchQuery={searchQuery}
+                pageIndex={pageIndex}
+                pageSize={pageSize}
+                setPageIndex={setPageIndex}
+                setPageSize={setPageSize}
+                sorting={sorting}
+                setSorting={setSorting}
+              />
             </TabsContent>
             {canViewInactive && (
               <TabsContent value="inactive">
