@@ -33,27 +33,11 @@ export const columns: ColumnDef<Member>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-  {
-    accessorKey: "avatar",
-    header: "",
-    cell: ({ row }) => (
-      <Avatar className="h-8 w-8">
-        {row.original.picture && (
-          <AvatarImage
-            src={row.original.picture}
-            alt={row.original.name || row.original.email}
-          />
-        )}
-        <AvatarFallback className="bg-primary text-primary-foreground">
-          {getInitials(row.original.name || row.original.email)}
-        </AvatarFallback>
-      </Avatar>
-    ),
-  },
+
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <div 
+      <div
         className="flex items-center space-x-1 cursor-pointer select-none"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
@@ -62,17 +46,31 @@ export const columns: ColumnDef<Member>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div>
-        <div className="font-medium">{row.original.name || "No name"}</div>
-        <div className="text-sm text-muted-foreground">{row.original.email}</div>
+      <div className="flex items-center gap-x-2">
+        <Avatar className="h-8 w-8">
+          {row.original.picture && (
+            <AvatarImage
+              src={row.original.picture}
+              alt={row.original.name || row.original.email}
+            />
+          )}
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {getInitials(row.original.name || row.original.email)}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <div className="font-medium">{row.original.name || "No name"}</div>
+          <div className="text-sm text-muted-foreground">{row.original.email}</div>
+        </div>
       </div>
     ),
     enableHiding: false,
   },
+
   {
     accessorKey: "role",
     header: ({ column }) => (
-      <div 
+      <div
         className="flex items-center space-x-1 cursor-pointer select-none"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
@@ -89,7 +87,7 @@ export const columns: ColumnDef<Member>[] = [
   {
     accessorKey: "lastLogin",
     header: ({ column }) => (
-      <div 
+      <div
         className="flex items-center space-x-1 cursor-pointer select-none"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
@@ -105,7 +103,7 @@ export const columns: ColumnDef<Member>[] = [
   {
     accessorKey: "status",
     header: ({ column }) => (
-      <div 
+      <div
         className="flex items-center space-x-1 cursor-pointer select-none"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >

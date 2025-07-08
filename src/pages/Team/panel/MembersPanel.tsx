@@ -1,4 +1,4 @@
-import { useRef, useEffect,useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,11 @@ import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
 
-const rolesData = {
-  Role: ['Admin', 'Co-admin', 'Agent'],
-  name: ['yo','ge','sh']
-};
+const ROLE_OPTIONS = [
+  { display: 'Admin', value: 'ADMIN' },
+  { display: 'Co-admin', value: 'COADMIN' },
+  { display: 'Agent', value: 'AGENT' },
+];
 
 export function MembersPanel() {
   const {
@@ -37,6 +38,8 @@ export function MembersPanel() {
     setSearchQuery,
     sorting,
     setSorting,
+    selectedRoles,
+    setSelectedRoles
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,9 +47,7 @@ export function MembersPanel() {
   const navigate = useNavigate();
   const { search: urlSearch } = useLocation();
 
-
-    const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // Close popup if clicking outside
   useEffect(() => {
@@ -62,7 +63,6 @@ export function MembersPanel() {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [filterOpen]);
-
 
   // Load query from URL on mount
   useEffect(() => {
@@ -88,11 +88,23 @@ export function MembersPanel() {
     setSearchQuery('');
     inputRef.current?.focus();
   };
+
   const toggleRole = (role: string) => {
-    setSelectedRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    setSelectedRoles(prev => 
+      prev.includes(role) 
+        ? prev.filter(r => r !== role) 
+        : [...prev, role]
     );
+    setPageIndex(0);
+    setFilterOpen(false);
   };
+
+  const clearAllFilters = () => {
+    setSelectedRoles([]);
+    setSearchQuery('');
+    setPageIndex(0);
+  };
+
   return (
     <Panel
       id="main-panel"
@@ -102,7 +114,7 @@ export function MembersPanel() {
       className="pr-4"
     >
       <Card className="h-full">
-         <CardHeader>
+        <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg">Team Members</CardTitle>
             <div className="flex items-center space-x-2">
@@ -132,32 +144,48 @@ export function MembersPanel() {
 
               {/* Filter button and popup */}
               <div className="relative" ref={filterRef}>
-                <Button onClick={() => setFilterOpen((open) => !open)}>
+                <Button 
+                  variant={selectedRoles.length > 0 ? "secondary" : "default"}
+                  onClick={() => setFilterOpen(open => !open)}
+                >
                   Filter
+                  {selectedRoles.length > 0 && (
+                    <span className="ml-2 bg-primary rounded-full px-2 py-0.5 text-xs">
+                      {selectedRoles.length}
+                    </span>
+                  )}
                 </Button>
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
-                    {Object.entries(rolesData).map(([category, roles]) => (
-                      <div key={category} className="p-2 border-b last:border-b-0">
-                        <h3 className="font-semibold mb-1">{category}</h3>
-                        <div className="flex flex-col space-y-1">
-                          {roles.map((role) => (
-                            <label
-                              key={role}
-                              className="inline-flex items-center space-x-2 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedRoles.includes(role)}
-                                onChange={() => toggleRole(role)}
-                                className="form-checkbox"
-                              />
-                              <span>{role}</span>
-                            </label>
-                          ))}
-                        </div>
+                    <div className="p-2 border-b">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold">Role</h3>
+                        <Button 
+                          variant="link" 
+                          size="sm"
+                          onClick={clearAllFilters}
+                          disabled={selectedRoles.length === 0}
+                        >
+                          Clear
+                        </Button>
                       </div>
-                    ))}
+                      <div className="flex flex-col space-y-1">
+                        {ROLE_OPTIONS.map((role) => (
+                          <label
+                            key={role.value}
+                            className="inline-flex items-center space-x-2 cursor-pointer p-1 hover:bg-gray-50 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedRoles.includes(role.value)}
+                              onChange={() => toggleRole(role.value)}
+                              className="form-checkbox rounded text-primary focus:ring-primary"
+                            />
+                            <span>{role.display}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -191,6 +219,9 @@ export function MembersPanel() {
                 setPageSize={setPageSize}
                 sorting={sorting}
                 setSorting={setSorting}
+                selectedRoles={selectedRoles}
+                setSelectedRoles={setSelectedRoles}
+                setSearchQuery={setSearchQuery}
               />
             </TabsContent>
             {canViewInactive && (

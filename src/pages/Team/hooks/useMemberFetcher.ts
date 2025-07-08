@@ -7,7 +7,8 @@ export function useMemberFetcher(
   pageIndex: number,
   pageSize: number,
   searchQuery = '',
-  sorting: SortingState = []
+  sorting: SortingState = [],
+  roles?: string[]
 ) {
   const { user, getAccessTokenSilently } = useAuth0();
   const [members, setMembers] = useState<Member[]>([]);
@@ -42,7 +43,8 @@ export function useMemberFetcher(
         pageSize,
         searchQuery,
         sortBy,
-        sortOrder
+        sortOrder,
+        roles
       );
       
       setMembers(membersData);
@@ -54,7 +56,7 @@ export function useMemberFetcher(
       if (isSorting) setSortLoading(false);
       else setLoading(false);
     }
-  }, [user, getAccessTokenSilently, pageIndex, pageSize, searchQuery, sorting]);
+  }, [user, getAccessTokenSilently, pageIndex, pageSize, searchQuery, sorting, roles]);
 
   useEffect(() => {
     fetchMembers();

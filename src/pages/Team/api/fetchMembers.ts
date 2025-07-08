@@ -11,7 +11,8 @@ export async function fetchMembersFromApi(
   pageSize: number,
   searchQuery?: string,
   sortBy?: SortField,
-  sortOrder?: 'asc' | 'desc'
+  sortOrder?: 'asc' | 'desc',
+  roles?: string[]
 ): Promise<FetchMembersResponse> {
   const url = new URL(`http://localhost:3000/auth/members`);
   
@@ -21,6 +22,9 @@ export async function fetchMembersFromApi(
   if (searchQuery) url.searchParams.append('search', searchQuery);
   if (sortBy) url.searchParams.append('sortBy', sortBy);
   if (sortOrder) url.searchParams.append('sortOrder', sortOrder);
+  if (roles && roles.length > 0) {
+    url.searchParams.append('roles', roles.join(','));
+  }
 
   const response = await fetch(url.toString(), {
     headers: {

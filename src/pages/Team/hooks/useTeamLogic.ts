@@ -14,7 +14,8 @@ export function useContactsLogic() {
   const activeTabMatch = useMatch('/app/team/active/*');
   const inactiveTabMatch = useMatch('/app/team/inactive/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
-const [sortLoading, setSortLoading] = useState(false);
+  const [sortLoading, setSortLoading] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
     activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
   );
@@ -33,6 +34,8 @@ const [sortLoading, setSortLoading] = useState(false);
     sorting,
     setSorting,
     fetchMembers,
+    selectedRoles,
+    setSelectedRoles,
   } = useMembers();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -182,6 +185,8 @@ const [sortLoading, setSortLoading] = useState(false);
     sorting,
     setSorting,
     actionLoading,
-    sortLoading
+    sortLoading,
+    selectedRoles,
+    setSelectedRoles
   };
 }

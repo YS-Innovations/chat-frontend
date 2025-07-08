@@ -20,7 +20,8 @@ import { TablePagination } from "./components/table-pagination";
 import { MemberTableHeader } from "./components/table-header";
 import { MemberTableBody } from "./components/table-body";
 import { SelectionStatus } from "./components/selection-status";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface MemberDataTableProps {
   members: Member[];
@@ -35,7 +36,16 @@ interface MemberDataTableProps {
   setPageSize: (size: number) => void;
   sorting: SortingState;
   setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
+  selectedRoles: string[];
+  setSelectedRoles: React.Dispatch<React.SetStateAction<string[]>>;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>; // Added this
 }
+
+const ROLE_OPTIONS = [
+  { display: 'Admin', value: 'ADMIN' },
+  { display: 'Co-admin', value: 'COADMIN' },
+  { display: 'Agent', value: 'AGENT' },
+];
 
 export function MemberDataTable({
   members,
@@ -50,6 +60,9 @@ export function MemberDataTable({
   setPageSize,
   sorting,
   setSorting,
+  selectedRoles,
+  setSelectedRoles,
+  setSearchQuery, // Added this
 }: MemberDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -86,6 +99,11 @@ export function MemberDataTable({
 
   const pageCount = Math.ceil(totalCount / pageSize);
 
+  const removeRole = (role: string) => {
+    setSelectedRoles(prev => prev.filter(r => r !== role));
+    setPageIndex(0);
+  };
+
   if (error) {
     return (
       <Alert variant="destructive" className="mb-4">
@@ -106,6 +124,57 @@ export function MemberDataTable({
 
   return (
     <div className="w-full flex-col justify-start gap-6">
+      {/* Active filters section */}
+      {(searchQuery || selectedRoles.length > 0) && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-sm font-medium text-muted-foreground">Active filters:</span>
+          
+          {searchQuery && (
+            <div className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center">
+              Search: {searchQuery}
+              <X 
+                className="ml-2 h-3 w-3 cursor-pointer" 
+                onClick={() => {
+                  setSearchQuery('');
+                  setPageIndex(0);
+                }}
+              />
+            </div>
+          )}
+          
+          {selectedRoles.map(role => {
+            const displayName = ROLE_OPTIONS.find(r => r.value === role)?.display || role;
+            return (
+              <div 
+                key={role} 
+                className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center"
+              >
+                Role: {displayName}
+                <X 
+                  className="ml-2 h-3 w-3 cursor-pointer" 
+                  onClick={() => removeRole(role)}
+                />
+              </div>
+            );
+          })}
+          
+          {(searchQuery || selectedRoles.length > 0) && (
+            <Button 
+              variant="link" 
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedRoles([]);
+                setPageIndex(0);
+              }}
+              className="text-destructive"
+            >
+              Clear all
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-lg border">
         <Table>
           <MemberTableHeader table={table} searchQuery={searchQuery} />

@@ -7,6 +7,7 @@ export function useMembers() {
   const { pageIndex, setPageIndex, pageSize, setPageSize } = usePagination();
   const [searchQuery, setSearchQuery] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const {
     members,
@@ -14,7 +15,7 @@ export function useMembers() {
     error,
     loading,
     fetchMembers,
-  } = useMemberFetcher(pageIndex, pageSize, searchQuery, sorting);
+  } = useMemberFetcher(pageIndex, pageSize, searchQuery, sorting, selectedRoles);
 
   return {
     members,
@@ -30,5 +31,7 @@ export function useMembers() {
     sorting,
     setSorting,
     fetchMembers,
+    selectedRoles,
+    setSelectedRoles,
   };
 }
