@@ -1,3 +1,5 @@
+
+
 export interface Member {
   id: string;
   name: string | null;
@@ -48,3 +50,10 @@ export interface InactiveMember {
   expiresAt: Date;
   status: string;
 }
+
+export type SortField = 'name' | 'email' | 'role' | 'lastLogin' | 'createdAt' | 'status';
+
+export interface SortingState extends Array<{
+  id: SortField;
+  desc: boolean;
+}> {}

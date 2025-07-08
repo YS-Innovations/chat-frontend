@@ -3,13 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus, X, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
+import type { SortField } from '../types/types';
 
 export function MembersPanel() {
   const {
@@ -23,6 +24,7 @@ export function MembersPanel() {
     totalCount,
     error,
     membersLoading,
+    sortLoading,
     pageIndex,
     setPageIndex,
     pageSize,
@@ -38,25 +40,40 @@ export function MembersPanel() {
   const navigate = useNavigate();
   const { search: urlSearch } = useLocation();
 
-  // Load query from URL on mount
+  // Load state from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     const q = params.get('search') || '';
-    if (q !== searchQuery) {
-      setSearchQuery(q);
+    const sort = params.get('sort') || '';
+    const order = params.get('order') || '';
+
+    if (q !== searchQuery) setSearchQuery(q);
+    if (sort && order) {
+      setSorting([{ id: sort as SortField, desc: order === 'desc' }]);
     }
     inputRef.current?.focus();
   }, []);
 
-  const [debounced] = useDebounce(searchQuery, 300);
+  const [debouncedSearch] = useDebounce(searchQuery, 300);
+  const [debouncedSorting] = useDebounce(sorting, 200);
 
-  // Persist to URL
+  // Persist state to URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
-    if (debounced) params.set('search', debounced);
+    
+    if (debouncedSearch) params.set('search', debouncedSearch);
     else params.delete('search');
+
+    if (debouncedSorting.length > 0) {
+      params.set('sort', debouncedSorting[0].id);
+      params.set('order', debouncedSorting[0].desc ? 'desc' : 'asc');
+    } else {
+      params.delete('sort');
+      params.delete('order');
+    }
+
     navigate({ search: params.toString() }, { replace: true });
-  }, [debounced]);
+  }, [debouncedSearch, debouncedSorting]);
 
   const handleClear = () => {
     setSearchQuery('');
@@ -112,20 +129,27 @@ export function MembersPanel() {
               )}
             </TabsList>
             <TabsContent value="active">
-              <MemberDataTable
-                members={members}
-                totalCount={totalCount}
-                loading={membersLoading}
-                error={error}
-                onSelect={handleMemberSelect}
-                searchQuery={searchQuery}
-                pageIndex={pageIndex}
-                pageSize={pageSize}
-                setPageIndex={setPageIndex}
-                setPageSize={setPageSize}
-                sorting={sorting}
-                setSorting={setSorting}
-              />
+              <div className="relative">
+                {sortLoading && (
+                  <div className="absolute inset-0 bg-background/50 z-10 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                )}
+                <MemberDataTable
+                  members={members}
+                  totalCount={totalCount}
+                  loading={membersLoading}
+                  error={error}
+                  onSelect={handleMemberSelect}
+                  searchQuery={searchQuery}
+                  pageIndex={pageIndex}
+                  pageSize={pageSize}
+                  setPageIndex={setPageIndex}
+                  setPageSize={setPageSize}
+                  sorting={sorting}
+                  setSorting={setSorting}
+                />
+              </div>
             </TabsContent>
             {canViewInactive && (
               <TabsContent value="inactive">

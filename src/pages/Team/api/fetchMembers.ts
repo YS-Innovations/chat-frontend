@@ -1,4 +1,4 @@
-import type { Member } from '../types/types';
+import type { Member, SortField } from '../types/types';
 
 interface FetchMembersResponse {
   members: Member[];
@@ -10,7 +10,7 @@ export async function fetchMembersFromApi(
   pageIndex: number,
   pageSize: number,
   searchQuery?: string,
-  sortBy?: string,
+  sortBy?: SortField,
   sortOrder?: 'asc' | 'desc'
 ): Promise<FetchMembersResponse> {
   const url = new URL(`http://localhost:3000/auth/members`);
@@ -30,7 +30,8 @@ export async function fetchMembersFromApi(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch members');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch members');
   }
 
   return await response.json();

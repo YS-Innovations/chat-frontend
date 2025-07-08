@@ -20,6 +20,7 @@ import { TablePagination } from "./components/table-pagination";
 import { MemberTableHeader } from "./components/table-header";
 import { MemberTableBody } from "./components/table-body";
 import { SelectionStatus } from "./components/selection-status";
+import { Loader2 } from "lucide-react";
 
 interface MemberDataTableProps {
   members: Member[];
@@ -66,7 +67,10 @@ export function MemberDataTable({
     getRowId: (row) => row.id.toString(),
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
+    onSortingChange: (newSorting) => {
+      setSorting(newSorting);
+      setPageIndex(0);
+    },
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
@@ -78,12 +82,7 @@ export function MemberDataTable({
 
   React.useEffect(() => {
     setRowSelection({});
-  }, [pageIndex, pageSize]);
-
-  // Reset page index when sorting changes
-  React.useEffect(() => {
-    setPageIndex(0);
-  }, [sorting]);
+  }, [pageIndex, pageSize, sorting]);
 
   const pageCount = Math.ceil(totalCount / pageSize);
 

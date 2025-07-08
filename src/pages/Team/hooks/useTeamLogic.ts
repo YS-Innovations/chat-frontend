@@ -14,7 +14,7 @@ export function useContactsLogic() {
   const activeTabMatch = useMatch('/app/team/active/*');
   const inactiveTabMatch = useMatch('/app/team/inactive/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
-
+const [sortLoading, setSortLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
     activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
   );
@@ -182,5 +182,6 @@ export function useContactsLogic() {
     sorting,
     setSorting,
     actionLoading,
+    sortLoading
   };
 }
