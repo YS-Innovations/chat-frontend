@@ -1,11 +1,15 @@
+import type { PermissionTemplate } from "@/pages/permissions/edit-page/types/types";
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import type { Member } from "../types/types";
 
-export function useTemplates(member: Member, getAccessTokenSilently: () => Promise<string>, isEditing: boolean) {
-  const [templates, setTemplates] = useState<any[]>([]);
+export function useTemplates(
+  permissions: Record<string, boolean>,  // Changed from member to permissions
+  getAccessTokenSilently: () => Promise<string>,
+  isEditing: boolean
+) {
+  const [templates, setTemplates] = useState<PermissionTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
-  const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
+  const [matchingTemplate, setMatchingTemplate] = useState<PermissionTemplate | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     setTemplatesLoading(true);
@@ -14,6 +18,7 @@ export function useTemplates(member: Member, getAccessTokenSilently: () => Promi
       const response = await fetch('http://localhost:3000/auth/permissions/templates', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!response.ok) throw new Error('Failed to fetch templates');
       const data = await response.json();
       setTemplates(data);
     } catch (error) {
@@ -41,10 +46,12 @@ export function useTemplates(member: Member, getAccessTokenSilently: () => Promi
 
   useEffect(() => {
     if (!isEditing && templates.length > 0) {
-      const match = templates.find(t => JSON.stringify(t.policy) === JSON.stringify(member.permissions));
+      const match = templates.find(t => 
+        JSON.stringify(t.policy) === JSON.stringify(permissions)
+      );
       setMatchingTemplate(match || null);
     }
-  }, [isEditing, templates, member.permissions]);
+  }, [isEditing, templates, permissions]);
 
   return {
     templates,

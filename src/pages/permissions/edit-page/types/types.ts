@@ -4,6 +4,8 @@ export interface PermissionTemplate {
   id: string;
   policyName: string;
   permissions?: string[];
+  policy: Record<string, boolean>;
+  createdAt: string;
 }
 
 

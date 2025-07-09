@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { UserLoginHistory, PermissionHistory } from "../types/types";
 
 export function useHistories(memberId: string) {
-  const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
+   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
 
   const fetchHistories = useCallback(async (getAccessTokenSilently: () => Promise<string>) => {
