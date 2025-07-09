@@ -1,4 +1,3 @@
-// src/pages/Team/hooks/useContactsLogic.ts
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useMatch } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -15,7 +14,8 @@ export function useContactsLogic() {
   const activeTabMatch = useMatch('/app/team/active/*');
   const inactiveTabMatch = useMatch('/app/team/inactive/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
-
+  const [sortLoading, setSortLoading] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
     activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
   );
@@ -31,7 +31,12 @@ export function useContactsLogic() {
     setPageSize,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
     fetchMembers,
+    selectedRoles,
+    setSelectedRoles,
+    clearAllFilters
   } = useMembers();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -178,6 +183,12 @@ export function useContactsLogic() {
     setPageSize,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
     actionLoading,
+    sortLoading,
+    selectedRoles,
+    setSelectedRoles,
+    clearAllFilters
   };
 }

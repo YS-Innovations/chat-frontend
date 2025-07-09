@@ -10,6 +10,13 @@ import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
+import { FilterPanel } from './filter-panel';
+
+const ROLE_OPTIONS = [
+  { value: 'ADMIN', display: 'Admin' },
+  { value: 'COADMIN', display: 'Co-admin' },
+  { value: 'AGENT', display: 'Agent' },
+];
 
 export function MembersPanel() {
   const {
@@ -30,11 +37,18 @@ export function MembersPanel() {
     handleMemberSelect,
     searchQuery,
     setSearchQuery,
+    sorting,
+    setSorting,
+    selectedRoles,
+    setSelectedRoles,
+    clearAllFilters,
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { search: urlSearch } = useLocation();
+
+  const [debounced] = useDebounce(searchQuery, 300);
 
   // Load query from URL on mount
   useEffect(() => {
@@ -45,8 +59,6 @@ export function MembersPanel() {
     }
     inputRef.current?.focus();
   }, []);
-
-  const [debounced] = useDebounce(searchQuery, 300);
 
   // Persist to URL
   useEffect(() => {
@@ -61,6 +73,15 @@ export function MembersPanel() {
     inputRef.current?.focus();
   };
 
+  const toggleRole = (role: string) => {
+    setSelectedRoles(prev => 
+      prev.includes(role) 
+        ? prev.filter(r => r !== role) 
+        : [...prev, role]
+    );
+    setPageIndex(0);
+  };
+
   return (
     <Panel
       id="main-panel"
@@ -70,37 +91,51 @@ export function MembersPanel() {
       className="pr-4"
     >
       <Card className="h-full">
-        <CardHeader>
-          <div className="flex justify-between items-center">
+        <CardHeader className="border-b">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <CardTitle className="text-lg">Team Members</CardTitle>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
+            
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
+              <div className="relative flex-1 max-w-md">
                 <Input
                   ref={inputRef}
-                  type="text"
-                  placeholder="Search members"
+                  placeholder="Search members..."
                   value={searchQuery}
-                  onChange={(e) => { setPageIndex(0); setSearchQuery(e.target.value); }}
-                  className="h-9 pr-8"
+                  onChange={(e) => {
+                    setPageIndex(0);
+                    setSearchQuery(e.target.value);
+                  }}
+                  className="pr-8"
                 />
                 {searchQuery && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-1 top-1"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
                     onClick={handleClear}
                   >
-                    <X />
+                    <X className="h-3 w-3" />
                   </Button>
                 )}
               </div>
-              <Button onClick={handleInviteClick}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite
-              </Button>
+
+              <div className="flex gap-2">
+                <FilterPanel
+                  roles={ROLE_OPTIONS}
+                  selectedRoles={selectedRoles}
+                  onRoleToggle={toggleRole}
+                  onClearAll={clearAllFilters}
+                />
+                
+                <Button onClick={handleInviteClick} className="shrink-0">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Invite
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
+        
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
@@ -121,6 +156,12 @@ export function MembersPanel() {
                 pageSize={pageSize}
                 setPageIndex={setPageIndex}
                 setPageSize={setPageSize}
+                sorting={sorting}
+                setSorting={setSorting}
+                selectedRoles={selectedRoles}
+                setSelectedRoles={setSelectedRoles}
+                setSearchQuery={setSearchQuery}
+                clearAllFilters={clearAllFilters}
               />
             </TabsContent>
             {canViewInactive && (
