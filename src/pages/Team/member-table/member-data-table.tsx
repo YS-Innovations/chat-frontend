@@ -151,15 +151,18 @@ export function MemberDataTable({
             />
           ))}
           
-          {sorting.length > 0 && (
-            <FilterChip
-              label={`Sorted by: ${sorting[0].id} (${sorting[0].desc ? 'Desc' : 'Asc'})`}
-              onRemove={() => {
-                setSorting([]);
-                setPageIndex(0);
-              }}
-            />
-          )}
+{sorting.map(sort => (
+  <FilterChip
+    key={sort.id}
+    label={`${sort.id} (${sort.desc ? 'Desc' : 'Asc'})`}
+    onRemove={() => {
+      setSorting(prev => prev.filter(s => s.id !== sort.id));
+      setPageIndex(0);
+    }}
+  />
+))}
+
+
           
           <Button 
             variant="ghost"

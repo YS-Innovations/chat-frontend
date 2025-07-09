@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import type { Member, SortingState, SortField } from '../types/types';
 import { fetchMembersFromApi } from '../api/fetchMembers';
@@ -29,9 +29,10 @@ export function useMemberFetcher(
         authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE },
       });
 
+      // Extract single-column sorting info with correct types
       let sortBy: SortField | undefined;
       let sortOrder: 'asc' | 'desc' | undefined;
-      
+
       if (sorting.length > 0) {
         sortBy = sorting[0].id as SortField;
         sortOrder = sorting[0].desc ? 'desc' : 'asc';
@@ -46,12 +47,12 @@ export function useMemberFetcher(
         sortOrder,
         roles
       );
-      
+
       setMembers(membersData);
       setTotalCount(totalCount);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch members");
+      setError(err instanceof Error ? err.message : 'Failed to fetch members');
     } finally {
       if (isSorting) setSortLoading(false);
       else setLoading(false);

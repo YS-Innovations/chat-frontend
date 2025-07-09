@@ -1,10 +1,9 @@
-import type { ColumnDef } from "@tanstack/react-table"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { getInitials } from "@/lib/utils"
-import type { Member } from "../../types/types"
-import { ArrowUpDown } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { getInitials } from "@/lib/utils";
+import type { Member } from "../../types/types";
 
 export const columns: ColumnDef<Member>[] = [
   {
@@ -36,15 +35,27 @@ export const columns: ColumnDef<Member>[] = [
 
   {
     accessorKey: "name",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Member</span>
-        <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-      </div>
-    ),
+    header: ({ column, table }) => {
+      const sorting = table.getState().sorting;
+      const sortIndex = sorting.findIndex((s) => s.id === column.id);
+      const isSorted = sortIndex > -1;
+      const sortDirection = isSorted ? (sorting[sortIndex].desc ? "desc" : "asc") : null;
+
+      return (
+        <div
+          className="flex items-center space-x-1 cursor-pointer select-none"
+          onClick={column.getToggleSortingHandler()}
+        >
+          <span>Member</span>
+          {isSorted && (
+            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+              {sortDirection === "asc" ? "▲" : "▼"}
+              <span className="text-[10px]">{sortIndex + 1}</span>
+            </div>
+          )}
+        </div>
+      );
+    },
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
         <Avatar className="h-8 w-8">
@@ -69,36 +80,86 @@ export const columns: ColumnDef<Member>[] = [
 
   {
     accessorKey: "role",
-    header: () => (
-      <span>Role</span>
-    ),
+    header: ({ column, table }) => {
+      const sorting = table.getState().sorting;
+      const sortIndex = sorting.findIndex((s) => s.id === column.id);
+      const isSorted = sortIndex > -1;
+      const sortDirection = isSorted ? (sorting[sortIndex].desc ? "desc" : "asc") : null;
+
+      return (
+        <div
+          className="flex items-center space-x-1 cursor-pointer select-none"
+          onClick={column.getToggleSortingHandler()}
+        >
+          <span>Role</span>
+          {isSorted && (
+            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+              {sortDirection === "asc" ? "▲" : "▼"}
+              <span className="text-[10px]">{sortIndex + 1}</span>
+            </div>
+          )}
+        </div>
+      );
+    },
     cell: ({ row }) => (
       <Badge variant={row.original.role === "ADMIN" ? "destructive" : "default"}>
         {row.original.role}
       </Badge>
     ),
   },
+
   {
     accessorKey: "lastLogin",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Last Login</span>
-        <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-      </div>
-    ),
+    header: ({ column, table }) => {
+      const sorting = table.getState().sorting;
+      const sortIndex = sorting.findIndex((s) => s.id === column.id);
+      const isSorted = sortIndex > -1;
+      const sortDirection = isSorted ? (sorting[sortIndex].desc ? "desc" : "asc") : null;
+
+      return (
+        <div
+          className="flex items-center space-x-1 cursor-pointer select-none"
+          onClick={column.getToggleSortingHandler()}
+        >
+          <span>Last Login</span>
+          {isSorted && (
+            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+              {sortDirection === "asc" ? "▲" : "▼"}
+              <span className="text-[10px]">{sortIndex + 1}</span>
+            </div>
+          )}
+        </div>
+      );
+    },
     cell: ({ row }) =>
       row.original.lastLogin
         ? new Date(row.original.lastLogin).toLocaleDateString()
         : "Never",
   },
+
   {
     accessorKey: "status",
-    header: () => (
-      <span>Status</span>
-    ),
+    header: ({ column, table }) => {
+      const sorting = table.getState().sorting;
+      const sortIndex = sorting.findIndex((s) => s.id === column.id);
+      const isSorted = sortIndex > -1;
+      const sortDirection = isSorted ? (sorting[sortIndex].desc ? "desc" : "asc") : null;
+
+      return (
+        <div
+          className="flex items-center space-x-1 cursor-pointer select-none"
+          onClick={column.getToggleSortingHandler()}
+        >
+          <span>Status</span>
+          {isSorted && (
+            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+              {sortDirection === "asc" ? "▲" : "▼"}
+              <span className="text-[10px]">{sortIndex + 1}</span>
+            </div>
+          )}
+        </div>
+      );
+    },
     cell: ({ row }) => (
       <Badge variant={row.original.blocked ? "destructive" : "default"}>
         {row.original.blocked ? "Blocked" : "Active"}
