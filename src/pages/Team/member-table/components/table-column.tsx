@@ -69,14 +69,8 @@ export const columns: ColumnDef<Member>[] = [
 
   {
     accessorKey: "role",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Role</span>
-        <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-      </div>
+    header: () => (
+      <span>Role</span>
     ),
     cell: ({ row }) => (
       <Badge variant={row.original.role === "ADMIN" ? "destructive" : "default"}>
@@ -102,14 +96,8 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "status",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Status</span>
-        <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-      </div>
+    header: () => (
+      <span>Status</span>
     ),
     cell: ({ row }) => (
       <Badge variant={row.original.blocked ? "destructive" : "default"}>
