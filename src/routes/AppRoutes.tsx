@@ -12,8 +12,8 @@ import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
-import { PermissionEditPage } from '@/pages/permissions/permission-edit-page';
-import { PermissionViewPage } from '@/pages/permissions/permission-view-page';
+import { PermissionEditPage } from '@/pages/permissions/edit-page';
+import { PermissionViewPage } from '@/pages/permissions/view-page';
 
 function AppRoutes() {
   return (

@@ -19,8 +19,8 @@ import { toast } from "sonner";
 import { LoginHistory } from "../login-history/login-history";
 import { PermissionHistorys } from "../permission-history/permission-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PermissionEdit } from "@/pages/permissions/components/permission-edit";
-import { PERMISSION_GROUPS } from "@/pages/permissions/types";
+import { PermissionEdit } from "@/pages/permissions/edit-page/components";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;
