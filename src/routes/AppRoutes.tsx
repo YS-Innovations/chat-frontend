@@ -3,7 +3,6 @@ import Home from '../pages/Home';
 import Profile from '../pages/Profile';
 import { Teams } from '../pages/Team/Members';
 import ApplicationPage from '../pages/ApplicationPage';
-import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
@@ -14,6 +13,8 @@ import { PermissionTemplates } from '@/pages/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 import { PermissionEditPage } from '@/pages/permissions/edit-page';
 import { PermissionViewPage } from '@/pages/permissions/view-page';
+import Dashboard from '@/pages/Conversation';
+
 
 function AppRoutes() {
   return (
@@ -46,7 +47,7 @@ function AppRoutes() {
           </Route>
         </Route>
 
-        <Route path="conversations" element={<AllConversations />} />
+        <Route path="conversations" element={<Dashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
 
