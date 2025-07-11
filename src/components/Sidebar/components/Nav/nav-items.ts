@@ -30,7 +30,7 @@ export const navMainItems: NavItem[] = [
     title: "Team",
     url: "#",
     icon: Users,
-    permission: "team-access",
+    permission: "member-list",
     items: [
       { title: "Members", url: "/app/team", permission: "member-list" },
       { title: "Invite", url: "/app/team/invite", permission: "member-list" },

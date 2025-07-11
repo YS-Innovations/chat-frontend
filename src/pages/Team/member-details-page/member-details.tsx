@@ -10,8 +10,6 @@ import { Mail, X, Pencil, Check, Clock } from "lucide-react";
 import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types/types";
 import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
-
-import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
 import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +20,7 @@ import { LoginHistory } from "../login-history/login-history";
 import { PermissionHistorys } from "../permission-history/permission-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PermissionEdit } from "@/pages/permissions/edit-page/components";
+import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;
