@@ -5,8 +5,6 @@ import { Teams } from '../pages/Team/Members';
 import ApplicationPage from '../pages/ApplicationPage';
 import AllConversations from '../pages/AllConversations';
 import AcceptInvite from '../pages/AcceptInvite';
-import { PermissionEditPage } from '../pages/permissions/edit-page';
-import { PermissionViewPage } from '../pages/permissions/view-page';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import { AdminOnlyRoute } from './AdminOnlyRoute';
@@ -14,6 +12,8 @@ import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
+import { PermissionEditPage } from '@/pages/permissions/permission-edit-page';
+import { PermissionViewPage } from '@/pages/permissions/permission-view-page';
 
 function AppRoutes() {
   return (
