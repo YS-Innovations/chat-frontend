@@ -39,7 +39,7 @@ export default function Dashboard() {
   })
 
   return (
-    <div className="flex h-screen w-screen bg-muted text-foreground">
+    <div className="flex h-screen bg-muted text-foreground">
       <aside className="w-80 border-r p-4 bg-background">
         <div className="flex gap-2 mb-4">
           {ROLE_KEYS.map((r) => (

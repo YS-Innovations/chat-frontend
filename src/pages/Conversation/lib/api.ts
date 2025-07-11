@@ -16,8 +16,7 @@ export async function uploadFile(file: File): Promise<{ mediaUrl: string }> {
 
   try {
     const res = await axios.post(
-      // Note: include the global '/api' prefix
-      `${API_BASE}/api/uploads/file`,
+      `${API_BASE}/uploads/file`,
       formData,
       {
         headers: {

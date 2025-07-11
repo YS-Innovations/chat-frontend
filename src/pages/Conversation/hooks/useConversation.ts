@@ -26,7 +26,7 @@ export function useConversation(socket: Socket | null) {
     if (!conversationId || didRestore.current) return
     didRestore.current = true
 
-    fetch(`${import.meta.env.VITE_SOCKET_URL}/api/conversation/${conversationId}/messages`)
+    fetch(`${import.meta.env.VITE_SOCKET_URL}/conversation/${conversationId}/messages`)
       .then(async res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
