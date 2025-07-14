@@ -58,27 +58,60 @@ export function MemberDetails({
   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
+  const [loginHistoryTotal, setLoginHistoryTotal] = useState(0);
+  const [loginHistorySkip, setLoginHistorySkip] = useState(0);
+  const [loginLoading, setLoginLoading] = useState(false);
+
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
 
+  const fetchLoginHistory = async (initial = false) => {
+    try {
+      setLoginLoading(true);
+      const token = await getAccessTokenSilently();
+      const take = initial ? 5 : 15;
+
+      const res = await fetch(
+        `http://localhost:3000/auth/user/${member.id}/login-history?skip=${initial ? 0 : loginHistorySkip}&take=${take}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok) {
+        if (initial) {
+          setLoginHistory(data.history);
+        } else {
+          setLoginHistory((prev) => [...prev, ...data.history]);
+        }
+        setLoginHistoryTotal(data.total);
+        setLoginHistorySkip((prev) => prev + data.history.length);
+      } else {
+        console.error("Error fetching login history:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching login history:", error);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // ✅ useEffect with initial fetch
   useEffect(() => {
     if (!member) return;
 
-    const fetchHistories = async () => {
+    setLoginHistory([]);
+    setLoginHistorySkip(0);
+    fetchLoginHistory(true);
+
+    const fetchPermissionHistory = async () => {
       try {
         const token = await getAccessTokenSilently();
-
-        // Fetch login history
-        const loginRes = await fetch(
-          `http://localhost:3000/auth/user/${member.id}/login-history`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const loginData = await loginRes.json();
-        setLoginHistory(loginData);
-
-        // Fetch permission history
         const permRes = await fetch(
           `http://localhost:3000/auth/permissions/${member.id}/history`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -86,11 +119,11 @@ export function MemberDetails({
         const permData = await permRes.json();
         setPermissionHistory(permData);
       } catch (error) {
-        console.error('Error fetching histories:', error);
+        console.error("Error fetching permission history:", error);
       }
     };
 
-    fetchHistories();
+    fetchPermissionHistory();
   }, [member, getAccessTokenSilently]);
 
   useEffect(() => {
@@ -391,6 +424,13 @@ export function MemberDetails({
             </div>
           </div>
           <LoginHistory history={loginHistory} />
+          {loginHistory.length < loginHistoryTotal && (
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => fetchLoginHistory(false)} disabled={loginLoading}>
+                {loginLoading ? "Loading..." : "Show More"}
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="permissions" className="flex-1 overflow-auto pt-4">
@@ -418,7 +458,7 @@ export function MemberDetails({
                         onClick={() => setShowPermissionHistoryModal(true)}
                       >
                         <Clock className="h-4 w-4 mr-2" />
-                       permission changes History
+                        permission changes History
                       </Button>
 
                       <Button
