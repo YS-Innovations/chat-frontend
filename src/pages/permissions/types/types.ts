@@ -17,9 +17,17 @@ export type PermissionGroup = {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   {
-    id: 'contact',
-    label: 'Contact Page',
-    value: 'contact',
+    id: 'inbox',
+    label: 'Inbox Page',
+    value: 'inbox-access',
+    permissions: [{id: 'inbox',
+    label: 'Inbox Page',
+    value: 'inbox-access',}],
+  },
+  {
+    id: 'Team',
+    label: 'Team',
+    value: 'team',
     permissions: [
       { id: 'member-list', label: 'Member List Page Allow', value: 'member-list' },
       { id: 'member-details', label: 'Member Details Page Allow', value: 'member-details' },
@@ -27,19 +35,38 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: 'permission-view', label: 'Permission View Page Allow', value: 'permission-view' },
       { id: 'permission-edit', label: 'Permission Edit Page Allow', value: 'permission-edit' },
       { id: 'user-delete', label: 'Delete User', value: 'user-delete' },
-      { id: 'inactive-members-view', label: 'View Inactive Members', value: 'inactive-members-view' },
+      { id: 'invite-pending-members-view', label: 'View-invite-pending-Members', value: 'inactive-members-view' },
       { id: 'resend-invitation', label: 'Resend Invitations', value: 'resend-invitation' },
+      { id: 'permission_templates', label: 'View Permission Templates', value: 'permission-templates' },
     ],
   },
-   {
+  {
     id: 'conversation',
     label: 'Conversation Page',
-    value: 'conversation',
+    value: 'conversation-access',
     permissions: [
-      { id: 'all', label: 'All Page Allow', value: 'all-list' },
-      { id: 'mention-details', label: 'Mention Details Page Allow', value: 'mention-details' },
-      { id: 'unread-form', label: 'Unread Page Allow', value: 'unread' },
-      { id: 'read-view', label: 'Read View Page Allow', value: 'read-view' },
+      { id: 'all', label: 'All Page Allow', value: 'conversation-list' },
+      { id: 'unread-form', label: 'Unread Page Allow', value: 'conversation-unread' },
+      { id: 'read-view', label: 'Read View Page Allow', value: 'conversation-archived' },
     ],
-  }
+  },
+  {
+    id: 'documentation',
+    label: 'Documentation Access',
+    value: 'documentation-access',
+    permissions: [
+      { id: 'intro', label: 'Docs Intro', value: 'docs-intro' },
+      { id: 'get_started', label: 'Docs Get Started', value: 'docs-get-started' },
+    ],
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    value: 'settings-access',
+    permissions: [
+      { id: 'general', label: 'General Settings', value: 'settings-general' },
+      { id: 'billing', label: 'Billing Settings', value: 'settings-billing' },
+    ],
+  },
+
 ];
