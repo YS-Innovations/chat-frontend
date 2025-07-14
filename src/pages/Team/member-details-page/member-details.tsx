@@ -20,6 +20,12 @@ import { PERMISSION_GROUPS } from "@/pages/features/permissions/types/types";
 import { TemplatePermissionsModal } from "@/pages/features/permissions/Dialog/PolicyPermissions";
 import { SaveOptionsModal } from "@/pages/features/permissions/Dialog/SaveOptions";
 import { updateTemplate } from "@/pages/features/permissions/Api/api";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 interface MemberDetailsProps {
   member: Member;
@@ -355,11 +361,6 @@ export function MemberDetails({
                 <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Last Login</p>
-                <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
-              </div>
-
-              <div>
                 <p className="text-sm text-muted-foreground">Phone Number</p>
                 <p>{member.phoneNumber || 'Not provided'}</p>
               </div>
@@ -433,25 +434,41 @@ export function MemberDetails({
                 </Dialog>
 
                 <div className="space-y-4">
-                  {PERMISSION_GROUPS.map(group => {
-                    const groupPermissions = group.permissions.filter(p =>
-                      tempPermissions[p.value]
-                    );
+                  <Accordion type="multiple" className="w-full space-y-3">
+                    {PERMISSION_GROUPS.map(group => {
+                      const groupPermissions = group.permissions.filter(p =>
+                        tempPermissions[p.value]
+                      );
 
-                    return groupPermissions.length > 0 && (
-                      <div key={group.id} className="border rounded-lg p-4">
-                        <h3 className="font-medium mb-3">{group.label}</h3>
-                        <div className="space-y-2">
-                          {groupPermissions.map(permission => (
-                            <div key={permission.id} className="flex items-center p-2 rounded bg-green-50">
-                              <Check className="h-4 w-4 text-green-500 mr-2" />
-                              <span>{permission.label}</span>
+                      if (groupPermissions.length === 0) return null;
+
+                      return (
+                        <AccordionItem
+                          key={group.id}
+                          value={group.id}
+                          className="border rounded-lg shadow-sm bg-white dark:bg-muted"
+                        >
+                          <AccordionTrigger className="px-4 py-3 text-left font-semibold text-sm hover:bg-muted/50 transition-colors">
+                            {group.label}
+                          </AccordionTrigger>
+
+                          <AccordionContent className="px-4 pb-4 pt-2">
+                            <div className="space-y-2">
+                              {groupPermissions.map(permission => (
+                                <div
+                                  key={permission.id}
+                                  className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/40 rounded-md text-sm"
+                                >
+                                  <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                  <span className="text-muted-foreground">{permission.label}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </div>
               </div>
             )
