@@ -32,6 +32,7 @@ function Onboarding() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loadingUserData, setLoadingUserData] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const form = useForm<OnboardingFormValues>({
     defaultValues: {
@@ -48,7 +49,8 @@ function Onboarding() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.sub) return;
-      
+      setFetchError(null);
+
       try {
         const token = await getAccessTokenSilently();
         const response = await axios.get(
@@ -63,6 +65,7 @@ function Onboarding() {
         form.reset({ organizationName: response.data.organization?.name || '' });
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setFetchError('Failed to load user data. Please refresh the page.');
       } finally {
         setLoadingUserData(false);
       }
@@ -89,7 +92,6 @@ function Onboarding() {
         deviceType: 'desktop',
       };
 
-      // Use PUT for updating existing organization
       if (userData?.hasOnboarded) {
         await axios.put(
           `${import.meta.env.VITE_API_URL}/auth/user/${user.sub}/organization`,
@@ -101,7 +103,6 @@ function Onboarding() {
           }
         );
       } else {
-        // Use POST for new onboarding
         await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/save-user`,
           {
@@ -117,7 +118,6 @@ function Onboarding() {
         );
       }
 
-      // Refresh user data after update
       const updatedResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/auth/user/${user.sub}`,
         {
@@ -144,75 +144,91 @@ function Onboarding() {
 
   if (loadingUserData) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-100 via-white to-purple-100">
+        <div className="text-xl font-semibold text-indigo-700 animate-pulse">
+          Loading user data...
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-red-50 px-4">
+        <div className="max-w-md rounded-lg bg-red-100 p-6 text-center shadow-md">
+          <p className="mb-4 text-red-700 font-semibold">{fetchError}</p>
+          <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700">
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (userData?.hasOnboarded && !isEditMode) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-indigo-50 via-white to-purple-50 px-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h2 className="mb-4 text-2xl font-semibold text-indigo-700">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-100 via-white to-purple-100 px-4">
+        <div className="w-full max-w-md rounded-xl bg-white p-10 shadow-xl border border-indigo-200">
+          <h2 className="mb-6 text-3xl font-extrabold text-indigo-700 tracking-wide">
             Your Organization
           </h2>
-          <div className="mb-6 space-y-4">
-            <p className="text-lg font-medium text-gray-700">
-              {userData.organization?.name}
-            </p>
-            <Button
-              onClick={() => setIsEditMode(true)}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              Edit Organization Name
-            </Button>
-          </div>
+          <p className="mb-8 text-lg font-medium text-gray-800">{userData.organization?.name}</p>
+          <Button
+            onClick={() => setIsEditMode(true)}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition"
+          >
+            Edit Organization Name
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-indigo-50 via-white to-purple-50 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-        <h2 className="mb-4 text-2xl font-semibold text-indigo-700">
-          {userData?.hasOnboarded ? 'Update Organization' : "Welcome! Let's set up your organization"}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-100 via-white to-purple-100 px-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-10 shadow-xl border border-indigo-200">
+        <h2 className="mb-5 text-3xl font-extrabold text-indigo-700 tracking-tight">
+          {userData?.hasOnboarded
+            ? 'Update Organization'
+            : "Welcome! Let's set up your organization"}
         </h2>
-        <p className="mb-6 text-gray-600">
+        <p className="mb-8 text-gray-600 text-md leading-relaxed">
           {userData?.hasOnboarded
             ? 'Update your organization name below'
             : 'Please enter the name of your organization to get started.'}
         </p>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
             <FormField
               control={form.control}
               name="organizationName"
               rules={{ required: 'Organization name is required' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-indigo-700">Organization Name</FormLabel>
+                  <FormLabel className="text-indigo-700 font-semibold text-lg">
+                    Organization Name
+                  </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Your organization name"
-                      className="border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500"
+                      className="border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm transition"
                       disabled={submitting}
+                      autoFocus
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-600 mt-1" />
                 </FormItem>
               )}
             />
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 mt-2">
               {userData?.hasOnboarded && (
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="flex-1 border-indigo-600 text-indigo-600 font-semibold hover:bg-indigo-50 focus:ring-4 focus:ring-indigo-300 transition rounded-md py-3"
                   onClick={() => setIsEditMode(false)}
                   disabled={submitting}
                 >
@@ -221,12 +237,16 @@ function Onboarding() {
               )}
               <Button
                 type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                className={`flex-1 font-semibold py-3 rounded-md transition focus:ring-4 focus:ring-indigo-300 ${submitting
+                    ? 'bg-indigo-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                  } text-white`}
                 disabled={submitting}
               >
                 {submitting ? 'Saving...' : 'Save'}
               </Button>
             </div>
+
           </form>
         </Form>
       </div>

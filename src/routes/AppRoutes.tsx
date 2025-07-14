@@ -23,6 +23,7 @@ function AppRoutes() {
 
       <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
         <Route index element={<ApplicationPage />} />
+        <Route path="onboarding" element={<Onboarding />} errorElement={<ErrorPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="team/status" element={<TeamStatusList />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
