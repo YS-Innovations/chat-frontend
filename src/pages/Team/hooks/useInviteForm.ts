@@ -48,7 +48,7 @@ export function useInviteForm({ onInviteSuccess }: UseInviteFormProps) {
       const response = await sendInvite({
         email,
         role: selectedRole,
-        permissions: selectedRole === 'COADMIN' ? {} : permissions,
+        permissions: selectedRole === 'ADMIN' ? {} : permissions,
         token,
       });
 
@@ -68,7 +68,7 @@ export function useInviteForm({ onInviteSuccess }: UseInviteFormProps) {
     }
   };
 
-  const showRoleSelector = currentUserRole === 'ADMIN';
+  const showRoleSelector = currentUserRole === 'OWNER';
   const showPermissionsSection = !showRoleSelector || selectedRole === 'AGENT';
 
   return {

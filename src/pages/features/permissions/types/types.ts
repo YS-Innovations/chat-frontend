@@ -90,6 +90,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     permissions: [
       { id: 'general', label: 'General Settings', value: 'settings-general' },
       { id: 'billing', label: 'Billing Settings', value: 'settings-billing' },
+      { id: 'onboarding', label: 'onboarding', value: 'onboarding' },
     ],
   },
 

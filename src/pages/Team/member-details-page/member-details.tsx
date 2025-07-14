@@ -99,7 +99,7 @@ export function MemberDetails({
   }, [member, getAccessTokenSilently]);
 
 
-  const canDelete = role === 'ADMIN' ||
+  const canDelete = role === 'OWNER' ||
     (hasPermission('user-delete') && member.role === 'AGENT');
 
   const handleDelete = async (e: React.MouseEvent, memberId: string) => {
@@ -190,7 +190,7 @@ export function MemberDetails({
       onRoleUpdate(newRole);
 
       toast.success("Role changed", {
-        description: `User is now ${newRole === 'COADMIN' ? 'Co-Admin' : 'Agent'}`,
+        description: `User is now ${newRole === 'ADMIN' ? 'Admin' : 'Agent'}`,
       });
     } catch (err) {
       console.error('Role change failed:', err);
@@ -252,13 +252,13 @@ export function MemberDetails({
     }
   };
 
-  const canViewPermissions = role === 'ADMIN' || hasPermission('permission-view');
+  const canViewPermissions = role === 'OWNER' || hasPermission('permission-view');
   const canEditPermissions = useMemo(() => {
-    // Hide for admins viewing other admins
+    // Hide for owners viewing other owners
+    if (role === 'OWNER' && member.role === 'OWNER') return false;
     if (role === 'ADMIN' && member.role === 'ADMIN') return false;
-    if (role === 'COADMIN' && member.role === 'COADMIN') return false;
-    // Show for admins viewing non-admins
-    return role === 'ADMIN' || hasPermission('permission-edit');
+    // Show for owners viewing non-owners
+    return role === 'OWNER' || hasPermission('permission-edit');
   }, [role, member.role, hasPermission]);
 
   return (
@@ -287,7 +287,7 @@ export function MemberDetails({
         </p>
 
         <Badge
-          variant={member.role === 'ADMIN' ? 'destructive' : 'default'}
+          variant={member.role === 'OWNER' ? 'destructive' : 'default'}
           className="mt-3"
         >
           {member.role}
@@ -304,19 +304,19 @@ export function MemberDetails({
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         )}
-        {role === 'ADMIN' && (
+        {role === 'OWNER' && (
           <>
             {member.role === 'AGENT' && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleChangeRole('COADMIN')}
+                onClick={() => handleChangeRole('ADMIN')}
                 disabled={changingRole}
               >
-                {changingRole ? 'Changing...' : 'Change to Co-Admin'}
+                {changingRole ? 'Changing...' : 'Change to Admin'}
               </Button>
             )}
-            {member.role === 'COADMIN' && (
+            {member.role === 'ADMIN' && (
               <Button
                 variant="outline"
                 size="sm"

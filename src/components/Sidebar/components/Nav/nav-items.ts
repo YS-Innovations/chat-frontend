@@ -56,6 +56,7 @@ export const navMainItems: NavItem[] = [
     items: [
       { title: "General", url: "/app/settings/general", permission: "settings-general" },
       { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
+      { title: "onboarding", url: "/app/onboarding", permission: "onboarding" },
     ],
   },
 ];

@@ -102,7 +102,7 @@ export const columns: ColumnDef<Member>[] = [
       );
     },
     cell: ({ row }) => (
-      <Badge variant={row.original.role === "ADMIN" ? "destructive" : "default"}>
+      <Badge variant={row.original.role === "OWNER" ? "destructive" : "default"}>
         {row.original.role}
       </Badge>
     ),

@@ -43,7 +43,7 @@ export function useContactsLogic() {
   const [panelMode, setPanelMode] = useState<'details' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
+  const canViewInactive = role === 'OWNER' || hasPermission('inactive-members-view');
 
   useEffect(() => {
     if (activeTabMatch) setActiveTab('active');
@@ -62,7 +62,7 @@ export function useContactsLogic() {
   }, [memberId, members]);
 
   const handleMemberSelect = (member: Member) => {
-    if (role === 'ADMIN' || hasPermission('member-details')) {
+    if (role === 'OWNER' || hasPermission('member-details')) {
       navigate(`/app/team/${activeTab}/user/${member.id}`);
     }
   };

@@ -17,7 +17,7 @@ export function MemberTableBody({ table, loading, onSelect }: TableBodyProps) {
   const { hasPermission, role } = usePermissions()
 
   const onRowClick = (member: Member) => {
-    if (role === 'ADMIN' || hasPermission('member-details')) {
+    if (role === 'OWNER' || hasPermission('member-details')) {
       onSelect(member)
     }
   }
@@ -42,7 +42,7 @@ export function MemberTableBody({ table, loading, onSelect }: TableBodyProps) {
             onClick={() => onRowClick(row.original)}
             className={`
               transition-colors
-              ${(role === 'ADMIN' || hasPermission('member-details')) 
+              ${(role === 'OWNER' || hasPermission('member-details')) 
                 ? 'hover:bg-muted/50 cursor-pointer' 
                 : ''}
             `}

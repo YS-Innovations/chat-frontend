@@ -13,8 +13,8 @@ import { useDebounce } from 'use-debounce';
 import { FilterPanel } from './filter-panel';
 
 const ROLE_OPTIONS = [
-  { value: 'ADMIN', display: 'Admin' },
-  { value: 'COADMIN', display: 'Co-admin' },
+  { value: 'OWNER', display: 'Owner' },
+  { value: 'ADMIN', display: 'admin' },
   { value: 'AGENT', display: 'Agent' },
 ];
 
