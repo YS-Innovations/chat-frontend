@@ -1,18 +1,15 @@
 import { Routes, Route } from 'react-router-dom';
-import Home from '../pages/Home';
-import Profile from '../pages/Profile';
+import Home from '../pages/home/Home';
+import Profile from '../pages/Profile/Profile';
 import { Teams } from '../pages/Team/Members';
-import ApplicationPage from '../pages/ApplicationPage';
+import ApplicationPage from '../pages/inbox/ApplicationPage';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
-import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
-import { PermissionTemplates } from '@/pages/PermissionTemplates';
+import { PermissionTemplates } from '@/pages/Team/permissionTemplates/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
-import { PermissionEditPage } from '@/pages/permissions/edit-page';
-import { PermissionViewPage } from '@/pages/permissions/view-page';
 import Dashboard from '@/pages/Conversation';
 
 
@@ -50,17 +47,6 @@ function AppRoutes() {
         <Route path="conversations" element={<Dashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
-
-      <Route
-        path="/permissions/edit/:userId"
-        element={<AdminOnlyRoute><PermissionEditPage /></AdminOnlyRoute>}
-        errorElement={<ErrorPage />}
-      />
-      <Route
-        path="/permissions/view/:userId"
-        element={<AdminOnlyRoute><PermissionViewPage /></AdminOnlyRoute>}
-        errorElement={<ErrorPage />}
-      />
       <Route path="*" element={<ErrorPage statusCode={404} />} />
     </Routes>
   );

@@ -10,17 +10,23 @@ import { Mail, X, Pencil, Check, Clock } from "lucide-react";
 import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types/types";
 import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
-import { SaveOptionsModal } from "@/pages/permissions/components/save-options-modal";
-import { TemplatePermissionsModal } from "@/pages/permissions/components/template-permissions-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// ✅ Sonner toast import
 import { toast } from "sonner";
 import { LoginHistory } from "../login-history/login-history";
 import { PermissionHistorys } from "../permission-history/permission-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PermissionEdit } from "@/pages/permissions/edit-page/components";
-import { PERMISSION_GROUPS } from "@/pages/permissions/types/types";
+import { PermissionEdit } from "@/pages/features/permissions/Layout";
+import { PERMISSION_GROUPS } from "@/pages/features/permissions/types/types";
+import { TemplatePermissionsModal } from "@/pages/features/permissions/Dialog/PolicyPermissions";
+import { SaveOptionsModal } from "@/pages/features/permissions/Dialog/SaveOptions";
+import { updateTemplate } from "@/pages/features/permissions/Api/api";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+
 interface MemberDetailsProps {
   member: Member;
   onClose: () => void;
@@ -52,7 +58,6 @@ export function MemberDetails({
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
@@ -93,15 +98,6 @@ export function MemberDetails({
     fetchHistories();
   }, [member, getAccessTokenSilently]);
 
-  useEffect(() => {
-    if (!isEditingPermissions && templates.length > 0) {
-      const permString = JSON.stringify(permissions);
-      const match = templates.find(t =>
-        JSON.stringify(t.policy) === permString
-      );
-      setMatchingTemplate(match || null);
-    }
-  }, [isEditingPermissions, templates, permissions]);
 
   const canDelete = role === 'ADMIN' ||
     (hasPermission('user-delete') && member.role === 'AGENT');
@@ -365,11 +361,6 @@ export function MemberDetails({
                 <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Last Login</p>
-                <p>{member.lastLogin ? new Date(member.lastLogin).toLocaleString() : 'Never'}</p>
-              </div>
-
-              <div>
                 <p className="text-sm text-muted-foreground">Phone Number</p>
                 <p>{member.phoneNumber || 'Not provided'}</p>
               </div>
@@ -418,7 +409,7 @@ export function MemberDetails({
                         onClick={() => setShowPermissionHistoryModal(true)}
                       >
                         <Clock className="h-4 w-4 mr-2" />
-                       permission changes History
+                        permission changes History
                       </Button>
 
                       <Button
@@ -441,43 +432,43 @@ export function MemberDetails({
                     <PermissionHistorys history={permissionHistory} />
                   </DialogContent>
                 </Dialog>
-                {matchingTemplate && (
-                  <div className="mb-4 flex items-center">
-                    <span className="text-sm text-muted-foreground mr-2">
-                      Using template:
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => handleTemplateClick(matchingTemplate.id)}
-                    >
-                      {matchingTemplate.policyName}
-                    </Badge>
-                  </div>
-                )}
 
                 <div className="space-y-4">
-                  {PERMISSION_GROUPS.map(group => {
-                    const groupPermissions = group.permissions.filter(p =>
-                      tempPermissions[p.value]
-                    );
+                  <Accordion type="multiple" className="w-full space-y-3">
+                    {PERMISSION_GROUPS.map(group => {
+                      const groupPermissions = group.permissions.filter(p =>
+                        tempPermissions[p.value]
+                      );
 
-                    if (groupPermissions.length === 0) return null;
+                      if (groupPermissions.length === 0) return null;
 
-                    return (
-                      <div key={group.id} className="border rounded-lg p-4">
-                        <h3 className="font-medium mb-3">{group.label}</h3>
-                        <div className="space-y-2">
-                          {groupPermissions.map(permission => (
-                            <div key={permission.id} className="flex items-center p-2 rounded bg-green-50">
-                              <Check className="h-4 w-4 text-green-500 mr-2" />
-                              <span>{permission.label}</span>
+                      return (
+                        <AccordionItem
+                          key={group.id}
+                          value={group.id}
+                          className="border rounded-lg shadow-sm bg-white dark:bg-muted"
+                        >
+                          <AccordionTrigger className="px-4 py-3 text-left font-semibold text-sm hover:bg-muted/50 transition-colors">
+                            {group.label}
+                          </AccordionTrigger>
+
+                          <AccordionContent className="px-4 pb-4 pt-2">
+                            <div className="space-y-2">
+                              {groupPermissions.map(permission => (
+                                <div
+                                  key={permission.id}
+                                  className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/40 rounded-md text-sm"
+                                >
+                                  <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                  <span className="text-muted-foreground">{permission.label}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </div>
               </div>
             )
@@ -492,11 +483,24 @@ export function MemberDetails({
         template={selectedTemplate}
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
-        onUse={(perms, action, templateName) => {
+        onUse={async (perms, action, templateName) => {
+          const token = await getAccessTokenSilently();
+
           if (action === 'apply') {
             savePermissions(perms);
           } else if (action === 'saveAsTemplate' && templateName) {
             savePermissions(perms, true, templateName);
+          } else if (action === 'updateTemplate' && selectedTemplate) {
+            try {
+              await updateTemplate(token, selectedTemplate.id, { policy: perms });
+              // Show success toast/message
+              toast.success('Template updated successfully');
+              // Refresh templates if needed
+              fetchTemplates();
+            } catch (error) {
+              toast.error('Failed to update template');
+              console.error(error);
+            }
           }
           setShowTemplateModal(false);
         }}
