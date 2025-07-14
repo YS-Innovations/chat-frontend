@@ -1,14 +1,14 @@
 import { Routes, Route } from 'react-router-dom';
-import Home from '../pages/Home';
-import Profile from '../pages/Profile';
+import Home from '../pages/home/Home';
+import Profile from '../pages/Profile/Profile';
 import { Teams } from '../pages/Team/Members';
-import ApplicationPage from '../pages/ApplicationPage';
+import ApplicationPage from '../pages/inbox/ApplicationPage';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
-import { PermissionTemplates } from '@/pages/PermissionTemplates';
+import { PermissionTemplates } from '@/pages/Team/permissionTemplates/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 import Dashboard from '@/pages/Conversation';
 

@@ -5,7 +5,7 @@ import { PermissionEditActions } from "./components/PermissionEditActions";
 import { TemplatesSection } from "./components/TemplatesSection";
 import { PermissionSearchBar } from "./components/PermissionSearchBar";
 import { usePermissionEdit } from "../hooks/usePermissionEditLayout";
-import type { PermissionEditProps } from "../../types/types";
+import type { PermissionEditProps } from "../types/types";
 
 export function PermissionEdit(props: PermissionEditProps) {
   const {

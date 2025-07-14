@@ -36,3 +36,21 @@ export async function saveUserPermissions(token: string, userId: string, permiss
   if (!res.ok) throw new Error('Failed to save permissions');
   return res.json();
 }
+
+export async function updateTemplate(
+  token: string, 
+  templateId: string, 
+  data: { policy: Record<string, boolean> }
+) {
+  const res = await fetch(`http://localhost:3000/auth/permissions/templates/${templateId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update template');
+  return res.json();
+}
+

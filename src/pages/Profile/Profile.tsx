@@ -1,9 +1,9 @@
 // Profile.tsx
 import { useAuth0 } from '@auth0/auth0-react';
-import useUser from '../hooks/useUser';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import useUser from '../../hooks/useUser';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';

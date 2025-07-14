@@ -95,5 +95,6 @@ export function useTemplatePermissionsModal({
     setTemplateName,
     setMode,
     setSearchTerm,
+    template
   };
 }

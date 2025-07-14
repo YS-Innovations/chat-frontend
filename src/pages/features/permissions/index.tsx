@@ -1,3 +1,4 @@
+// src/pages/features/permissions/index.tsx
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PermissionEdit } from "./Layout";
@@ -5,6 +6,7 @@ import { usePermissionEditPage } from "./hooks/usePermissionEditPage";
 import type { PermissionEditPageProps } from "./types/types";
 import { SaveOptionsModal } from "./Dialog/SaveOptions";
 import { TemplatePermissionsModal } from "./Dialog/PolicyPermissions";
+import { toast } from "sonner";
 
 export function PermissionEditPage({ userId }: PermissionEditPageProps) {
   const navigate = useNavigate();
@@ -28,6 +30,16 @@ export function PermissionEditPage({ userId }: PermissionEditPageProps) {
   if (loading) return <div>Loading permissions...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const handleSaveForUser = async () => {
+    try {
+      await handleSave(permissions);
+      toast.success('Permissions applied successfully');
+      navigate(-1); // Go back to permission view page
+    } catch (error) {
+      toast.error('Failed to apply permissions');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -47,18 +59,21 @@ export function PermissionEditPage({ userId }: PermissionEditPageProps) {
         onTemplateClick={handleTemplateClick}
       />
 
-        <SaveOptionsModal
+      <SaveOptionsModal
         open={saveOptionsOpen}
         onClose={() => setSaveOptionsOpen(false)}
-        onSaveForUser={() => handleSave(permissions)}
-        onSaveAsTemplate={() => handleSave(permissions)}
+        onSaveForUser={handleSaveForUser}
+        onSaveAsTemplate={() => {
+          setSaveOptionsOpen(false);
+          setTemplateModalOpen(true);
+        }}
         templates={templates}
         permissions={permissions}
         onViewTemplate={handleTemplateClick}
       />
 
       <TemplatePermissionsModal
-        template={selectedTemplate}
+        template={selectedTemplate || undefined}
         open={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
         onUse={handleUseTemplate}

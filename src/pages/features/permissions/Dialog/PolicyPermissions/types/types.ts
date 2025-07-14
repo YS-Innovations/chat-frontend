@@ -11,7 +11,7 @@ export interface TemplatePermissionsModalProps {
   onClose: () => void;
   onUse: (
     permissions: Record<string, boolean>,
-    action: "apply" | "saveAsTemplate",
+    action: "apply" | "saveAsTemplate" | "updateTemplate",
     templateName?: string
   ) => void;
 }

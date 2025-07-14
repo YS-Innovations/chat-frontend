@@ -19,6 +19,7 @@ import { PermissionEdit } from "@/pages/features/permissions/Layout";
 import { PERMISSION_GROUPS } from "@/pages/features/permissions/types/types";
 import { TemplatePermissionsModal } from "@/pages/features/permissions/Dialog/PolicyPermissions";
 import { SaveOptionsModal } from "@/pages/features/permissions/Dialog/SaveOptions";
+import { updateTemplate } from "@/pages/features/permissions/Api/api";
 
 interface MemberDetailsProps {
   member: Member;
@@ -51,7 +52,6 @@ export function MemberDetails({
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [matchingTemplate, setMatchingTemplate] = useState<any | null>(null);
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
@@ -92,15 +92,6 @@ export function MemberDetails({
     fetchHistories();
   }, [member, getAccessTokenSilently]);
 
-  useEffect(() => {
-    if (!isEditingPermissions && templates.length > 0) {
-      const permString = JSON.stringify(permissions);
-      const match = templates.find(t =>
-        JSON.stringify(t.policy) === permString
-      );
-      setMatchingTemplate(match || null);
-    }
-  }, [isEditingPermissions, templates, permissions]);
 
   const canDelete = role === 'ADMIN' ||
     (hasPermission('user-delete') && member.role === 'AGENT');
@@ -417,7 +408,7 @@ export function MemberDetails({
                         onClick={() => setShowPermissionHistoryModal(true)}
                       >
                         <Clock className="h-4 w-4 mr-2" />
-                       permission changes History
+                        permission changes History
                       </Button>
 
                       <Button
@@ -440,20 +431,6 @@ export function MemberDetails({
                     <PermissionHistorys history={permissionHistory} />
                   </DialogContent>
                 </Dialog>
-                {matchingTemplate && (
-                  <div className="mb-4 flex items-center">
-                    <span className="text-sm text-muted-foreground mr-2">
-                      Using template:
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => handleTemplateClick(matchingTemplate.id)}
-                    >
-                      {matchingTemplate.policyName}
-                    </Badge>
-                  </div>
-                )}
 
                 <div className="space-y-4">
                   {PERMISSION_GROUPS.map(group => {
@@ -461,9 +438,7 @@ export function MemberDetails({
                       tempPermissions[p.value]
                     );
 
-                    if (groupPermissions.length === 0) return null;
-
-                    return (
+                    return groupPermissions.length > 0 && (
                       <div key={group.id} className="border rounded-lg p-4">
                         <h3 className="font-medium mb-3">{group.label}</h3>
                         <div className="space-y-2">
@@ -491,11 +466,24 @@ export function MemberDetails({
         template={selectedTemplate}
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
-        onUse={(perms, action, templateName) => {
+        onUse={async (perms, action, templateName) => {
+          const token = await getAccessTokenSilently();
+
           if (action === 'apply') {
             savePermissions(perms);
           } else if (action === 'saveAsTemplate' && templateName) {
             savePermissions(perms, true, templateName);
+          } else if (action === 'updateTemplate' && selectedTemplate) {
+            try {
+              await updateTemplate(token, selectedTemplate.id, { policy: perms });
+              // Show success toast/message
+              toast.success('Template updated successfully');
+              // Refresh templates if needed
+              fetchTemplates();
+            } catch (error) {
+              toast.error('Failed to update template');
+              console.error(error);
+            }
           }
           setShowTemplateModal(false);
         }}

@@ -6,9 +6,11 @@ import {
   fetchTemplates, 
   fetchUser, 
   fetchUserPermissions, 
-  saveUserPermissions 
+  saveUserPermissions, 
+  updateTemplate
 } from '../Api/api';
 import type { PermissionTemplate, PermissionValue } from '../types/types';
+import { toast } from 'sonner';
 
 export function usePermissionEditPage(userId?: string) {
   const { getAccessTokenSilently } = useAuth0();
@@ -80,7 +82,7 @@ export function usePermissionEditPage(userId?: string) {
 
   const handleUseTemplate = useCallback((
     perms: PermissionValue, 
-    action: 'apply' | 'saveAsTemplate', 
+    action: 'apply' | 'saveAsTemplate' | 'updateTemplate', 
     name?: string
   ) => {
     if (action === 'apply') {
@@ -88,9 +90,20 @@ export function usePermissionEditPage(userId?: string) {
       setSaveOptionsOpen(true);
     } else if (action === 'saveAsTemplate' && name) {
       // Save template logic here
+    } else if (action === 'updateTemplate' && selectedTemplate) {
+      // Update template logic
+      const updateTemplatePermissions = async () => {
+        try {
+          const token = await getAccessTokenSilently();
+          await updateTemplate(token, selectedTemplate.id, { policy: perms });
+          toast.success('Template updated successfully');
+        } catch (error) {
+          toast.error('Failed to update template');
+        }
+      };
+      updateTemplatePermissions();
     }
-  }, []);
-
+  }, [selectedTemplate, getAccessTokenSilently]);
   return {
     permissions,
     loading,

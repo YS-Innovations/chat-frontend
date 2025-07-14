@@ -32,6 +32,7 @@ export function TemplatePermissionsModal({
     setTemplateName,
     setMode,
     setSearchTerm,
+    template: currentTemplate
   } = useTemplatePermissionsModal({ template, onUse, onClose });
 
   return (
@@ -88,17 +89,34 @@ export function TemplatePermissionsModal({
                 Use and Save
               </Button>
             ) : (
-              <div className="flex gap-2 w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => onUse(permissions, "apply")}
-                  className="flex-1"
-                >
-                  Apply to Current User
-                </Button>
-                <Button onClick={() => setMode("saveAsTemplate")} className="flex-1">
-                  Save as Template
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3">
+                  <Button
+                    variant="outline"
+                    onClick={() => onUse(permissions, "apply")}
+                    className="flex-1"
+                  >
+                    Apply to Current User
+                  </Button>
+                  <Button
+                    onClick={() => setMode("saveAsTemplate")}
+                    className="flex-1"
+                  >
+                    Save as Template
+                  </Button>
+                </div>
+                {currentTemplate && !currentTemplate.duplicateOfId && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      onUse(permissions, "updateTemplate");
+                      onUse(permissions, "apply"); // Apply updated permissions
+                    }}
+                    className="w-full sm:w-1/3"
+                  >
+                    Update & Apply
+                  </Button>
+                )}
               </div>
             )}
           </DialogFooter>

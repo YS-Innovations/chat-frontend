@@ -6,9 +6,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu"
-import { Button } from '../components/ui/button';
-import { useAuth } from '../hooks/useAuth'; // Import custom hook
+} from "../../components/ui/dropdown-menu"
+import { Button } from '../../components/ui/button';
+import { useAuth } from '../../hooks/useAuth'; // Import custom hook
 
 export default function Home() {
   const { 
