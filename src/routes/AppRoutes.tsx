@@ -6,13 +6,10 @@ import ApplicationPage from '../pages/ApplicationPage';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
-import { AdminOnlyRoute } from './AdminOnlyRoute';
 import ErrorPage from '../pages/ErrorPage';
 import { TeamStatusList } from '@/pages/TeamStatusList';
 import { PermissionTemplates } from '@/pages/PermissionTemplates';
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
-import { PermissionEditPage } from '@/pages/permissions/edit-page';
-import { PermissionViewPage } from '@/pages/permissions/view-page';
 import Dashboard from '@/pages/Conversation';
 
 
@@ -50,17 +47,6 @@ function AppRoutes() {
         <Route path="conversations" element={<Dashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
-
-      <Route
-        path="/permissions/edit/:userId"
-        element={<AdminOnlyRoute><PermissionEditPage /></AdminOnlyRoute>}
-        errorElement={<ErrorPage />}
-      />
-      <Route
-        path="/permissions/view/:userId"
-        element={<AdminOnlyRoute><PermissionViewPage /></AdminOnlyRoute>}
-        errorElement={<ErrorPage />}
-      />
       <Route path="*" element={<ErrorPage statusCode={404} />} />
     </Routes>
   );

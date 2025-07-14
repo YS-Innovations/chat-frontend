@@ -1,7 +1,5 @@
-// src/pages/permissions/components/template-permissions-modal/useTemplatePermissionsModal.ts
-
 import { useState, useEffect, useMemo } from "react";
-import { PERMISSION_GROUPS, type PermissionGroup } from "../../../types/types"; // Make sure this is imported correctly
+import { PERMISSION_GROUPS, type PermissionGroup } from "../../../types/types";
 import type { TemplatePermissionsModalProps } from "../types/types";
 
 interface UseTemplatePermissionsModalParams

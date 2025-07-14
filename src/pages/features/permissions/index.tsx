@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PermissionEdit } from "./components";
-import type { PermissionEditPageProps } from "./types/types";
+import { PermissionEdit } from "./Layout";
 import { usePermissionEditPage } from "./hooks/usePermissionEditPage";
-import { SaveOptionsModal } from "../components/save-options-modal";
-import { TemplatePermissionsModal } from "../components/template-permissions-modal";
+import type { PermissionEditPageProps } from "./types/types";
+import { SaveOptionsModal } from "./Dialog/SaveOptions";
+import { TemplatePermissionsModal } from "./Dialog/PolicyPermissions";
 
 export function PermissionEditPage({ userId }: PermissionEditPageProps) {
   const navigate = useNavigate();

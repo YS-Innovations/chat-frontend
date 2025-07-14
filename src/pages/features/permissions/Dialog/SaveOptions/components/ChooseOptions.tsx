@@ -14,8 +14,6 @@ export function SaveOptionsSelect({
   onSaveForUser,
   onSaveAsTemplateMode,
   onClose,
-  matchingTemplate,
-  onViewTemplate,
 }: SaveOptionsSelectProps) {
   return (
     <>
@@ -23,24 +21,6 @@ export function SaveOptionsSelect({
         <DialogTitle>Save Options</DialogTitle>
         <DialogDescription>Choose how to save these permissions</DialogDescription>
       </DialogHeader>
-
-      {matchingTemplate && (
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-2">
-            Permissions match existing template:
-          </p>
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => {
-              onViewTemplate(matchingTemplate.id);
-              onClose();
-            }}
-          >
-            {matchingTemplate.policyName}
-          </Button>
-        </div>
-      )}
 
       <div className="grid gap-3 py-4">
         <Button

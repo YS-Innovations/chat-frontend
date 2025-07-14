@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import type { PermissionValue, PermissionTemplate } from "../types/types";
-import { arrayToPermissionObject } from '../../helper/utils';
+import { arrayToPermissionObject } from '../helper/utils';
 import { 
   fetchTemplates, 
   fetchUser, 
   fetchUserPermissions, 
   saveUserPermissions 
-} from './api';
+} from '../Api/api';
+import type { PermissionTemplate, PermissionValue } from '../types/types';
 
 export function usePermissionEditPage(userId?: string) {
   const { getAccessTokenSilently } = useAuth0();

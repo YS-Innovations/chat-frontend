@@ -1,8 +1,8 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSaveOptionsModal } from "./hooks/useSaveOptionsModal";
 import type { SaveOptionsModalProps } from "./types/types";
-import { SaveOptionsSelect } from "./components/SaveOptionsSelect";
-import { SaveOptionsTemplate } from "./components/SaveOptionsTemplate";
+import { SaveOptionsSelect } from "./components/ChooseOptions";
+import { SaveOptionsTemplate } from "./components/SaveTemplate";
 
 export function SaveOptionsModal({
   open,
