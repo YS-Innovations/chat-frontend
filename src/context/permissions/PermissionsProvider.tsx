@@ -6,7 +6,7 @@ import { type PermissionsContextType } from './types/types';
 export const PermissionsProvider = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [role, setRole] = useState<'ADMIN' | 'AGENT' | 'COADMIN' | null>(null);
+  const [role, setRole] = useState<'OWNER' | 'AGENT' | 'ADMIN' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPermissions = async () => {
@@ -41,7 +41,7 @@ export const PermissionsProvider = ({ children }: { children: React.ReactNode })
   }, [isAuthenticated]);
 
   const hasPermission = (key: string) => {
-    if (role === 'ADMIN') return true;
+    if (role === 'OWNER') return true;
     return permissions[key] === true;
   };
 

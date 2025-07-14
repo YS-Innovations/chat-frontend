@@ -24,8 +24,8 @@ import {
 import React from "react";
 
 const ROLE_OPTIONS = [
-  { value: 'ADMIN', display: 'Admin' },
-  { value: 'COADMIN', display: 'Co-admin' },
+  { value: 'OWNER', display: 'owner' },
+  { value: 'ADMIN', display: 'admin' },
   { value: 'AGENT', display: 'Agent' },
 ];
 
@@ -51,7 +51,7 @@ interface MemberDataTableProps {
 const FilterChip = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
   <div className="flex items-center gap-1 px-3 py-1 bg-white border rounded-full text-sm shadow-xs">
     <span>{label}</span>
-    <button 
+    <button
       onClick={onRemove}
       className="p-0.5 rounded-full hover:bg-gray-100"
       aria-label="Remove filter"
@@ -78,7 +78,7 @@ export function MemberDataTable({
   setSelectedRoles,
   setSearchQuery,
   clearAllFilters,
-  
+
 }: MemberDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -129,9 +129,9 @@ export function MemberDataTable({
       {(searchQuery || selectedRoles.length > 0 || sorting.length > 0) && (
         <div className="flex flex-wrap items-center gap-2 mb-4 p-2 bg-gray-50 rounded-lg">
           <span className="text-sm font-medium">Filters:</span>
-          
+
           {searchQuery && (
-            <FilterChip 
+            <FilterChip
               label={`Search: "${searchQuery}"`}
               onRemove={() => {
                 setSearchQuery('');
@@ -139,7 +139,7 @@ export function MemberDataTable({
               }}
             />
           )}
-          
+
           {selectedRoles.map(role => (
             <FilterChip
               key={role}
@@ -150,21 +150,19 @@ export function MemberDataTable({
               }}
             />
           ))}
-          
-{sorting.map(sort => (
-  <FilterChip
-    key={sort.id}
-    label={`${sort.id} (${sort.desc ? 'Desc' : 'Asc'})`}
-    onRemove={() => {
-      setSorting(prev => prev.filter(s => s.id !== sort.id));
-      setPageIndex(0);
-    }}
-  />
-))}
 
+          {sorting.map(sort => (
+            <FilterChip
+              key={sort.id}
+              label={`${sort.id} (${sort.desc ? 'Desc' : 'Asc'})`}
+              onRemove={() => {
+                setSorting(prev => prev.filter(s => s.id !== sort.id));
+                setPageIndex(0);
+              }}
+            />
+          ))}
 
-          
-          <Button 
+          <Button
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
@@ -186,7 +184,7 @@ export function MemberDataTable({
         <>
           {/* Empty State */}
           {members.length === 0 ? (
-            <EmptyState 
+            <EmptyState
               hasSearch={!!searchQuery}
               hasFilters={selectedRoles.length > 0 || sorting.length > 0}
               onClearFilters={clearAllFilters}
@@ -197,7 +195,7 @@ export function MemberDataTable({
                 <Table>
                   <MemberTableHeader table={table} />
                   <MemberTableBody
-                  loading={loading}
+                    loading={loading}
                     table={table}
                     onSelect={onSelect}
                   />

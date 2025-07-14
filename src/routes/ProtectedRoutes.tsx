@@ -22,48 +22,55 @@ export const ProtectedRoutes = () => {
 
   useEffect(() => {
     const checkAuthState = async () => {
-      if (!isLoading) {
-        if (!isAuthenticated) {
-          try {
-            await getAccessTokenSilently();
-            setAuthChecked(true);
-          } catch {
-            setAuthChecked(true);
-          }
-        } else {
-          try {
-            const token = await getAccessTokenSilently();
+      if (isLoading) return;
 
-            const res = await axios.get(
-              `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-
-            const userData = res.data;
-
-            // ✅ Use backend flag
-            const isNewUser = !userData.hasOnboarded;
-
-            if (isNewUser && location.pathname !== '/onboarding') {
-              navigate('/onboarding');
-              return;
-            }
-
-            setAuthChecked(true);
-          } catch (err) {
-            console.error('Failed to fetch user data:', err);
-            setAuthChecked(true);
-          }
+      if (!isAuthenticated) {
+        try {
+          await getAccessTokenSilently();
+          setAuthChecked(true);
+        } catch {
+          setAuthChecked(true);
         }
+        return;
+      }
+
+      try {
+        const token = await getAccessTokenSilently();
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const userData = res.data;
+        const isOwner = userData?.role === 'owner';
+        const isNewOwner = isOwner && !userData?.hasOnboarded;
+
+        if (isNewOwner && location.pathname !== '/onboarding') {
+          navigate('/onboarding');
+          return;
+        }
+
+        setAuthChecked(true);
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+        setAuthChecked(true); // Proceed anyway
       }
     };
 
     checkAuthState();
-  }, [isLoading, isAuthenticated, getAccessTokenSilently, user, navigate, location.pathname]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    getAccessTokenSilently,
+    user,
+    navigate,
+    location.pathname,
+  ]);
 
   if (isLoading || !authChecked) {
     return <LoadingSpinner />;

@@ -51,7 +51,6 @@ function AppRoutes() {
         <Route path="conversations" element={<Dashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
-      <Route path="*" element={<ErrorPage statusCode={404} />} />
     </Routes>
   );
 }

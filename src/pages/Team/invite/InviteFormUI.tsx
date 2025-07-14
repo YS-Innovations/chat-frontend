@@ -73,7 +73,7 @@ export function InviteFormUI({
                   className="w-full p-2 border rounded"
                 >
                   <option value="AGENT">Agent</option>
-                  <option value="COADMIN">Co-Admin</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
             )}

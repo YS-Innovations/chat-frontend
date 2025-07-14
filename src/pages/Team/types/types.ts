@@ -35,7 +35,7 @@ export interface PermissionHistory {
   };
   changedAt: Date;
 }
-export type Role = 'ADMIN' | 'COADMIN' | 'AGENT';
+export type Role = 'OWNER' | 'ADMIN' | 'AGENT';
 
 
 export interface InactiveMember {
