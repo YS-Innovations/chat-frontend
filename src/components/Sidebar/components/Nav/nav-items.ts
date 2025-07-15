@@ -34,6 +34,7 @@ export const navMainItems: NavItem[] = [
     items: [
       { title: "Members", url: "/app/team", permission: "member-list" },
       { title: "Invite", url: "/app/team/invite", permission: "invite-form" },
+      { title: "Pending Invite", url: "/app/team/invite-pending", permission: "pending-invite" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
       { title: "Status", url: "/app/team/status", permission: "team-status-view" },
     ],
