@@ -8,7 +8,7 @@ interface SelectionStatusProps {
 export function SelectionStatus({ selectedCount, totalCount }: SelectionStatusProps) {
   return (
     <div className="text-muted-foreground text-sm">
-      {selectedCount} of {totalCount} member(s) selected.
+      {selectedCount} of {totalCount} item(s) selected.
     </div>
   )
 }

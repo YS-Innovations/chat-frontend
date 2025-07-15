@@ -44,7 +44,7 @@ export function TablePagination({
           value={`${pageSize}`}
           onValueChange={(value) => {
             setPageSize(Number(value))
-            setPageIndex(0) // Reset to first page
+            setPageIndex(0)
           }}
         >
           <SelectTrigger size="sm" className="w-20" id="rows-per-page">
@@ -67,12 +67,12 @@ export function TablePagination({
       <div className="flex items-center justify-center gap-2">
         <Button
           variant="outline"
-          className="hidden h-8 w-8 p-0 sm:flex"
+          className="hidden size-8 p-0 sm:flex"
           onClick={() => setPageIndex(0)}
           disabled={!canPrevious}
         >
           <span className="sr-only">Go to first page</span>
-          <IconChevronsLeft />
+          <IconChevronsLeft className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -82,7 +82,7 @@ export function TablePagination({
           disabled={!canPrevious}
         >
           <span className="sr-only">Go to previous page</span>
-          <IconChevronLeft />
+          <IconChevronLeft className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -92,7 +92,7 @@ export function TablePagination({
           disabled={!canNext}
         >
           <span className="sr-only">Go to next page</span>
-          <IconChevronRight />
+          <IconChevronRight className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -102,7 +102,7 @@ export function TablePagination({
           disabled={!canNext}
         >
           <span className="sr-only">Go to last page</span>
-          <IconChevronsRight />
+          <IconChevronsRight className="size-4" />
         </Button>
       </div>
     </div>

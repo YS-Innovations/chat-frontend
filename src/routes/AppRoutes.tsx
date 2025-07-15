@@ -35,6 +35,7 @@ function AppRoutes() {
             </PermissionGuard>
           }
         />
+        <Route path="team/invite-pending" element={<Teams />}></Route>
         <Route
           path="team"
           element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
@@ -43,9 +44,7 @@ function AppRoutes() {
           <Route path="active" element={<Teams />}>
             <Route path="user/:memberId" element={<Teams />} />
           </Route>
-          <Route path="inactive" element={<Teams />}>
-            <Route path="user/:memberId" element={<Teams />} />
-          </Route>
+          
         </Route>
 
         <Route path="conversations" element={<Dashboard />} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { usePermissions } from '@/context/permissions';
 import type { InactiveMember } from '../types/types';
@@ -6,33 +6,63 @@ import type { InactiveMember } from '../types/types';
 export function useInactiveMembers() {
   const { getAccessTokenSilently } = useAuth0();
   const { hasPermission, role } = usePermissions();
-  
+
   const [inactiveMembers, setInactiveMembers] = useState<InactiveMember[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [resending, setResending] = useState<Record<string, boolean>>({});
 
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState('');
+  type SortDirection = 'asc' | 'desc';
+
+  interface Sort {
+    field: string;
+    direction: SortDirection;
+  }
+
+  const [sort, setSort] = useState<Sort[]>([{ field: 'createdAt', direction: 'desc' }]);
   const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
   const canResend = role === 'ADMIN' || hasPermission('resend-invitation');
 
-  const fetchInactiveMembers = async () => {
+const buildQueryParams = () => {
+  const sortParam = sort.map(s => `${s.field}:${s.direction}`).join(',');
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  });
+
+  if (search) params.append('search', search);
+  if (sortParam) params.append('sort', sortParam);
+
+  return params.toString();
+};
+
+  const fetchInactiveMembers = useCallback(async () => {
+    if (!canViewInactive) return;
+
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:3000/auth/inactive-members', {
+      const queryParams = buildQueryParams();
+
+      const response = await fetch(`http://localhost:3000/auth/inactive-members?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to fetch inactive members');
 
       const data = await response.json();
-      setInactiveMembers(data);
+      setInactiveMembers(data.invitations || []);
+      setTotalCount(data.totalCount || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, search, sort, canViewInactive, getAccessTokenSilently]);
 
   const handleResend = async (invitationId: string) => {
     setResending(prev => ({ ...prev, [invitationId]: true }));
@@ -60,21 +90,26 @@ export function useInactiveMembers() {
   };
 
   useEffect(() => {
-    if (canViewInactive) {
-      fetchInactiveMembers();
-    }
-  }, [canViewInactive]);
-
-  // Filter out accepted invitations
-  const filteredMembers = inactiveMembers.filter(member => !member.usedAt);
+    fetchInactiveMembers();
+  }, [fetchInactiveMembers]);
 
   return {
     loading,
     error,
-    members: filteredMembers,
+    members: inactiveMembers,
+    totalCount,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch,
+    sort,
+    setSort,
     resending,
     canViewInactive,
     canResend,
     handleResend,
+    refetch: fetchInactiveMembers,
   };
 }

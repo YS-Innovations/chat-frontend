@@ -1,29 +1,18 @@
 "use client"
 
-import { TableBody, TableCell, TableRow } from "@/components/ui/table"
+import { TableBody as UITableBody, TableCell, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { usePermissions } from "@/context/permissions"
-import type { Member } from "../../types/types"
 import { flexRender, type Table } from "@tanstack/react-table"
 
-interface TableBodyProps {
-  table: Table<Member>
+interface TableBodyProps<TData> {
+  table: Table<TData>
   loading: boolean
-  searchQuery?: string;
-  onSelect: (member: Member) => void
+  onRowClick?: (item: TData) => void
 }
 
-export function MemberTableBody({ table, loading, onSelect }: TableBodyProps) {
-  const { hasPermission, role } = usePermissions()
-
-  const onRowClick = (member: Member) => {
-    if (role === 'OWNER' || hasPermission('member-details')) {
-      onSelect(member)
-    }
-  }
-
+export function TableBody<TData>({ table, loading, onRowClick }: TableBodyProps<TData>) {
   return (
-    <TableBody>
+    <UITableBody>
       {loading ? (
         [...Array(5)].map((_, i) => (
           <TableRow key={i}>
@@ -39,13 +28,8 @@ export function MemberTableBody({ table, loading, onSelect }: TableBodyProps) {
           <TableRow
             key={row.id}
             data-state={row.getIsSelected() && "selected"}
-            onClick={() => onRowClick(row.original)}
-            className={`
-              transition-colors
-              ${(role === 'OWNER' || hasPermission('member-details')) 
-                ? 'hover:bg-muted/50 cursor-pointer' 
-                : ''}
-            `}
+            onClick={() => onRowClick?.(row.original)}
+            className={onRowClick ? 'hover:bg-muted/50 cursor-pointer' : ''}
           >
             {row.getVisibleCells().map((cell) => (
               <TableCell key={cell.id}>
@@ -60,10 +44,10 @@ export function MemberTableBody({ table, loading, onSelect }: TableBodyProps) {
             colSpan={table.getAllColumns().length} 
             className="h-24 text-center"
           >
-            No members found
+            No results found
           </TableCell>
         </TableRow>
       )}
-    </TableBody>
+    </UITableBody>
   )
 }

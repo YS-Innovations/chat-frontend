@@ -12,7 +12,7 @@ export function useContactsLogic() {
 
   const { memberId } = useParams<{ memberId?: string }>();
   const activeTabMatch = useMatch('/app/team/active/*');
-  const inactiveTabMatch = useMatch('/app/team/inactive/*');
+  const inactiveTabMatch = useMatch('/app/team/invite-pending/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
   const [sortLoading, setSortLoading] = useState(false);
   
