@@ -18,28 +18,27 @@ export function useInactiveMembers() {
   const [search, setSearch] = useState('');
   type SortDirection = 'asc' | 'desc';
 
-interface Sort {
-  field: string;
-  direction: SortDirection;
-}
+  interface Sort {
+    field: string;
+    direction: SortDirection;
+  }
 
-const [sort, setSort] = useState<Sort[]>([{ field: 'createdAt', direction: 'desc' }]);
-
+  const [sort, setSort] = useState<Sort[]>([{ field: 'createdAt', direction: 'desc' }]);
   const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
   const canResend = role === 'ADMIN' || hasPermission('resend-invitation');
 
-  const buildQueryParams = () => {
-    const sortParam = sort.map(s => `${s.field}:${s.direction}`).join(',');
-    const params = new URLSearchParams({
-      page: page.toString(),
-      pageSize: pageSize.toString(),
-    });
+const buildQueryParams = () => {
+  const sortParam = sort.map(s => `${s.field}:${s.direction}`).join(',');
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  });
 
-    if (search) params.append('search', search);
-    if (sortParam) params.append('sort', sortParam);
+  if (search) params.append('search', search);
+  if (sortParam) params.append('sort', sortParam);
 
-    return params.toString();
-  };
+  return params.toString();
+};
 
   const fetchInactiveMembers = useCallback(async () => {
     if (!canViewInactive) return;
