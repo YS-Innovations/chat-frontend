@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { PERMISSION_GROUPS } from '../../features/permissions/types/types';
+import { DataTable } from '@/components/data-table/data-table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { ColumnDef } from '@tanstack/react-table';
 
 interface Template {
   id: string;
@@ -13,14 +22,33 @@ export const PermissionTemplates: React.FC = () => {
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [loadingList, setLoadingList] = useState(false);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [newTemplateMode, setNewTemplateMode] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [successMessage, setSuccessMessage] = useState('');
+
+  const columns: ColumnDef<Template>[] = [
+    {
+      accessorKey: 'policyName',
+      header: 'Template Name',
+      cell: ({ row }) => (
+        <div 
+          className="font-medium cursor-pointer hover:text-primary"
+          onClick={() => handleSelectTemplate(row.original)}
+        >
+          {row.original.policyName}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created At',
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+    },
+  ];
 
   useEffect(() => {
     const initialPermissions: Record<string, boolean> = {};
@@ -34,7 +62,7 @@ export const PermissionTemplates: React.FC = () => {
 
   const fetchTemplates = async () => {
     if (!isAuthenticated) return;
-    setLoadingList(true);
+    setLoading(true);
     try {
       const token = await getAccessTokenSilently();
       const res = await fetch('http://localhost:3000/auth/permissions/templates', {
@@ -47,7 +75,7 @@ export const PermissionTemplates: React.FC = () => {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoadingList(false);
+      setLoading(false);
     }
   };
 
@@ -55,7 +83,7 @@ export const PermissionTemplates: React.FC = () => {
 
   const loadTemplateDetails = async (id: string) => {
     if (!isAuthenticated) return;
-    setLoadingDetail(true);
+    setLoading(true);
     try {
       const token = await getAccessTokenSilently();
       const res = await fetch(`http://localhost:3000/auth/permissions/templates/${id}`, {
@@ -70,7 +98,7 @@ export const PermissionTemplates: React.FC = () => {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoadingDetail(false);
+      setLoading(false);
     }
   };
 
@@ -175,223 +203,211 @@ export const PermissionTemplates: React.FC = () => {
     setSelectedTemplate(null);
   };
 
-  if (loadingList) return <p className="text-center py-8">Loading permission templates...</p>;
-  
+  const renderPermissionsGrid = () => (
+    <div className="space-y-4">
+      {PERMISSION_GROUPS.map(group => (
+        <Card key={group.id}>
+          <CardHeader className="p-4 pb-2">
+            <h4 className="font-medium">{group.label}</h4>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {group.permissions.map(permission => (
+                <div key={permission.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={permission.value}
+                    checked={permissions[permission.value] || false}
+                    onCheckedChange={(checked) => 
+                      handlePermissionChange(permission.value, checked as boolean)
+                    }
+                    disabled={!editMode && !newTemplateMode}
+                  />
+                  <Label htmlFor={permission.value}>{permission.label}</Label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Permission Templates</h1>
-        <button
-          onClick={handleNewTemplateClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
+        <Button onClick={handleNewTemplateClick}>
           New Template
-        </button>
+        </Button>
       </div>
 
       {successMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          {successMessage}
-        </div>
+        <Alert variant="default">
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
       )}
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="md:w-1/3 bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Saved Templates</h2>
-          {templates.length === 0 ? (
-            <p className="text-gray-500">No templates found.</p>
-          ) : (
-            <ul className="space-y-2">
-              {templates.map(template => (
-                <li
-                  key={template.id}
-                  className={`p-3 rounded cursor-pointer hover:bg-gray-100 ${
-                    selectedTemplate?.id === template.id ? 'bg-blue-100 border-l-4 border-blue-500' : ''
-                  }`}
-                  onClick={() => handleSelectTemplate(template)}
-                >
-                  <div className="font-medium">{template.policyName}</div>
-                  <div className="text-sm text-gray-500">
-                    Created: {new Date(template.createdAt).toLocaleDateString()}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Saved Templates</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <DataTable<Template>
+                  columns={columns}
+                  data={templates}
+                  totalCount={templates.length}
+                  loading={false}
+                  error={null}
+                  pageIndex={0}
+                  pageSize={templates.length}
+                  setPageIndex={() => {}}
+                  setPageSize={() => {}}
+                  sorting={[]}
+                  setSorting={() => {}}
+                  enableRowSelection={false}
+                  emptyState={
+                    <div className="p-4 text-center text-muted-foreground">
+                      No templates found
+                    </div>
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="md:w-2/3 bg-white rounded-lg shadow p-4">
-          {loadingDetail ? (
-            <p className="text-center py-8">Loading template details...</p>
-          ) : newTemplateMode ? (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Create New Template</h2>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="templateName">
-                  Template Name
-                </label>
-                <input
-                  id="templateName"
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  placeholder="Enter template name"
-                />
-              </div>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-3">Permissions</h3>
+        <div className="lg:col-span-2">
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              {loading ? (
                 <div className="space-y-4">
-                  {PERMISSION_GROUPS.map(group => (
-                    <div key={group.id} className="border rounded p-4">
-                      <h4 className="font-medium mb-2">{group.label}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {group.permissions.map(permission => (
-                          <div key={permission.value} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={permission.value}
-                              checked={permissions[permission.value] || false}
-                              onChange={(e) => handlePermissionChange(permission.value, e.target.checked)}
-                              className="mr-2"
-                            />
-                            <label htmlFor={permission.value}>{permission.label}</label>
-                          </div>
+                  <Skeleton className="h-8 w-1/2" />
+                  <Skeleton className="h-4 w-full" />
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-6 w-1/3" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, j) => (
+                          <Skeleton key={j} className="h-4 w-full" />
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleCreateTemplate}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Create Template
-                </button>
-                <button
-                  onClick={() => setNewTemplateMode(false)}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : selectedTemplate ? (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                {editMode ? (
-                  <div className="w-full">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="editTemplateName">
-                      Template Name
-                    </label>
-                    <input
-                      id="editTemplateName"
-                      type="text"
+              ) : newTemplateMode ? (
+                <>
+                  <h2 className="text-xl font-semibold">Create New Template</h2>
+                  <div className="space-y-2">
+                    <Label htmlFor="templateName">Template Name</Label>
+                    <Input
+                      id="templateName"
                       value={templateName}
                       onChange={(e) => setTemplateName(e.target.value)}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      placeholder="Enter template name"
                     />
                   </div>
-                ) : (
-                  <h2 className="text-xl font-semibold">{selectedTemplate.policyName}</h2>
-                )}
-                {!editMode && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setEditMode(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      Update
-                    </button>
-                    <button
-                      onClick={handleDeleteTemplate}
-                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      Delete
-                    </button>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Permissions</h3>
+                    {renderPermissionsGrid()}
                   </div>
-                )}
-              </div>
-              
-              <p className="text-gray-600 mb-4">
-                <strong>Created At:</strong> {new Date(selectedTemplate.createdAt).toLocaleString()}
-              </p>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-3">Permissions</h3>
-                <div className="space-y-4">
-                  {PERMISSION_GROUPS.map(group => (
-                    <div key={group.id} className="border rounded p-4">
-                      <h4 className="font-medium mb-2">{group.label}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {group.permissions.map(permission => (
-                          <div key={permission.value} className="flex items-center">
-                            {editMode ? (
-                              <>
-                                <input
-                                  type="checkbox"
-                                  id={`edit-${permission.value}`}
-                                  checked={permissions[permission.value] || false}
-                                  onChange={(e) => handlePermissionChange(permission.value, e.target.checked)}
-                                  className="mr-2"
-                                />
-                                <label htmlFor={`edit-${permission.value}`}>{permission.label}</label>
-                              </>
-                            ) : (
-                              <>
-                                <input
-                                  type="checkbox"
-                                  checked={selectedTemplate.policy?.[permission.value] || false}
-                                  readOnly
-                                  className="mr-2"
-                                />
-                                <span>{permission.label}</span>
-                              </>
-                            )}
-                          </div>
-                        ))}
+                  
+                  <div className="flex space-x-3">
+                    <Button onClick={handleCreateTemplate}>
+                      Create Template
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setNewTemplateMode(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </>
+              ) : selectedTemplate ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    {editMode ? (
+                      <div className="space-y-2 w-full">
+                        <Label htmlFor="editTemplateName">Template Name</Label>
+                        <Input
+                          id="editTemplateName"
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.value)}
+                        />
                       </div>
+                    ) : (
+                      <h2 className="text-xl font-semibold">{selectedTemplate.policyName}</h2>
+                    )}
+                    {!editMode && (
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditMode(true)}
+                        >
+                          Update
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDeleteTemplate}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <p className="text-muted-foreground">
+                    Created: {new Date(selectedTemplate.createdAt).toLocaleString()}
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Permissions</h3>
+                    {renderPermissionsGrid()}
+                  </div>
+                  
+                  {editMode && (
+                    <div className="flex space-x-3">
+                      <Button onClick={handleUpdateTemplate}>
+                        Save Changes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setEditMode(false)}
+                      >
+                        Cancel
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              {editMode && (
-                <div className="flex space-x-3">
-                  <button
-                    onClick={handleUpdateTemplate}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={() => setEditMode(false)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    Cancel
-                  </button>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    {templates.length > 0 
+                      ? 'Select a template to view details' 
+                      : 'Create your first template to get started'}
+                  </p>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                {templates.length > 0 
-                  ? 'Select a template to view details' 
-                  : 'Create your first template to get started'}
-              </p>
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
