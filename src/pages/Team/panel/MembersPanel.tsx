@@ -3,14 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { UserPlus, X } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { UserPlus } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
 import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
 import { FilterPanel } from './filter-panel';
+import { SearchInput } from '@/components/search-input';
 
 const ROLE_OPTIONS = [
   { value: 'OWNER', display: 'Owner' },
@@ -68,11 +68,6 @@ export function MembersPanel() {
     navigate({ search: params.toString() }, { replace: true });
   }, [debounced]);
 
-  const handleClear = () => {
-    setSearchQuery('');
-    inputRef.current?.focus();
-  };
-
   const toggleRole = (role: string) => {
     setSelectedRoles(prev => 
       prev.includes(role) 
@@ -96,28 +91,16 @@ export function MembersPanel() {
             <CardTitle className="text-lg">Team Members</CardTitle>
             
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
-              <div className="relative flex-1 max-w-md">
-                <Input
-                  ref={inputRef}
-                  placeholder="Search members..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setPageIndex(0);
-                    setSearchQuery(e.target.value);
-                  }}
-                  className="pr-8"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                    onClick={handleClear}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
+              <SearchInput
+  value={searchQuery}
+  onChange={(val) => {
+    setPageIndex(0);
+    setSearchQuery(val);
+  }}
+  placeholder="Search members..."
+  autoFocus
+/>
+
 
               <div className="flex gap-2">
                 <FilterPanel
