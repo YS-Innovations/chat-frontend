@@ -5,7 +5,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { SearchInput } from '@/components/search-input';
+import { useMemo, useEffect, useState } from 'react';
 import type { InactiveMember } from '../types/types';
 
 export function Invitepending() {
@@ -13,11 +15,32 @@ export function Invitepending() {
     loading,
     error,
     members,
+    totalCount,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch,
+    sort,
+    setSort,
     resending,
     canViewInactive,
     canResend,
     handleResend,
   } = useInactiveMembers();
+
+  const [sortingState, setSortingState] = useState<SortingState>([]);
+
+  // Sync tanstack sort to our internal sort format
+  useEffect(() => {
+    const mappedSort = sortingState.map(s => ({
+      field: s.id,
+      direction: s.desc ? 'desc' as const : 'asc' as const,
+    }));
+    setSort(mappedSort);
+    setPage(0);
+  }, [sortingState]);
 
   const columns: ColumnDef<InactiveMember>[] = [
     {
@@ -26,9 +49,7 @@ export function Invitepending() {
       cell: ({ row }) => (
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarFallback className="bg-blue-100 text-blue-800">
-              {getInitials(row.original.email)}
-            </AvatarFallback>
+            <AvatarFallback>{getInitials(row.original.email)}</AvatarFallback>
           </Avatar>
           <span>{row.original.email}</span>
         </div>
@@ -37,18 +58,15 @@ export function Invitepending() {
     {
       accessorKey: 'invitedBy',
       header: 'Invited By',
-      cell: ({ row }) => (
+      cell: ({ row }) =>
         row.original.invitedBy ? (
           <div>
             <div>{row.original.invitedBy.name || 'Unknown'}</div>
-            <div className="text-sm text-muted-foreground">
-              {row.original.invitedBy.email}
-            </div>
+            <div className="text-sm text-muted-foreground">{row.original.invitedBy.email}</div>
           </div>
         ) : (
           'System'
-        )
-      ),
+        ),
     },
     {
       accessorKey: 'createdAt',
@@ -72,8 +90,8 @@ export function Invitepending() {
     },
     {
       id: 'actions',
-      cell: ({ row }) => (
-        row.original.status === 'Expired' && canResend && (
+      cell: ({ row }) =>
+        row.original.status === 'Expired' && canResend ? (
           <Button
             variant="outline"
             size="sm"
@@ -86,8 +104,7 @@ export function Invitepending() {
               'Resend Email'
             )}
           </Button>
-        )
-      ),
+        ) : null,
     },
   ];
 
@@ -100,26 +117,42 @@ export function Invitepending() {
   }
 
   return (
-    <DataTable<InactiveMember>
-      columns={columns}
-      data={members}
-      totalCount={members.length}
-      loading={loading}
-      error={error}
-      pageIndex={0}
-      pageSize={members.length}
-      setPageIndex={() => {}}
-      setPageSize={() => {}}
-      sorting={[]}
-      setSorting={() => {}}
-      enableRowSelection={false}
-      emptyState={
-        <EmptyState
-          hasSearch={false}
-          hasFilters={false}
-          onClearFilters={() => {}}
-        />
-      }
-    />
+    <div className="flex flex-col space-y-4">
+      <SearchInput
+        value={search}
+        onChange={(val) => {
+          setPage(0);
+          setSearch(val);
+        }}
+        placeholder="Search pending invites..."
+      />
+
+      <DataTable<InactiveMember>
+        columns={columns}
+        data={members}
+        totalCount={totalCount}
+        loading={loading}
+        error={error}
+        pageIndex={page}
+        pageSize={pageSize}
+        setPageIndex={setPage}
+        setPageSize={setPageSize}
+        sorting={sortingState}
+        setSorting={setSortingState}
+        enableRowSelection={false}
+        emptyState={
+          <EmptyState
+            hasSearch={!!search}
+            hasFilters={false}
+            onClearFilters={() => {
+              setSearch('');
+              setSort([{ field: 'createdAt', direction: 'desc' }]);
+              setSortingState([]);
+              setPage(0);
+            }}
+          />
+        }
+      />
+    </div>
   );
 }
