@@ -27,6 +27,7 @@ import {
 import { handleEditorShortcut } from '@/pages/Conversation/lib/shortcuts';
 import { HistoryEditor, withHistory } from 'slate-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { uploadFile } from '../lib/api';
 
 interface RichTextEditorProps {
   value: Descendant[];
@@ -334,7 +335,32 @@ export default function RichTextEditor({ value, onChange, onSend, disabled = fal
                 <File />
               </div>
             </label>
-            <input type="file" id="file-upload" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (file) alert(`Selected file: ${file.name}`); }} />
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                try {
+                  // Upload file using your backend API
+                  const { mediaUrl } = await uploadFile(file);
+
+                  // Insert file URL as a link into the editor
+                  const fileNode: SlateElement = {
+                    type: 'link',
+                    url: mediaUrl,
+                    children: [{ text: file.name }],
+                  };
+
+                  Transforms.insertNodes(editor, fileNode);
+                } catch (error) {
+                  console.error('File upload failed:', error);
+                  alert('File upload failed');
+                }
+              }}
+            />
           </div>
           <button
             onClick={() => {

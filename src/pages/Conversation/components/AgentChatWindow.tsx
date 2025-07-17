@@ -115,6 +115,18 @@ export default function AgentChatWindow({
 
           const senderName = msg.sender?.name || (isAgent ? msg.senderRole : 'You')
 
+          // Sanitize and extract image links
+          const content = sanitize(msg.content || '')
+          const imageRegex = /<a[^>]+href="([^"]+\.(?:jpe?g|png|gif|bmp|webp|svg))"[^>]*>.*?<\/a>/gi
+          const images: string[] = []
+          let cleanedContent = content
+
+          let match
+          while ((match = imageRegex.exec(content)) !== null) {
+            images.push(match[1])
+            cleanedContent = cleanedContent.replace(match[0], '')
+          }
+
           return (
             <div key={msg.id} className="flex flex-col max-w-[80%] space-y-1">
               <div
@@ -123,6 +135,7 @@ export default function AgentChatWindow({
                 {senderName}
               </div>
               <Card className={`px-3 py-2 text-sm ${bubbleClass}`}>
+                {/* Render mediaUrl if exists */}
                 {msg.mediaUrl ? (
                   isImageFile(msg.mediaUrl) ? (
                     <img
@@ -141,10 +154,29 @@ export default function AgentChatWindow({
                     </a>
                   )
                 ) : (
-                  <div
-                    className="prose prose-sm max-w-full prose-li:marker:text-muted-foreground prose-ol:list-decimal prose-ul:list-disc"
-                    dangerouslySetInnerHTML={{ __html: sanitize(msg.content || '') }}
-                  />
+                  <>
+                    {/* Render extracted image previews */}
+                    {images.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {images.map((url, idx) => (
+                          <img
+                            key={idx}
+                            src={url}
+                            alt={`img-${idx}`}
+                            className="max-w-64 max-h-48 object-cover rounded-md shadow"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Render remaining HTML content */}
+                    {cleanedContent.trim() && (
+                      <div
+                        className="prose prose-sm max-w-full prose-li:marker:text-muted-foreground prose-ol:list-decimal prose-ul:list-disc"
+                        dangerouslySetInnerHTML={{ __html: cleanedContent }}
+                      />
+                    )}
+                  </>
                 )}
               </Card>
             </div>
