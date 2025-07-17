@@ -69,9 +69,9 @@ export function MembersPanel() {
   }, [debounced]);
 
   const toggleRole = (role: string) => {
-    setSelectedRoles(prev => 
-      prev.includes(role) 
-        ? prev.filter(r => r !== role) 
+    setSelectedRoles(prev =>
+      prev.includes(role)
+        ? prev.filter(r => r !== role)
         : [...prev, role]
     );
     setPageIndex(0);
@@ -89,17 +89,17 @@ export function MembersPanel() {
         <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <CardTitle className="text-lg">Team Members</CardTitle>
-            
+
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
               <SearchInput
-  value={searchQuery}
-  onChange={(val) => {
-    setPageIndex(0);
-    setSearchQuery(val);
-  }}
-  placeholder="Search members..."
-  autoFocus
-/>
+                value={searchQuery}
+                onChange={(val) => {
+                  setPageIndex(0);
+                  setSearchQuery(val);
+                }}
+                placeholder="Search members..."
+                autoFocus
+              />
 
 
               <div className="flex gap-2">
@@ -109,7 +109,7 @@ export function MembersPanel() {
                   onRoleToggle={toggleRole}
                   onClearAll={clearAllFilters}
                 />
-                
+
                 <Button onClick={handleInviteClick} className="shrink-0">
                   <UserPlus className="mr-2 h-4 w-4" />
                   Invite
@@ -118,10 +118,10 @@ export function MembersPanel() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-           
+
             <TabsContent value="active">
               <MemberDataTable
                 members={members}

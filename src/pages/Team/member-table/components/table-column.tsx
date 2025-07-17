@@ -4,6 +4,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import type { Member } from "../../types/types";
+import { useSocket } from "@/test/SocketContext";
+import { StatusDot } from "@/components/StatusDot";
 
 export const columns: ColumnDef<Member>[] = [
   {
@@ -34,49 +36,31 @@ export const columns: ColumnDef<Member>[] = [
   },
 
   {
-    accessorKey: "name",
-    header: ({ column, table }) => {
-      const sorting = table.getState().sorting;
-      const sortIndex = sorting.findIndex((s) => s.id === column.id);
-      const isSorted = sortIndex > -1;
-      const sortDirection = isSorted ? (sorting[sortIndex].desc ? "desc" : "asc") : null;
+  accessorKey: "name",
+  cell: ({ row }) => {
+    const { userStatuses } = useSocket();
+    const isOnline = userStatuses[row.original.id]?.isOnline ?? false;
 
-      return (
-        <div
-          className="flex items-center space-x-1 cursor-pointer select-none"
-          onClick={column.getToggleSortingHandler()}
-        >
-          <span>Member</span>
-          {isSorted && (
-            <div className="flex items-center gap-1 text-muted-foreground text-xs">
-              {sortDirection === "asc" ? "▲" : "▼"}
-              <span className="text-[10px]">{sortIndex + 1}</span>
-            </div>
+    return (
+      <div className="relative flex items-center gap-x-2">
+        <Avatar className="relative h-8 w-8">
+          {row.original.picture ? (
+            <AvatarImage src={row.original.picture} alt={row.original.name || row.original.email} />
+          ) : (
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {getInitials(row.original.name || row.original.email)}
+            </AvatarFallback>
           )}
-        </div>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="flex items-center gap-x-2">
-        <Avatar className="h-8 w-8">
-          {row.original.picture && (
-            <AvatarImage
-              src={row.original.picture}
-              alt={row.original.name || row.original.email}
-            />
-          )}
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            {getInitials(row.original.name || row.original.email)}
-          </AvatarFallback>
+          <StatusDot isOnline={isOnline} />
         </Avatar>
         <div>
           <div className="font-medium">{row.original.name || "No name"}</div>
           <div className="text-sm text-muted-foreground">{row.original.email}</div>
         </div>
       </div>
-    ),
-    enableHiding: false,
+    );
   },
+},
 
   {
     accessorKey: "role",

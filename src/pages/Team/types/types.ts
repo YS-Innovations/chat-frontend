@@ -2,6 +2,7 @@
 
 export interface Member {
   id: string;
+  uuid:string;
   name: string | null;
   email: string;
   role: Role;
