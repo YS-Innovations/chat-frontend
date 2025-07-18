@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import type { Member } from "../../types/types";
-import { useSocket } from "@/test/SocketContext";
+import { useSocket } from "@/context/SocketContext";
 import { StatusDot } from "@/components/StatusDot";
 
 export const columns: ColumnDef<Member>[] = [
@@ -56,6 +56,17 @@ export const columns: ColumnDef<Member>[] = [
         <div>
           <div className="font-medium">{row.original.name || "No name"}</div>
           <div className="text-sm text-muted-foreground">{row.original.email}</div>
+          {userStatuses[row.original.id] && (
+                <p className="text-xs font-bold">
+                  {userStatuses[row.original.id].isOnline
+                    ? <span className="text-green-600">Online now</span>
+                    : null
+                    //  userStatuses[row.original.id].lastSeen
+                    //   ? `Last seen: ${new Date(userStatuses[row.original.id].lastSeen!).toLocaleTimeString()}`
+                    //   : 'Offline'
+                      }
+                </p>
+              )}
         </div>
       </div>
     );

@@ -2,13 +2,11 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
-import { useUserStatus } from "@/context/userStatus";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function useNavUser() {
   const { isCollapsed } = useSidebar();
   const { user: auth0User, isLoading, logout } = useAuth0();
-  const { statuses } = useUserStatus();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -25,9 +23,6 @@ export function useNavUser() {
     avatar: auth0User.picture ?? "/default-avatar.png",
   } : null;
 
-  const userStatus = auth0User?.sub 
-    ? Object.values(statuses).find(s => s.user?.auth0Id === auth0User.sub)
-    : null;
 
   return {
     isCollapsed,
@@ -36,6 +31,5 @@ export function useNavUser() {
     navigate,
     handleLogout,
     currentUser,
-    userStatus,
   };
 }

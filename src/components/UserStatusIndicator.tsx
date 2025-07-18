@@ -1,6 +1,6 @@
 // src/components/UserStatusIndicator.tsx
 import React from 'react';
-import { useSocket } from './SocketContext';
+import { useSocket } from '../context/SocketContext';
 
 interface UserStatusIndicatorProps {
   userId: string;

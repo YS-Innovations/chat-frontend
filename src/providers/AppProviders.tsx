@@ -1,8 +1,7 @@
 import React from 'react'
 import { Auth0Provider } from '@auth0/auth0-react'
 import { PermissionsProvider } from '../context/permissions'
-import { UserStatusProvider } from '../context/userStatus'
-import { SocketProvider } from '@/test/SocketContext'
+import { SocketProvider } from '@/context/SocketContext'
 
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -18,9 +17,7 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     >
       <PermissionsProvider>
         <SocketProvider>
-        <UserStatusProvider>
           {children}
-        </UserStatusProvider>
         </SocketProvider>
       </PermissionsProvider>
     </Auth0Provider>
