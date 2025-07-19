@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useNavUser } from "./hooks/use-nav-user";
-import { useUserStatus } from "./hooks/use-user-status"; // 👈 Import status hook
+import { useUserStatus } from "./hooks/use-user-status";
+import { StatusDot } from "@/components/StatusDot";
 
 export function NavUser() {
   const {
@@ -44,7 +45,7 @@ export function NavUser() {
     currentUser,
   } = useNavUser();
 
-  const { isOnline } = useUserStatus(); // 👈 Use hook
+  const { isOnline } = useUserStatus();
 
   if (isLoading) {
     return (
@@ -99,6 +100,7 @@ export function NavUser() {
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
+                <StatusDot isOnline={isOnline} size="sm" />
               </div>
               {!isCollapsed && (
                 <>
@@ -109,13 +111,6 @@ export function NavUser() {
                     <span className="truncate text-xs text-muted-foreground">
                       {currentUser!.email}
                     </span>
-                          <span
-        className={`ml-2 h-3 w-3 rounded-full ${
-          isOnline ? 'bg-green-500' : 'bg-gray-400'
-        }`}
-        title={isOnline ? 'Online' : 'Offline'}
-      />
-
                   </div>
                   <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </>
@@ -144,22 +139,14 @@ export function NavUser() {
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
+                  <StatusDot isOnline={isOnline} />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{currentUser!.name}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {currentUser!.email}
                   </span>
-                  <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
-                    <span
-                      className={`inline-block size-2 rounded-full ${
-                        isOnline === null
-                          ? "bg-gray-400"
-                          : isOnline
-                          ? "bg-green-500"
-                          : "bg-red-500"
-                      }`}
-                    />
+                  <span className="truncate text-xs text-muted-foreground">
                     {isOnline === null ? "..." : isOnline ? "Online" : "Offline"}
                   </span>
                 </div>
