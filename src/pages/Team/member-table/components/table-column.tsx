@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
+
 export const columns: ColumnDef<Member>[] = [
   {
     id: "select",
@@ -41,8 +42,10 @@ export const columns: ColumnDef<Member>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-   {
-    accessorKey: "name",
+  {
+    id: "name",
+    header: "Name",
+    accessorFn: (row) => `${row.name} ${row.email}`,
     cell: ({ row }) => {
       const { userStatuses } = useSocket();
       const isOnline = userStatuses[row.original.id]?.isOnline ?? false;
@@ -85,7 +88,7 @@ export const columns: ColumnDef<Member>[] = [
     },
   },
   {
-    accessorKey: "role",
+    id: "role",
     header: ({ column, table }) => {
       const sorting = table.getState().sorting;
       const sortIndex = sorting.findIndex((s) => s.id === column.id);
@@ -112,9 +115,10 @@ export const columns: ColumnDef<Member>[] = [
         {row.original.role}
       </Badge>
     ),
+    accessorFn: (row) => row.role,
   },
   {
-    accessorKey: "lastLogin",
+    id: "lastLogin",
     header: ({ column, table }) => {
       const sorting = table.getState().sorting;
       const sortIndex = sorting.findIndex((s) => s.id === column.id);
@@ -140,6 +144,7 @@ export const columns: ColumnDef<Member>[] = [
       row.original.lastLogin
         ? new Date(row.original.lastLogin).toLocaleDateString()
         : "Never",
+    accessorFn: (row) => row.lastLogin,
   },
   {
     id: "actions",
@@ -168,5 +173,6 @@ export const columns: ColumnDef<Member>[] = [
         </DropdownMenu>
       );
     },
+    enableSorting: false,
   },
 ];

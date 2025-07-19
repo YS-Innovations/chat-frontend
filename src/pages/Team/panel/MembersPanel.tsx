@@ -140,6 +140,7 @@ export function MembersPanel() {
                 setSelectedRoles={setSelectedRoles}
                 setSearchQuery={setSearchQuery}
                 clearAllFilters={clearAllFilters}
+                simplifiedView={!!panelMode}
               />
             </TabsContent>
             {canViewInactive && (
