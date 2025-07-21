@@ -1,10 +1,16 @@
-// pages/Onboarding.tsx
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import { useUserData } from './hooks/useUserData';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -25,44 +31,36 @@ function Onboarding() {
     try {
       const token = await getAccessTokenSilently();
 
-      const clientInfo = {
-        browser: navigator.userAgent,
-        os: navigator.platform,
-        ip: 'auto',
-        loginTime: new Date().toISOString(),
-        deviceType: 'desktop',
-      };
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/save-user`,
-        { ...user, organizationName: data.organizationName, clientInfo },
+      // ✅ PATCH request to onboard route
+      const res = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/auth/onboard`,
+        { organizationName: data.organizationName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedUser = await axios.get(
-        `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setUserData(updatedUser.data);
+      // Update local state
+      setUserData(res.data);
       navigate('/app');
       window.location.reload();
     } catch (err) {
-      console.error(err);
-      alert('Error saving organization. Try again.');
+      console.error('Onboarding failed:', err);
+      alert('Error saving organization. Please try again.');
     }
   };
 
   if (loading) return <div>Loading...</div>;
+
   if (userData?.hasOnboarded) {
-    navigate('/onboarding/edit');
+    navigate('/onboarding/edit'); // Optional: redirect to edit if already onboarded
     return null;
   }
 
   return (
-    <div>
-      <h1>Welcome! Let’s set up your organization</h1>
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow rounded">
+      <h1 className="text-xl font-semibold mb-4">Welcome! Let’s set up your organization</h1>
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FormField
             control={form.control}
             name="organizationName"
@@ -70,12 +68,17 @@ function Onboarding() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Organization Name</FormLabel>
-                <FormControl><Input {...field} /></FormControl>
+                <FormControl>
+                  <Input placeholder="e.g. Acme Corp" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit">Save</Button>
+
+          <Button type="submit" className="mt-4 w-full">
+            Save & Continue
+          </Button>
         </form>
       </Form>
     </div>

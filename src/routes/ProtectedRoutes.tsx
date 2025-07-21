@@ -47,18 +47,27 @@ export const ProtectedRoutes = () => {
         );
 
         const userData = res.data;
-        const isOwner = userData?.role === 'owner';
+        const isOwner = userData?.role?.toUpperCase() === 'OWNER';
         const isNewOwner = isOwner && !userData?.hasOnboarded;
+        const isInAppRoutes = location.pathname.startsWith('/app');
+        const isOnboardingRoute = location.pathname === '/onboarding';
 
-        if (isNewOwner && location.pathname !== '/onboarding') {
-          navigate('/onboarding');
+        // Redirect new OWNER to onboarding
+        if (isNewOwner && !isOnboardingRoute) {
+          navigate('/onboarding', { replace: true });
+          return;
+        }
+
+        // Redirect onboarded OWNER away from onboarding page
+        if (!isNewOwner && isOnboardingRoute) {
+          navigate('/app', { replace: true });
           return;
         }
 
         setAuthChecked(true);
       } catch (err) {
         console.error('Failed to fetch user data:', err);
-        setAuthChecked(true); // Proceed anyway
+        setAuthChecked(true); // Allow fallback to app layout
       }
     };
 
