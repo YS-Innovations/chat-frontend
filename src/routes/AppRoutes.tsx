@@ -11,6 +11,7 @@ import { PermissionTemplates } from '@/pages/Team/permissionTemplates/Permission
 import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 import Dashboard from '@/pages/Conversation';
 import Onboarding from '@/pages/Onboarding/Onboarding';
+import EditOrganization from '@/pages/Onboarding/EditOrganization';
 
 
 function AppRoutes() {
@@ -21,7 +22,7 @@ function AppRoutes() {
       <Route path="/onboarding" element={<Onboarding />} errorElement={<ErrorPage />} />
       <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
         <Route index element={<ApplicationPage />} />
-        <Route path="onboarding" element={<Onboarding />} errorElement={<ErrorPage />} />
+        <Route path="onboarding/edit" element={<EditOrganization />} errorElement={<ErrorPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
         <Route

@@ -1,6 +1,5 @@
-// pages/Onboarding.tsx
+// pages/EditOrganization.tsx
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import { useUserData } from './hooks/useUserData';
@@ -12,55 +11,40 @@ interface OnboardingFormValues {
   organizationName: string;
 }
 
-function Onboarding() {
+function EditOrganization() {
   const { user, getAccessTokenSilently } = useAuth0();
-  const navigate = useNavigate();
   const { userData, setUserData, loading } = useUserData();
 
   const form = useForm<OnboardingFormValues>({
-    defaultValues: { organizationName: '' },
+    defaultValues: { organizationName: userData?.organization?.name || '' },
   });
 
   const onSubmit = async (data: OnboardingFormValues) => {
     try {
       const token = await getAccessTokenSilently();
-
-      const clientInfo = {
-        browser: navigator.userAgent,
-        os: navigator.platform,
-        ip: 'auto',
-        loginTime: new Date().toISOString(),
-        deviceType: 'desktop',
-      };
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/save-user`,
-        { ...user, organizationName: data.organizationName, clientInfo },
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}/organization`,
+        { organizationName: data.organizationName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedUser = await axios.get(
+      const updated = await axios.get(
         `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUserData(updatedUser.data);
-      navigate('/app');
-      window.location.reload();
+      setUserData(updated.data);
+      alert('Organization name updated.');
     } catch (err) {
       console.error(err);
-      alert('Error saving organization. Try again.');
+      alert('Update failed.');
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (userData?.hasOnboarded) {
-    navigate('/onboarding/edit');
-    return null;
-  }
 
   return (
     <div>
-      <h1>Welcome! Let’s set up your organization</h1>
+      <h1>Edit Organization Name</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
@@ -75,11 +59,11 @@ function Onboarding() {
               </FormItem>
             )}
           />
-          <Button type="submit">Save</Button>
+          <Button type="submit">Update</Button>
         </form>
       </Form>
     </div>
   );
 }
 
-export default Onboarding;
+export default EditOrganization;
