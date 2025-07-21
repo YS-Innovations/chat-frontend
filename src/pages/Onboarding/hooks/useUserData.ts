@@ -3,8 +3,14 @@ import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 
+export interface Organization {
+  id?: string;
+  name: string;
+  website: string;
+}
+
 export interface UserData {
-  organization?: { name: string };
+  organization?: Organization;
   hasOnboarded?: boolean;
 }
 
@@ -27,6 +33,7 @@ export function useUserData() {
         setUserData(res.data);
       } catch (err) {
         setError('Failed to fetch user data.');
+        console.error('Error fetching user data:', err);
       } finally {
         setLoading(false);
       }
