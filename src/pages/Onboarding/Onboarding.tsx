@@ -16,15 +16,16 @@ import { Button } from '@/components/ui/button';
 
 interface OnboardingFormValues {
   organizationName: string;
+  websiteUrl: string;
 }
 
 function Onboarding() {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const { userData, setUserData, loading } = useUserData();
 
   const form = useForm<OnboardingFormValues>({
-    defaultValues: { organizationName: '' },
+    defaultValues: { organizationName: '', websiteUrl: '' },
   });
 
   const onSubmit = async (data: OnboardingFormValues) => {
@@ -34,7 +35,7 @@ function Onboarding() {
       // ✅ PATCH request to onboard route
       const res = await axios.patch(
         `${import.meta.env.VITE_API_URL}/auth/onboard`,
-        { organizationName: data.organizationName },
+        { organizationName: data.organizationName, websiteUrl: data.websiteUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -75,7 +76,29 @@ function Onboarding() {
               </FormItem>
             )}
           />
-
+          <FormField
+            control={form.control}
+            name="websiteUrl"
+            rules={{
+              required: 'Website URL is required',
+              pattern: {
+                value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                message: 'Please enter a valid website URL'
+              }
+            }}
+            render={({ field }) => (
+              <FormItem className="mb-4">
+                <FormLabel>Website URL</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://yourcompany.com"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <Button type="submit" className="mt-4 w-full">
             Save & Continue
           </Button>
