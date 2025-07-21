@@ -60,7 +60,10 @@ export function MemberDetails({
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
-  const [loginHistory, setLoginHistory] = useState<UserLoginHistory[]>([]);
+  const [loginHistory, setLoginHistory] = useState<{
+    history: UserLoginHistory[];
+    total: number;
+  }>({ history: [], total: 0 });
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
 
@@ -74,15 +77,22 @@ export function MemberDetails({
     const fetchHistories = async () => {
       try {
         const token = await getAccessTokenSilently();
+        const page = 1; // You might want to make this stateful
+    const perPage = 5;
 
         // Fetch login history
         const loginRes = await fetch(
-          `http://localhost:3000/auth/user/${member.id}/login-history`,
+      `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        if (!loginRes.ok) throw new Error('Failed to fetch login history');
         const loginData = await loginRes.json();
-        setLoginHistory(loginData);
+        setLoginHistory({
+          history: loginData.history || [],
+          total: loginData.total || 0
+        });
 
+        
         // Fetch permission history
         const permRes = await fetch(
           `http://localhost:3000/auth/permissions/${member.id}/history`,
@@ -381,7 +391,11 @@ export function MemberDetails({
               </div>
             </div>
           </div>
-          <LoginHistory history={loginHistory} />
+          <LoginHistory 
+  history={loginHistory.history} 
+  total={loginHistory.total} 
+  memberId={member.id} 
+/>
         </TabsContent>
 
         <TabsContent value="permissions" className="flex-1 overflow-auto pt-4">
