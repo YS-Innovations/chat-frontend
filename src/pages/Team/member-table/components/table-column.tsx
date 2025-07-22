@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
-
+import { UserStatusSwitch } from "./UserStatusSwitch";
 export const columns: ColumnDef<Member>[] = [
   {
     id: "select",
@@ -55,9 +55,9 @@ export const columns: ColumnDef<Member>[] = [
           <div className="relative">
             <Avatar className="h-8 w-8">
               {row.original.picture ? (
-                <AvatarImage 
-                  src={row.original.picture} 
-                  alt={row.original.name || row.original.email} 
+                <AvatarImage
+                  src={row.original.picture}
+                  alt={row.original.name || row.original.email}
                 />
               ) : (
                 <AvatarFallback className="bg-primary text-primary-foreground">
@@ -175,4 +175,10 @@ export const columns: ColumnDef<Member>[] = [
     },
     enableSorting: false,
   },
+  {
+  id: "status",
+  header: "Status",
+  cell: ({ row }) => <UserStatusSwitch member={row.original} />,
+  enableSorting: false,
+},
 ];
