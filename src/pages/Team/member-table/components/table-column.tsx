@@ -142,7 +142,7 @@ export const columns: ColumnDef<Member>[] = [
     },
     cell: ({ row }) =>
       row.original.lastLogin
-        ? new Date(row.original.lastLogin).toLocaleDateString()
+        ? new Date(row.original.lastLogin).toLocaleString()
         : "Never",
     accessorFn: (row) => row.lastLogin,
   },
