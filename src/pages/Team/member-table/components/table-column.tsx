@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { UserStatusSwitch } from "./UserStatusSwitch";
+import { DeleteUserButton } from "../../member-details-page/delete/delete-user-button";
 export const columns: ColumnDef<Member>[] = [
   {
     id: "select",
@@ -152,28 +153,36 @@ export const columns: ColumnDef<Member>[] = [
     cell: ({ row }) => <UserStatusSwitch member={row.original} />,
     enableSorting: false,
   },
-  {
-    id: "actions",
-    cell: () => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-    enableSorting: false,
+{
+  id: "actions",
+  cell: ({ row }) => {
+    const member = row.original;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>Edit</DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <DeleteUserButton
+              userId={member.id}
+              userRole={member.role}
+              onSuccess={() => {
+              }}
+              className="w-full text-left"
+            />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   },
+  enableSorting: false,
+}
+
 
 ];
