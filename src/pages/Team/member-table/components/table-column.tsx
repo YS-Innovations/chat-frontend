@@ -147,9 +147,14 @@ export const columns: ColumnDef<Member>[] = [
     accessorFn: (row) => row.lastLogin,
   },
   {
+    id: "status",
+    header: "Status",
+    cell: ({ row }) => <UserStatusSwitch member={row.original} />,
+    enableSorting: false,
+  },
+  {
     id: "actions",
-    cell: ({ row }) => {
-      const member = row.original;
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -158,15 +163,10 @@ export const columns: ColumnDef<Member>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <div className="px-2 py-1.5 text-sm">
-              Status: <Badge variant={member.blocked ? "destructive" : "default"}>
-                {member.blocked ? "Blocked" : "Active"}
-              </Badge>
-            </div>
             <DropdownMenuItem>
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -175,10 +175,5 @@ export const columns: ColumnDef<Member>[] = [
     },
     enableSorting: false,
   },
-  {
-  id: "status",
-  header: "Status",
-  cell: ({ row }) => <UserStatusSwitch member={row.original} />,
-  enableSorting: false,
-},
+
 ];

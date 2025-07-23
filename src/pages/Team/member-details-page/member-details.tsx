@@ -26,6 +26,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { useDeleteUser } from "./delete/useDeleteUser";
 
 interface MemberDetailsProps {
   member: Member;
@@ -51,7 +52,6 @@ export function MemberDetails({
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>(permissions);
   const { hasPermission, role } = usePermissions();
-  const [deleting, setDeleting] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
@@ -60,13 +60,10 @@ export function MemberDetails({
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
-  const [loginHistory, setLoginHistory] = useState<{
-    history: UserLoginHistory[];
-    total: number;
-  }>({ history: [], total: 0 });
+  const [loginHistory, setLoginHistory] = useState<{history: UserLoginHistory[]; total: number;}>({ history: [], total: 0 });
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
-
+  const { deleting, handleDelete } = useDeleteUser(onClose);
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
@@ -78,11 +75,11 @@ export function MemberDetails({
       try {
         const token = await getAccessTokenSilently();
         const page = 1; // You might want to make this stateful
-    const perPage = 5;
+        const perPage = 5;
 
         // Fetch login history
         const loginRes = await fetch(
-      `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
+          `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!loginRes.ok) throw new Error('Failed to fetch login history');
@@ -92,7 +89,7 @@ export function MemberDetails({
           total: loginData.total || 0
         });
 
-        
+
         // Fetch permission history
         const permRes = await fetch(
           `http://localhost:3000/auth/permissions/${member.id}/history`,
@@ -112,27 +109,6 @@ export function MemberDetails({
   const canDelete = role === 'OWNER' ||
     (hasPermission('user-delete') && member.role === 'AGENT');
 
-  const handleDelete = async (e: React.MouseEvent, memberId: string) => {
-    e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      setDeleting(true);
-      const token = await getAccessTokenSilently();
-      await fetch(`http://localhost:3000/auth/members/${memberId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      onClose();
-    } catch (error) {
-      console.error('Delete failed:', error);
-      toast("Delete failed", {
-        description: "Could not delete user",
-      });
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   useEffect(() => {
     setTempPermissions(permissions);
@@ -308,7 +284,10 @@ export function MemberDetails({
           <Button
             variant="destructive"
             size="sm"
-            onClick={(e) => handleDelete(e, member.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(member.id);
+            }}
             disabled={deleting}
           >
             {deleting ? 'Deleting...' : 'Delete'}
@@ -391,11 +370,11 @@ export function MemberDetails({
               </div>
             </div>
           </div>
-          <LoginHistory 
-  history={loginHistory.history} 
-  total={loginHistory.total} 
-  memberId={member.id} 
-/>
+          <LoginHistory
+            history={loginHistory.history}
+            total={loginHistory.total}
+            memberId={member.id}
+          />
         </TabsContent>
 
         <TabsContent value="permissions" className="flex-1 overflow-auto pt-4">
