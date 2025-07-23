@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -19,17 +19,21 @@ export const ProtectedRoutes = () => {
   const navigate = useNavigate();
 
   const [authChecked, setAuthChecked] = useState(false);
+  const isCheckingRef = useRef(false); // Track if checkAuthState is running
 
   useEffect(() => {
     const checkAuthState = async () => {
-      if (isLoading) return;
+      if (isLoading || isCheckingRef.current) return; // Prevent duplicate call
+      isCheckingRef.current = true;
 
       if (!isAuthenticated) {
         try {
           await getAccessTokenSilently();
-          setAuthChecked(true);
         } catch {
+          // ignore
+        } finally {
           setAuthChecked(true);
+          isCheckingRef.current = false;
         }
         return;
       }
@@ -49,37 +53,28 @@ export const ProtectedRoutes = () => {
         const userData = res.data;
         const isOwner = userData?.role?.toUpperCase() === 'OWNER';
         const isNewOwner = isOwner && !userData?.hasOnboarded;
-        const isInAppRoutes = location.pathname.startsWith('/app');
         const isOnboardingRoute = location.pathname === '/onboarding';
 
         // Redirect new OWNER to onboarding
         if (isNewOwner && !isOnboardingRoute) {
           navigate('/onboarding', { replace: true });
-          return;
-        }
-
+        } 
         // Redirect onboarded OWNER away from onboarding page
-        if (!isNewOwner && isOnboardingRoute) {
+        else if (!isNewOwner && isOnboardingRoute) {
           navigate('/app', { replace: true });
-          return;
+        } else {
+          setAuthChecked(true);
         }
-
-        setAuthChecked(true);
       } catch (err) {
         console.error('Failed to fetch user data:', err);
-        setAuthChecked(true); // Allow fallback to app layout
+        setAuthChecked(true);
+      } finally {
+        isCheckingRef.current = false;
       }
     };
 
     checkAuthState();
-  }, [
-    isLoading,
-    isAuthenticated,
-    getAccessTokenSilently,
-    user,
-    navigate,
-    location.pathname,
-  ]);
+  }, [isLoading, isAuthenticated, getAccessTokenSilently, user?.sub, navigate, location.pathname]);
 
   if (isLoading || !authChecked) {
     return <LoadingSpinner />;
