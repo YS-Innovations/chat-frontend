@@ -26,7 +26,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { useDeleteUser } from "./delete/useDeleteUser";
+import { DeleteUserButton } from "./delete/delete-user-button";
 
 interface MemberDetailsProps {
   member: Member;
@@ -60,10 +60,9 @@ export function MemberDetails({
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
-  const [loginHistory, setLoginHistory] = useState<{history: UserLoginHistory[]; total: number;}>({ history: [], total: 0 });
+  const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
-  const { deleting, handleDelete } = useDeleteUser(onClose);
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
@@ -104,10 +103,6 @@ export function MemberDetails({
 
     fetchHistories();
   }, [member, getAccessTokenSilently]);
-
-
-  const canDelete = role === 'OWNER' ||
-    (hasPermission('user-delete') && member.role === 'AGENT');
 
 
   useEffect(() => {
@@ -280,19 +275,11 @@ export function MemberDetails({
         </Badge>
       </div>
       <div className="flex gap-2 justify-end px-4 mb-4">
-        {canDelete && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(member.id);
-            }}
-            disabled={deleting}
-          >
-            {deleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        )}
+        <DeleteUserButton
+          userId={member.id}
+          userRole={member.role}
+          onSuccess={onClose}
+        />
         {role === 'OWNER' && (
           <>
             {member.role === 'AGENT' && (
