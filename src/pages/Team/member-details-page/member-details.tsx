@@ -26,7 +26,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { DeleteUserButton } from "./delete/delete-user-button";
+import { DeleteUserButton } from "./delete/components/DeleteUserButton";
 
 interface MemberDetailsProps {
   member: Member;

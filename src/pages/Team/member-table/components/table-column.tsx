@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { UserStatusSwitch } from "./UserStatusSwitch";
-import { DeleteUserButton } from "../../member-details-page/delete/delete-user-button";
+import { DeleteUserButton } from "../../member-details-page/delete/components/DeleteUserButton";
 export const columns: ColumnDef<Member>[] = [
   {
     id: "select",
@@ -168,13 +168,12 @@ export const columns: ColumnDef<Member>[] = [
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Edit</DropdownMenuItem>
 
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild onClick={e => e.stopPropagation()}>
             <DeleteUserButton
               userId={member.id}
               userRole={member.role}
-              onSuccess={() => {
-              }}
-              className="w-full text-left"
+              onSuccess={() => {}}
+              className="w-full text-left" 
             />
           </DropdownMenuItem>
         </DropdownMenuContent>
