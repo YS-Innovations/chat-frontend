@@ -1,17 +1,15 @@
 import { useEffect, useCallback, useRef } from "react";
 import { UAParser } from "ua-parser-js";
 
-export default function useClientInfo(user: { id?: string; [key: string]: any }) {
-  const lastUserIdRef = useRef<string | null>(null);
+export default function useClientInfo(user: any) {
+  const lastUserIdRef = useRef<any>(null);
 
   const fetchClientInfo = useCallback(async () => {
     try {
-      // Get client IP address
       const ipResponse = await fetch("https://api.ipify.org?format=json");
       const ipData = await ipResponse.json();
       const clientIp = ipData.ip;
 
-      // Parse user-agent
       const parser = new UAParser();
       const result = parser.getResult();
 
@@ -24,19 +22,19 @@ export default function useClientInfo(user: { id?: string; [key: string]: any })
         loginTime: new Date().toISOString(),
       };
 
-      // Send to backend
-      await fetch("http://localhost:3000/auth/save-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...user,
-          clientInfo,
-        }),
-      });
+      if (user) {
+        await fetch("http://localhost:3000/auth/save-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...user,
+            clientInfo,
+          }),
+        });
+      }
     } catch (error) {
-      console.error("Error fetching client info:", error);
+      console.error("Error getting client info:", error);
 
-      // Fallback info if IP fetch fails
       const parser = new UAParser();
       const result = parser.getResult();
 
@@ -49,25 +47,27 @@ export default function useClientInfo(user: { id?: string; [key: string]: any })
         loginTime: new Date().toISOString(),
       };
 
-      // Still send user info without IP
-      await fetch("http://localhost:3000/auth/save-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...user,
-          clientInfo,
-        }),
-      });
+      if (user) {
+        await fetch("http://localhost:3000/auth/save-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...user,
+            clientInfo,
+          }),
+        });
+      }
     }
   }, [user]);
 
   useEffect(() => {
-    if (!user || !user.id) return;
+    if (!user) return;
 
-    // Only fetch if this user hasn't been handled yet
+    // Assuming user has an 'id' property you can uniquely identify
     if (lastUserIdRef.current !== user.id) {
       lastUserIdRef.current = user.id;
       fetchClientInfo();
     }
+    // else: same user id, do not re-fetch
   }, [user, fetchClientInfo]);
 }
