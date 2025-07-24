@@ -1,7 +1,7 @@
 // src/pages/contacts/components/member-details.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -67,13 +67,19 @@ export function MemberDetails({
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
 
+  // Use ref to track if we're already fetching data
+  const isFetchingRef = useRef(false);
+
   useEffect(() => {
     if (!member) return;
 
     const fetchHistories = async () => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+
       try {
         const token = await getAccessTokenSilently();
-        const page = 1; // You might want to make this stateful
+        const page = 1;
         const perPage = 5;
 
         // Fetch login history
@@ -88,7 +94,6 @@ export function MemberDetails({
           total: loginData.total || 0
         });
 
-
         // Fetch permission history
         const permRes = await fetch(
           `http://localhost:3000/auth/permissions/${member.id}/history`,
@@ -98,12 +103,13 @@ export function MemberDetails({
         setPermissionHistory(permData);
       } catch (error) {
         console.error('Error fetching histories:', error);
+      } finally {
+        isFetchingRef.current = false;
       }
     };
 
     fetchHistories();
   }, [member, getAccessTokenSilently]);
-
 
   useEffect(() => {
     setTempPermissions(permissions);
@@ -183,7 +189,6 @@ export function MemberDetails({
     }
   };
 
-
   const handleSaveAsTemplate = async (templateName: string) => {
     await savePermissions(tempPermissions, true, templateName);
     fetchTemplates();
@@ -235,10 +240,8 @@ export function MemberDetails({
 
   const canViewPermissions = role === 'OWNER' || hasPermission('permission-view');
   const canEditPermissions = useMemo(() => {
-    // Hide for owners viewing other owners
     if (role === 'OWNER' && member.role === 'OWNER') return false;
     if (role === 'ADMIN' && member.role === 'ADMIN') return false;
-    // Show for owners viewing non-owners
     return role === 'OWNER' || hasPermission('permission-edit');
   }, [role, member.role, hasPermission]);
 
@@ -454,9 +457,6 @@ export function MemberDetails({
             )
           )}
         </TabsContent>
-        <TabsContent value="history">
-
-        </TabsContent>
       </Tabs>
 
       <TemplatePermissionsModal
@@ -473,9 +473,7 @@ export function MemberDetails({
           } else if (action === 'updateTemplate' && selectedTemplate) {
             try {
               await updateTemplate(token, selectedTemplate.id, { policy: perms });
-              // Show success toast/message
               toast.success('Template updated successfully');
-              // Refresh templates if needed
               fetchTemplates();
             } catch (error) {
               toast.error('Failed to update template');

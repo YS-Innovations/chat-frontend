@@ -1,3 +1,4 @@
+// src/pages/contacts/components/login-history/login-history.tsx
 import {
   Table,
   TableBody,
@@ -7,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { UserLoginHistory } from "../types/types";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -24,10 +25,16 @@ export function LoginHistory({ history, total, memberId }: LoginHistoryProps) {
   const itemsPerPage = 5;
   const hasMore = page * itemsPerPage < total;
   const { getAccessTokenSilently } = useAuth0();
+  
+  // Use ref to track if we're already loading more
+  const isLoadingMoreRef = useRef(false);
 
   const loadMore = async () => {
+    if (isLoadingMoreRef.current) return;
+    isLoadingMoreRef.current = true;
+    setLoadingMore(true);
+
     try {
-      setLoadingMore(true);
       const token = await getAccessTokenSilently();
       const nextPage = page + 1;
       const res = await fetch(
@@ -43,6 +50,7 @@ export function LoginHistory({ history, total, memberId }: LoginHistoryProps) {
     } catch (error) {
       console.error('Error loading more:', error);
     } finally {
+      isLoadingMoreRef.current = false;
       setLoadingMore(false);
     }
   };
