@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -16,11 +16,14 @@ export function useAcceptInvite() {
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Verify token, 2: Set password
 
+  const hasVerifiedTokenRef = useRef<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tokenParam = params.get('token');
-    if (tokenParam) {
+    if (tokenParam && tokenParam !== hasVerifiedTokenRef.current) {
       setToken(tokenParam);
+      hasVerifiedTokenRef.current = tokenParam;
       verifyToken(tokenParam);
     }
   }, [location]);
