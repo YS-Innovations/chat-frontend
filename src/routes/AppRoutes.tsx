@@ -26,26 +26,10 @@ function AppRoutes() {
         <Route path="onboarding/edit" element={<EditOrganization />} errorElement={<ErrorPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
-        <Route
-          path="team/invite"
-          element={
-            <PermissionGuard permission="member-list">
-              <InviteFormWrapper />
-            </PermissionGuard>
-          }
-        />
+        <Route path="team/invite" element={<PermissionGuard permission="member-list"> <InviteFormWrapper /> </PermissionGuard>} />
         <Route path="team/invite-pending" element={<Invitepending />}></Route>
-        <Route
-          path="team"
-          element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
-        >
-
-          <Route path="active" element={<Teams />}>
-            <Route path="user/:memberId" element={<Teams />} />
-          </Route>
-          
-        </Route>
-
+        <Route path="team" element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>} />
+        <Route path="team/user/:memberId" element={<PermissionGuard permission="member-list"> <Teams /> </PermissionGuard>} />
         <Route path="conversations" element={<Dashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
