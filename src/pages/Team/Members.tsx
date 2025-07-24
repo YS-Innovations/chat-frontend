@@ -11,9 +11,9 @@ export function Teams() {
   } = useContactsLogic();
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 p-6">
-        <PanelGroup direction="horizontal" className="h-full rounded-lg border">
+    <div className="flex flex-col">
+      <div className="flex-1">
+        <PanelGroup direction="horizontal">
           <MembersPanel />
           {panelMode === 'details' && (
             <>
