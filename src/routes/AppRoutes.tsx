@@ -8,11 +8,11 @@ import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import ErrorPage from '../pages/ErrorPage';
 import { PermissionTemplates } from '@/pages/Team/permissionTemplates/PermissionTemplates';
-import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 import Dashboard from '@/pages/Conversation';
 import Onboarding from '@/pages/Onboarding/Onboarding';
 import EditOrganization from '@/pages/Onboarding/EditOrganization';
 import { Invitepending } from '@/pages/Team/invitePendingMembers/invitePendingMembers';
+import { InviteForm } from '@/pages/Team/invite/invite-form';
 
 
 function AppRoutes() {
@@ -26,7 +26,7 @@ function AppRoutes() {
         <Route path="onboarding/edit" element={<EditOrganization />} errorElement={<ErrorPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
-        <Route path="team/invite" element={<PermissionGuard permission="member-list"> <InviteFormWrapper /> </PermissionGuard>} />
+        <Route path="team/invite" element={<PermissionGuard permission="member-list"> <InviteForm /> </PermissionGuard>} />
         <Route path="team/invite-pending" element={<Invitepending />}></Route>
         <Route path="team" element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>} />
         <Route path="team/user/:memberId" element={<PermissionGuard permission="member-list"> <Teams /> </PermissionGuard>} />

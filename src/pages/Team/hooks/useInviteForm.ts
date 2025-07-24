@@ -6,11 +6,9 @@ import { usePermissions } from "@/context/permissions";
 import { togglePermission } from "../utils/invite-helpers";
 import { sendInvite } from "../api/invite";
 
-interface UseInviteFormProps {
-  onInviteSuccess: () => void;
-}
 
-export function useInviteForm({ onInviteSuccess }: UseInviteFormProps) {
+
+export function useInviteForm() {
   const { getAccessTokenSilently } = useAuth0();
   const { role: currentUserRole } = usePermissions();
 
@@ -56,7 +54,6 @@ export function useInviteForm({ onInviteSuccess }: UseInviteFormProps) {
         setEmail('');
         setPermissions({});
         setInviteStatus('Invitation sent successfully');
-        onInviteSuccess();
       } else {
         const data = await response.json();
         setError(data.message || 'Failed to send invitation');
