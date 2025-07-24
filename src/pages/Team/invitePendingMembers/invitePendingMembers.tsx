@@ -24,12 +24,13 @@ export function Invitepending() {
     setPageSize,
     search,
     setSearch,
-    sort,
     setSort,
     resending,
     canViewInactive,
     canResend,
     handleResend,
+    statusFilters,
+    setStatusFilters,
   } = useInactiveMembers();
 
   const [sortingState, setSortingState] = useState<SortingState>([
@@ -175,7 +176,42 @@ export function Invitepending() {
         }}
         placeholder="Search pending invites..."
       />
-
+      <div className="flex items-center gap-2 text-sm">
+        <label>
+          <input
+            type="checkbox"
+            className="mr-1"
+            checked={statusFilters.includes('Pending')}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setPage(0);
+              setStatusFilters((prev) =>
+                checked
+                  ? [...prev, 'Pending']
+                  : prev.filter((f) => f !== 'Pending')
+              );
+            }}
+          />
+          Pending
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            className="mr-1"
+            checked={statusFilters.includes('Expired')}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setPage(0);
+              setStatusFilters((prev) =>
+                checked
+                  ? [...prev, 'Expired']
+                  : prev.filter((f) => f !== 'Expired')
+              );
+            }}
+          />
+          Expired
+        </label>
+      </div>
       <DataTable<InactiveMember>
         columns={columns}
         data={members}
