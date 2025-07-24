@@ -4,12 +4,10 @@ import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
-import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
-import { FilterPanel } from './filter-panel';
+import { FilterPanel } from './filter';
 import { SearchInput } from '@/components/search-input';
 
 const ROLE_OPTIONS = [
@@ -20,12 +18,9 @@ const ROLE_OPTIONS = [
 
 export function MembersPanel() {
   const {
-    panelMode,
     inviteRouteMatch,
-    activeTab,
-    handleTabChange,
+    panelMode,
     handleInviteClick,
-    canViewInactive,
     members,
     totalCount,
     error,
@@ -42,7 +37,7 @@ export function MembersPanel() {
     selectedRoles,
     setSelectedRoles,
     clearAllFilters,
-    fetchMembers, // Get fetchMembers from useTeamLogic
+    fetchMembers,
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,7 +46,7 @@ export function MembersPanel() {
 
   const [debounced] = useDebounce(searchQuery, 300);
 
-  // Load query from URL on mount
+  // Load search from URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     const q = params.get('search') || '';
@@ -59,14 +54,10 @@ export function MembersPanel() {
       setSearchQuery(q);
     }
     inputRef.current?.focus();
-    
-    // Fetch members if we're on the active tab
-    if (activeTab === 'active') {
-      fetchMembers();
-    }
+    fetchMembers();
   }, []);
 
-  // Persist to URL
+  // Persist search to URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     if (debounced) params.set('search', debounced);
@@ -107,7 +98,6 @@ export function MembersPanel() {
                 autoFocus
               />
 
-
               <div className="flex gap-2">
                 <FilterPanel
                   roles={ROLE_OPTIONS}
@@ -126,35 +116,25 @@ export function MembersPanel() {
         </CardHeader>
 
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-
-            <TabsContent value="active">
-              <MemberDataTable
-                members={members}
-                totalCount={totalCount}
-                loading={membersLoading}
-                error={error}
-                onSelect={handleMemberSelect}
-                searchQuery={searchQuery}
-                pageIndex={pageIndex}
-                pageSize={pageSize}
-                setPageIndex={setPageIndex}
-                setPageSize={setPageSize}
-                sorting={sorting}
-                setSorting={setSorting}
-                selectedRoles={selectedRoles}
-                setSelectedRoles={setSelectedRoles}
-                setSearchQuery={setSearchQuery}
-                clearAllFilters={clearAllFilters}
-                simplifiedView={!!panelMode}
-              />
-            </TabsContent>
-            {canViewInactive && (
-              <TabsContent value="inactive">
-                <Invitepending />
-              </TabsContent>
-            )}
-          </Tabs>
+          <MemberDataTable
+            members={members}
+            totalCount={totalCount}
+            loading={membersLoading}
+            error={error}
+            onSelect={handleMemberSelect}
+            searchQuery={searchQuery}
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            setPageIndex={setPageIndex}
+            setPageSize={setPageSize}
+            sorting={sorting}
+            setSorting={setSorting}
+            selectedRoles={selectedRoles}
+            setSelectedRoles={setSelectedRoles}
+            setSearchQuery={setSearchQuery}
+            clearAllFilters={clearAllFilters}
+            simplifiedView={!!panelMode}
+          />
         </CardContent>
       </Card>
     </Panel>

@@ -12,6 +12,7 @@ import { InviteFormWrapper } from '../pages/Team/routes/InviteFormWrapper';
 import Dashboard from '@/pages/Conversation';
 import Onboarding from '@/pages/Onboarding/Onboarding';
 import EditOrganization from '@/pages/Onboarding/EditOrganization';
+import { Invitepending } from '@/pages/Team/invitePendingMembers/invitePendingMembers';
 
 
 function AppRoutes() {
@@ -33,7 +34,7 @@ function AppRoutes() {
             </PermissionGuard>
           }
         />
-        <Route path="team/invite-pending" element={<Teams />}></Route>
+        <Route path="team/invite-pending" element={<Invitepending />}></Route>
         <Route
           path="team"
           element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>}
