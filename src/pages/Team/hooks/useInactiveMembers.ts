@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { usePermissions } from '@/context/permissions';
 import type { InactiveMember } from '../types/types';
@@ -16,8 +16,8 @@ export function useInactiveMembers() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  type SortDirection = 'asc' | 'desc';
 
+  type SortDirection = 'asc' | 'desc';
   interface Sort {
     field: string;
     direction: SortDirection;
@@ -27,24 +27,28 @@ export function useInactiveMembers() {
   const canViewInactive = role === 'ADMIN' || hasPermission('inactive-members-view');
   const canResend = role === 'ADMIN' || hasPermission('resend-invitation');
 
-const buildQueryParams = () => {
-  const sortParam = sort.map(s => `${s.field}:${s.direction}`).join(',');
-  const params = new URLSearchParams({
-    page: page.toString(),
-    pageSize: pageSize.toString(),
-  });
+  const isFetchingRef = useRef(false); // 👈 prevent duplicate calls
 
-  if (search) params.append('search', search);
-  if (sortParam) params.append('sort', sortParam);
+  const buildQueryParams = () => {
+    const sortParam = sort.map(s => `${s.field}:${s.direction}`).join(',');
+    const params = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+    });
 
-  return params.toString();
-};
+    if (search) params.append('search', search);
+    if (sortParam) params.append('sort', sortParam);
+
+    return params.toString();
+  };
 
   const fetchInactiveMembers = useCallback(async () => {
-    if (!canViewInactive) return;
+    if (!canViewInactive || isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
+    setLoading(true);
 
     try {
-      setLoading(true);
       const token = await getAccessTokenSilently();
       const queryParams = buildQueryParams();
 
@@ -61,6 +65,7 @@ const buildQueryParams = () => {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [page, pageSize, search, sort, canViewInactive, getAccessTokenSilently]);
 
