@@ -1,5 +1,4 @@
-// hooks/useUserData.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 
@@ -20,6 +19,9 @@ export function useUserData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref to track whether we've already fetched user data
+  const hasFetched = useRef(false);
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.sub) return;
@@ -39,7 +41,10 @@ export function useUserData() {
       }
     };
 
-    fetchUserData();
+    if (!hasFetched.current && user?.sub) {
+      fetchUserData();
+      hasFetched.current = true;
+    }
   }, [user?.sub, getAccessTokenSilently]);
 
   return { userData, setUserData, loading, error };
