@@ -45,7 +45,7 @@ export function useMemberFetcher(
         setTotalCount(result.totalCount);
         setError(null);
       } catch (err) {
-        // error handled below
+        // error handled below or ignored if abort
       }
       return;
     }
@@ -91,9 +91,11 @@ export function useMemberFetcher(
 
         return result;
       } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch members');
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // Let abort errors propagate (do not return undefined)
+          throw err;
         }
+        setError(err instanceof Error ? err.message : 'Failed to fetch members');
         throw err;
       } finally {
         requestQueue.delete(requestSignature);
@@ -109,10 +111,20 @@ export function useMemberFetcher(
   }, [user, getAccessTokenSilently, requestSignature, pageIndex, pageSize, searchQuery, sorting, roles]);
 
   useEffect(() => {
-    fetchMembers();
+    let isMounted = true;
 
-    // Cleanup on unmount or when requestSignature changes
+    fetchMembers()?.catch(err => {
+      if (
+        isMounted &&
+        !(err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        console.error('Unhandled error in fetchMembers:', err);
+      }
+      // Abort errors are ignored silently here
+    });
+
     return () => {
+      isMounted = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
