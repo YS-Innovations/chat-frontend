@@ -1,11 +1,13 @@
-// useUser.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
 export default function useUser() {
   const { user, getAccessTokenSilently } = useAuth0();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Ref to track if fetchUserProfile has already been called
+  const hasFetchedProfile = useRef(false);
 
   const fetchUserProfile = async () => {
     try {
@@ -55,12 +57,14 @@ export default function useUser() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasFetchedProfile.current) {
       fetchUserProfile();
-    } else {
+      hasFetchedProfile.current = true;
+    } else if (!user) {
       setIsLoading(false);
+      hasFetchedProfile.current = false; // reset for next login
     }
-  }, [user]);
+  }, [user, getAccessTokenSilently]);
 
   return { profile, updateProfile, isLoading, fetchUserProfile };
 }
