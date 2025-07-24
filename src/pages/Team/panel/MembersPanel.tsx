@@ -14,7 +14,7 @@ import { SearchInput } from '@/components/search-input';
 
 const ROLE_OPTIONS = [
   { value: 'OWNER', display: 'Owner' },
-  { value: 'ADMIN', display: 'admin' },
+  { value: 'ADMIN', display: 'Admin' },
   { value: 'AGENT', display: 'Agent' },
 ];
 
@@ -42,6 +42,7 @@ export function MembersPanel() {
     selectedRoles,
     setSelectedRoles,
     clearAllFilters,
+    fetchMembers, // Get fetchMembers from useTeamLogic
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +59,11 @@ export function MembersPanel() {
       setSearchQuery(q);
     }
     inputRef.current?.focus();
+    
+    // Fetch members if we're on the active tab
+    if (activeTab === 'active') {
+      fetchMembers();
+    }
   }, []);
 
   // Persist to URL

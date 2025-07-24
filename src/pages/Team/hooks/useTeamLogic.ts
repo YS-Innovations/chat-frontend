@@ -14,7 +14,6 @@ export function useContactsLogic() {
   const activeTabMatch = useMatch('/app/team/active/*');
   const inactiveTabMatch = useMatch('/app/team/invite-pending/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
-  const [sortLoading, setSortLoading] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
     activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
@@ -46,9 +45,13 @@ export function useContactsLogic() {
   const canViewInactive = role === 'OWNER' || hasPermission('inactive-members-view');
 
   useEffect(() => {
-    if (activeTabMatch) setActiveTab('active');
-    else if (inactiveTabMatch) setActiveTab('inactive');
-  }, [activeTabMatch, inactiveTabMatch]);
+    if (activeTabMatch) {
+      setActiveTab('active');
+      fetchMembers(); // Only fetch when active tab is active
+    } else if (inactiveTabMatch) {
+      setActiveTab('inactive');
+    }
+  }, [activeTabMatch, inactiveTabMatch, fetchMembers]);
 
   useEffect(() => {
     if (memberId && members.length > 0) {
@@ -73,6 +76,9 @@ export function useContactsLogic() {
       setPanelMode(null);
       setSelectedMember(null);
       navigate(`/app/team/${value}`);
+      if (value === 'active') {
+        fetchMembers(); // Only fetch when switching to active tab
+      }
     }
   };
 
@@ -186,9 +192,10 @@ export function useContactsLogic() {
     sorting,
     setSorting,
     actionLoading,
-    sortLoading,
+    // sortLoading,
     selectedRoles,
     setSelectedRoles,
-    clearAllFilters
+    clearAllFilters,
+    fetchMembers
   };
 }
