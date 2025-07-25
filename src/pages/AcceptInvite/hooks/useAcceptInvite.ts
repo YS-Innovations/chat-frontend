@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 
 export function useAcceptInvite() {
   const { loginWithRedirect } = useAuth0();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [token, setToken] = useState('');

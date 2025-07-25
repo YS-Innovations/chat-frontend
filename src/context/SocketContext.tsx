@@ -32,53 +32,53 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>({});
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
 
+  const initSocket = async () => {
+    const token = await getAccessTokenSilently();
+    const newSocket = io(`${import.meta.env.VITE_API_URL}/user-status`, {
+      path: '/socket.io',
+      query: { token },
+      transports: ['websocket'],
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to status service');
+    });
+
+    newSocket.on('initialStatuses', (statuses: UserStatus[]) => {
+      const statusMap: Record<string, UserStatus> = {};
+      statuses.forEach(status => {
+        statusMap[status.userId] = {
+          ...status,
+          lastSeen: status.lastSeen ? new Date(status.lastSeen) : undefined,
+        };
+      });
+      setUserStatuses(statusMap);
+    });
+
+    newSocket.on('statusUpdate', (update: {
+      userId: string;
+      isOnline: boolean;
+      lastSeen?: string
+    }) => {
+      setUserStatuses(prev => ({
+        ...prev,
+        [update.userId]: {
+          ...prev[update.userId],
+          isOnline: update.isOnline,
+          lastSeen: update.lastSeen ? new Date(update.lastSeen) : undefined,
+        }
+      }));
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from status service');
+    });
+
+    setSocket(newSocket);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    const initSocket = async () => {
-      const token = await getAccessTokenSilently();
-      const newSocket = io(`${import.meta.env.VITE_API_URL}/user-status`, {
-        path: '/socket.io',
-        query: { token },
-        transports: ['websocket'],
-      });
-
-      newSocket.on('connect', () => {
-        console.log('Connected to status service');
-      });
-
-      newSocket.on('initialStatuses', (statuses: UserStatus[]) => {
-        const statusMap: Record<string, UserStatus> = {};
-        statuses.forEach(status => {
-          statusMap[status.userId] = {
-            ...status,
-            lastSeen: status.lastSeen ? new Date(status.lastSeen) : undefined,
-          };
-        });
-        setUserStatuses(statusMap);
-      });
-
-      newSocket.on('statusUpdate', (update: { 
-        userId: string; 
-        isOnline: boolean; 
-        lastSeen?: string 
-      }) => {
-        setUserStatuses(prev => ({
-          ...prev,
-          [update.userId]: {
-            ...prev[update.userId],
-            isOnline: update.isOnline,
-            lastSeen: update.lastSeen ? new Date(update.lastSeen) : undefined,
-          }
-        }));
-      });
-
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from status service');
-      });
-
-      setSocket(newSocket);
-    };
 
     initSocket();
 
