@@ -1,8 +1,40 @@
 import { useEffect, useCallback, useRef } from "react";
 import { UAParser } from "ua-parser-js";
 
-export default function useClientInfo(user: any) {
-  const lastUserIdRef = useRef<any>(null);
+interface User {
+  id: string;
+  uuid?: string;
+  auth0Id?: string;
+  email?: string;
+  name?: string;
+  nickname?: string;
+  phoneNumber?: string;
+  picture?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  organizationId?: string;
+  role?: string;
+  hasOnboarded?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: Date | null;
+  blocked?: boolean | null;
+  identities?: unknown; // JSON type
+  metadata?: unknown;   // JSON type
+  channelId?: string;
+  // You can add other related fields if needed, but usually you only send what's needed
+}
+
+interface ClientInfo {
+  browser: string;
+  os: string;
+  deviceType: string;
+  ip: string;
+  rawUA: string;
+  loginTime: string;
+}
+
+export default function useClientInfo(user: User | null) {
+  const lastUserIdRef = useRef<string | null>(null);
 
   const fetchClientInfo = useCallback(async () => {
     try {
@@ -13,7 +45,7 @@ export default function useClientInfo(user: any) {
       const parser = new UAParser();
       const result = parser.getResult();
 
-      const clientInfo = {
+      const clientInfo: ClientInfo = {
         browser: `${result.browser.name} ${result.browser.version}`,
         os: `${result.os.name} ${result.os.version || ""}`.trim(),
         deviceType: result.device.type || "desktop",
@@ -38,7 +70,7 @@ export default function useClientInfo(user: any) {
       const parser = new UAParser();
       const result = parser.getResult();
 
-      const clientInfo = {
+      const clientInfo: ClientInfo = {
         browser: `${result.browser.name} ${result.browser.version}`,
         os: `${result.os.name} ${result.os.version || ""}`.trim(),
         deviceType: result.device.type || "desktop",
@@ -63,11 +95,9 @@ export default function useClientInfo(user: any) {
   useEffect(() => {
     if (!user) return;
 
-    // Assuming user has an 'id' property you can uniquely identify
     if (lastUserIdRef.current !== user.id) {
       lastUserIdRef.current = user.id;
       fetchClientInfo();
     }
-    // else: same user id, do not re-fetch
   }, [user, fetchClientInfo]);
 }
