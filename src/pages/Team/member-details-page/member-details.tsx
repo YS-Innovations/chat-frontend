@@ -25,7 +25,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { DeleteUserButton } from "./delete/components/DeleteUserButton";
-import { PermissionHistorySection } from "./PermissionHistorySection";
+import { PermissionHistorySection } from "../permission-history/PermissionHistorySection";
 
 interface MemberDetailsProps {
   member: Member;
