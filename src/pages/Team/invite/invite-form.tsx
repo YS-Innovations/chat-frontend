@@ -1,12 +1,7 @@
 import { InviteFormUI } from "./InviteFormUI";
 import { useInviteForm } from "../hooks/useInviteForm";
 
-interface InviteFormProps {
-  onClose: () => void;
-  onInviteSuccess: () => void;
-}
-
-export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
+export function InviteForm() {
   const {
     email,
     setEmail,
@@ -20,7 +15,7 @@ export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
     handleInvite,
     showRoleSelector,
     showPermissionsSection,
-  } = useInviteForm({ onInviteSuccess });
+  } = useInviteForm();
 
   return (
     <InviteFormUI
@@ -36,7 +31,7 @@ export function InviteForm({ onClose, onInviteSuccess }: InviteFormProps) {
       handleInvite={handleInvite}
       showRoleSelector={showRoleSelector}
       showPermissionsSection={showPermissionsSection}
-      onClose={onClose}
+    
     />
   );
 }

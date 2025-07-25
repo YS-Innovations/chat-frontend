@@ -36,7 +36,6 @@ export const navMainItems: NavItem[] = [
       { title: "Invite", url: "/app/team/invite", permission: "invite-form" },
       { title: "Pending Invite", url: "/app/team/invite-pending", permission: "pending-invite" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
-      { title: "Status", url: "/app/team/status", permission: "team-status-view" },
     ],
   },
   {
@@ -57,7 +56,7 @@ export const navMainItems: NavItem[] = [
     items: [
       { title: "General", url: "/app/settings/general", permission: "settings-general" },
       { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
-      { title: "onboarding", url: "/app/onboarding", permission: "onboarding" },
+      { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
     ],
   },
 ];

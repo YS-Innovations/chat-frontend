@@ -4,28 +4,23 @@ import { Panel } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MemberDataTable } from '../member-table/member-data-table';
 import { useContactsLogic } from '../hooks/useTeamLogic';
-import { Invitepending } from '../invitePendingMembers/invitePendingMembers';
 import { useDebounce } from 'use-debounce';
-import { FilterPanel } from './filter-panel';
+import { FilterPanel } from './filter';
 import { SearchInput } from '@/components/search-input';
 
 const ROLE_OPTIONS = [
   { value: 'OWNER', display: 'Owner' },
-  { value: 'ADMIN', display: 'admin' },
+  { value: 'ADMIN', display: 'Admin' },
   { value: 'AGENT', display: 'Agent' },
 ];
 
 export function MembersPanel() {
   const {
-    panelMode,
     inviteRouteMatch,
-    activeTab,
-    handleTabChange,
+    panelMode,
     handleInviteClick,
-    canViewInactive,
     members,
     totalCount,
     error,
@@ -42,6 +37,7 @@ export function MembersPanel() {
     selectedRoles,
     setSelectedRoles,
     clearAllFilters,
+    fetchMembers,
   } = useContactsLogic();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +46,7 @@ export function MembersPanel() {
 
   const [debounced] = useDebounce(searchQuery, 300);
 
-  // Load query from URL on mount
+  // Load search from URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     const q = params.get('search') || '';
@@ -58,9 +54,10 @@ export function MembersPanel() {
       setSearchQuery(q);
     }
     inputRef.current?.focus();
+    fetchMembers();
   }, []);
 
-  // Persist to URL
+  // Persist search to URL
   useEffect(() => {
     const params = new URLSearchParams(urlSearch);
     if (debounced) params.set('search', debounced);
@@ -69,9 +66,9 @@ export function MembersPanel() {
   }, [debounced]);
 
   const toggleRole = (role: string) => {
-    setSelectedRoles(prev => 
-      prev.includes(role) 
-        ? prev.filter(r => r !== role) 
+    setSelectedRoles(prev =>
+      prev.includes(role)
+        ? prev.filter(r => r !== role)
         : [...prev, role]
     );
     setPageIndex(0);
@@ -89,18 +86,17 @@ export function MembersPanel() {
         <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <CardTitle className="text-lg">Team Members</CardTitle>
-            
+
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
               <SearchInput
-  value={searchQuery}
-  onChange={(val) => {
-    setPageIndex(0);
-    setSearchQuery(val);
-  }}
-  placeholder="Search members..."
-  autoFocus
-/>
-
+                value={searchQuery}
+                onChange={(val) => {
+                  setPageIndex(0);
+                  setSearchQuery(val);
+                }}
+                placeholder="Search members..."
+                autoFocus
+              />
 
               <div className="flex gap-2">
                 <FilterPanel
@@ -109,7 +105,7 @@ export function MembersPanel() {
                   onRoleToggle={toggleRole}
                   onClearAll={clearAllFilters}
                 />
-                
+
                 <Button onClick={handleInviteClick} className="shrink-0">
                   <UserPlus className="mr-2 h-4 w-4" />
                   Invite
@@ -118,36 +114,27 @@ export function MembersPanel() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="h-[calc(100%-100px)] overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-           
-            <TabsContent value="active">
-              <MemberDataTable
-                members={members}
-                totalCount={totalCount}
-                loading={membersLoading}
-                error={error}
-                onSelect={handleMemberSelect}
-                searchQuery={searchQuery}
-                pageIndex={pageIndex}
-                pageSize={pageSize}
-                setPageIndex={setPageIndex}
-                setPageSize={setPageSize}
-                sorting={sorting}
-                setSorting={setSorting}
-                selectedRoles={selectedRoles}
-                setSelectedRoles={setSelectedRoles}
-                setSearchQuery={setSearchQuery}
-                clearAllFilters={clearAllFilters}
-              />
-            </TabsContent>
-            {canViewInactive && (
-              <TabsContent value="inactive">
-                <Invitepending />
-              </TabsContent>
-            )}
-          </Tabs>
+          <MemberDataTable
+            members={members}
+            totalCount={totalCount}
+            loading={membersLoading}
+            error={error}
+            onSelect={handleMemberSelect}
+            searchQuery={searchQuery}
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            setPageIndex={setPageIndex}
+            setPageSize={setPageSize}
+            sorting={sorting}
+            setSorting={setSorting}
+            selectedRoles={selectedRoles}
+            setSelectedRoles={setSelectedRoles}
+            setSearchQuery={setSearchQuery}
+            clearAllFilters={clearAllFilters}
+            simplifiedView={!!panelMode}
+          />
         </CardContent>
       </Card>
     </Panel>

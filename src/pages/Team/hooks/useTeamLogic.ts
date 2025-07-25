@@ -9,16 +9,8 @@ export function useContactsLogic() {
   const { getAccessTokenSilently } = useAuth0();
   const { hasPermission, role } = usePermissions();
   const navigate = useNavigate();
-
   const { memberId } = useParams<{ memberId?: string }>();
-  const activeTabMatch = useMatch('/app/team/active/*');
-  const inactiveTabMatch = useMatch('/app/team/invite-pending/*');
   const inviteRouteMatch = useMatch('/app/team/invite');
-  const [sortLoading, setSortLoading] = useState(false);
-  
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
-    activeTabMatch ? 'active' : inactiveTabMatch ? 'inactive' : 'active'
-  );
 
   const {
     members,
@@ -36,19 +28,16 @@ export function useContactsLogic() {
     fetchMembers,
     selectedRoles,
     setSelectedRoles,
-    clearAllFilters
+    clearAllFilters,
   } = useMembers();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [panelMode, setPanelMode] = useState<'details' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const canViewInactive = role === 'OWNER' || hasPermission('inactive-members-view');
-
   useEffect(() => {
-    if (activeTabMatch) setActiveTab('active');
-    else if (inactiveTabMatch) setActiveTab('inactive');
-  }, [activeTabMatch, inactiveTabMatch]);
+    fetchMembers(); // Load members initially
+  }, [fetchMembers]);
 
   useEffect(() => {
     if (memberId && members.length > 0) {
@@ -63,16 +52,7 @@ export function useContactsLogic() {
 
   const handleMemberSelect = (member: Member) => {
     if (role === 'OWNER' || hasPermission('member-details')) {
-      navigate(`/app/team/${activeTab}/user/${member.id}`);
-    }
-  };
-
-  const handleTabChange = (value: string) => {
-    if (value === 'active' || value === 'inactive') {
-      setActiveTab(value);
-      setPanelMode(null);
-      setSelectedMember(null);
-      navigate(`/app/team/${value}`);
+      navigate(`/app/team/user/${member.id}`);
     }
   };
 
@@ -83,7 +63,7 @@ export function useContactsLogic() {
   const closeDetailsPanel = () => {
     setSelectedMember(null);
     setPanelMode(null);
-    navigate(`/app/team/${activeTab}`);
+    navigate(`/app/team`);
   };
 
   const handleRoleUpdate = async (memberId: string, newRole: Role) => {
@@ -161,9 +141,6 @@ export function useContactsLogic() {
   };
 
   return {
-    activeTab,
-    setActiveTab,
-    handleTabChange,
     handleInviteClick,
     closeDetailsPanel,
     handleMemberSelect,
@@ -172,7 +149,6 @@ export function useContactsLogic() {
     selectedMember,
     panelMode,
     inviteRouteMatch,
-    canViewInactive,
     members,
     totalCount,
     error,
@@ -186,9 +162,9 @@ export function useContactsLogic() {
     sorting,
     setSorting,
     actionLoading,
-    sortLoading,
     selectedRoles,
     setSelectedRoles,
-    clearAllFilters
+    clearAllFilters,
+    fetchMembers,
   };
 }

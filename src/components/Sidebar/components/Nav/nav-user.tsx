@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   BadgeCheck,
@@ -8,15 +8,14 @@ import {
   LogOut,
   Pencil,
   Sparkles,
-} from "lucide-react"
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { UserStatusIndicator } from "@/components/UserStatusIndicator/UserStatusIndicator";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar"
+} from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,25 +24,28 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useNavUser } from "./hooks/use-nav-user";
+import { useUserStatus } from "./hooks/use-user-status";
+import { StatusDot } from "@/components/StatusDot";
 
 export function NavUser() {
-  const { 
+  const {
     isCollapsed,
     auth0User,
     isLoading,
     navigate,
     handleLogout,
     currentUser,
-    userStatus
   } = useNavUser();
+
+  const { isOnline } = useUserStatus();
 
   if (isLoading) {
     return (
@@ -62,12 +64,12 @@ export function NavUser() {
 
   if (!auth0User) {
     return (
-      <button 
+      <button
         className={cn(
           "w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700",
           isCollapsed ? "p-2" : ""
         )}
-        onClick={() => navigate('/login')}
+        onClick={() => navigate("/login")}
       >
         {isCollapsed ? "🔑" : "Sign In"}
       </button>
@@ -86,29 +88,29 @@ export function NavUser() {
             >
               <div className="relative">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage 
-                    src={currentUser!.avatar} 
-                    alt={currentUser!.name} 
+                  <AvatarImage
+                    src={currentUser!.avatar}
+                    alt={currentUser!.name}
                     className="object-cover"
                   />
                   <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                    {currentUser!.name.split(' ').map(n => n[0]).join('')}
+                    {currentUser!.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
                   </AvatarFallback>
                 </Avatar>
-                {auth0User.sub && (
-                  <div className="absolute -bottom-1 -right-1">
-                    <UserStatusIndicator 
-                      userId={auth0User.sub} 
-                      size="sm"
-                    />
-                  </div>
-                )}
+                <StatusDot isOnline={isOnline} size="sm" />
               </div>
               {!isCollapsed && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{currentUser!.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{currentUser!.email}</span>
+                    <span className="truncate font-medium">
+                      {currentUser!.name}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {currentUser!.email}
+                    </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </>
@@ -125,40 +127,32 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-2 py-1.5">
                 <div className="relative">
                   <Avatar className="h-10 w-10 rounded-lg">
-                    <AvatarImage 
-                      src={currentUser!.avatar} 
-                      alt={currentUser!.name} 
+                    <AvatarImage
+                      src={currentUser!.avatar}
+                      alt={currentUser!.name}
                       className="object-cover"
                     />
                     <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                      {currentUser!.name.split(' ').map(n => n[0]).join('')}
+                      {currentUser!.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  {auth0User.sub && (
-                    <div className="absolute -bottom-1 -right-1">
-                      <UserStatusIndicator 
-                        userId={auth0User.sub} 
-                        size="sm"
-                      />
-                    </div>
-                  )}
+                  <StatusDot isOnline={isOnline} />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{currentUser!.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">{currentUser!.email}</span>
-                  {auth0User.sub && userStatus && (
-                    <div className="flex items-center mt-1">
-                      <UserStatusIndicator 
-                        userId={auth0User.sub} 
-                        size="sm" 
-                        showText
-                      />
-                    </div>
-                  )}
+                  <span className="truncate text-xs text-muted-foreground">
+                    {currentUser!.email}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {isOnline === null ? "..." : isOnline ? "Online" : "Offline"}
+                  </span>
                 </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button 
+                    <button
                       onClick={() => navigate("/app/profile")}
                       className="flex size-8 items-center justify-center rounded-full hover:bg-accent"
                       aria-label="Edit profile"
@@ -198,7 +192,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={handleLogout}
               className="focus:bg-destructive focus:text-destructive-foreground"
             >

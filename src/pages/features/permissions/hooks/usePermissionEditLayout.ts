@@ -82,5 +82,6 @@ export function usePermissionEdit(props: PermissionEditProps) {
     handleClearAll,
     setSearchTerm,
     setExpandedGroups,
+    searchTerm
   };
 }

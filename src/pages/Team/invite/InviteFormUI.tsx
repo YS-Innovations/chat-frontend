@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Role } from "../types/types";
 import { PERMISSION_GROUPS } from "@/pages/features/permissions/types/types";
@@ -19,7 +19,6 @@ interface InviteFormUIProps {
   handleInvite: () => void;
   showRoleSelector: boolean;
   showPermissionsSection: boolean;
-  onClose: () => void;
 }
 
 export function InviteFormUI({
@@ -35,15 +34,12 @@ export function InviteFormUI({
   handleInvite,
   showRoleSelector,
   showPermissionsSection,
-  onClose,
 }: InviteFormUIProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center p-4 border-b">
         <h2 className="text-lg font-semibold">Invite New Member</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
+     
       </div>
 
       <div className="flex-1 p-6 overflow-auto">

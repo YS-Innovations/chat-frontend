@@ -9,12 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-} from "@tabler/icons-react"
+import { MoveLeft, MoveRight } from "lucide-react"
 
 interface TablePaginationProps {
   pageIndex: number
@@ -72,7 +67,7 @@ export function TablePagination({
           disabled={!canPrevious}
         >
           <span className="sr-only">Go to first page</span>
-          <IconChevronsLeft className="size-4" />
+          <MoveLeft className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -82,7 +77,7 @@ export function TablePagination({
           disabled={!canPrevious}
         >
           <span className="sr-only">Go to previous page</span>
-          <IconChevronLeft className="size-4" />
+          <MoveLeft className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -92,7 +87,7 @@ export function TablePagination({
           disabled={!canNext}
         >
           <span className="sr-only">Go to next page</span>
-          <IconChevronRight className="size-4" />
+          <MoveRight className="size-4" />
         </Button>
         <Button
           variant="outline"
@@ -102,7 +97,7 @@ export function TablePagination({
           disabled={!canNext}
         >
           <span className="sr-only">Go to last page</span>
-          <IconChevronsRight className="size-4" />
+          <MoveRight className="size-4" />
         </Button>
       </div>
     </div>

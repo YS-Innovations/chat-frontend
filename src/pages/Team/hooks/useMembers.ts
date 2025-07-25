@@ -1,3 +1,4 @@
+// src/pages/Team/hooks/useMembers.ts
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePagination } from './usePagination';
@@ -84,6 +85,6 @@ export function useMembers() {
     selectedRoles,
     setSelectedRoles,
     clearAllFilters,
-    fetchMembers,
+    fetchMembers, // Expose fetchMembers to be called manually
   };
 }

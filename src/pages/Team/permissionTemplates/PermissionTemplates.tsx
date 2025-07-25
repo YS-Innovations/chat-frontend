@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { PERMISSION_GROUPS } from '../../features/permissions/types/types';
 import { DataTable } from '@/components/data-table/data-table';
@@ -60,6 +60,8 @@ export const PermissionTemplates: React.FC = () => {
     setPermissions(initialPermissions);
   }, []);
 
+ const hasFetchedTemplates = useRef(false);
+
   const fetchTemplates = async () => {
     if (!isAuthenticated) return;
     setLoading(true);
@@ -79,8 +81,12 @@ export const PermissionTemplates: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchTemplates(); }, [getAccessTokenSilently, isAuthenticated]);
-
+  useEffect(() => {
+    if (!hasFetchedTemplates.current && isAuthenticated) {
+      fetchTemplates();
+      hasFetchedTemplates.current = true;
+    }
+  }, [isAuthenticated, getAccessTokenSilently]);
   const loadTemplateDetails = async (id: string) => {
     if (!isAuthenticated) return;
     setLoading(true);

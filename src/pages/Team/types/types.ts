@@ -2,6 +2,7 @@
 
 export interface Member {
   id: string;
+  uuid:string;
   name: string | null;
   email: string;
   role: Role;
@@ -19,12 +20,13 @@ export interface Member {
 
 export interface UserLoginHistory {
   id: string;
+  userId: string;
   lastIp: string;
+  lastLogin: string;
+  lastLogoutAt: string | null;
   browserName: string;
   os: string;
-  deviceType:string;
-  lastLogin: Date;
-  lastLogoutAt: Date | null;
+  deviceType: string;
 }
 
 export interface PermissionHistory {

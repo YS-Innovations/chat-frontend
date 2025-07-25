@@ -12,6 +12,7 @@ export function PermissionEdit(props: PermissionEditProps) {
     isDirty,
     expandedGroups,
     filteredGroups,
+    searchTerm,
     handleTogglePermission,
     handleGroupToggle,
     handleSelectAll,
@@ -28,7 +29,7 @@ export function PermissionEdit(props: PermissionEditProps) {
       />
 
       <PermissionSearchBar
-        searchTerm={""}
+        searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
       />
 

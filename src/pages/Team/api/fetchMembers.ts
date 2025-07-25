@@ -5,6 +5,10 @@ interface FetchMembersResponse {
   totalCount: number;
 }
 
+// Response cache with expiration
+const responseCache = new Map<string, { data: FetchMembersResponse; timestamp: number }>();
+const CACHE_EXPIRATION_MS = 30000; // 30 seconds
+
 export async function fetchMembersFromApi(
   token: string,
   pageIndex: number,
@@ -12,9 +16,25 @@ export async function fetchMembersFromApi(
   searchQuery?: string,
   sortBy?: SortField,
   sortOrder?: 'asc' | 'desc',
-  roles?: string[]
+  roles?: string[],
+  signal?: AbortSignal
 ): Promise<FetchMembersResponse> {
-  const url = new URL(`http://localhost:3000/auth/members`);
+  const cacheKey = JSON.stringify({
+    pageIndex,
+    pageSize,
+    searchQuery,
+    sortBy,
+    sortOrder,
+    roles: roles?.sort()
+  });
+
+  // Check cache (if not aborted and not expired)
+  const cached = responseCache.get(cacheKey);
+  if (cached && !signal?.aborted && (Date.now() - cached.timestamp) < CACHE_EXPIRATION_MS) {
+    return cached.data;
+  }
+
+  const url = new URL(`${import.meta.env.VITE_API_BASE_URL}/auth/members`);
   
   url.searchParams.append('page', pageIndex.toString());
   url.searchParams.append('pageSize', pageSize.toString());
@@ -30,7 +50,10 @@ export async function fetchMembersFromApi(
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
+    signal,
+    credentials: 'include' // Important for CORS with credentials
   });
 
   if (!response.ok) {
@@ -38,5 +61,8 @@ export async function fetchMembersFromApi(
     throw new Error(errorData.message || 'Failed to fetch members');
   }
 
-  return await response.json();
+  const result = await response.json();
+  responseCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  
+  return result;
 }

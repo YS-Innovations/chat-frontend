@@ -1,7 +1,7 @@
 import React from 'react'
 import { Auth0Provider } from '@auth0/auth0-react'
 import { PermissionsProvider } from '../context/permissions'
-import { UserStatusProvider } from '../context/userStatus'
+import { SocketProvider } from '@/context/SocketContext'
 
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -16,9 +16,9 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       useRefreshTokens={true}
     >
       <PermissionsProvider>
-        <UserStatusProvider>
+        <SocketProvider>
           {children}
-        </UserStatusProvider>
+        </SocketProvider>
       </PermissionsProvider>
     </Auth0Provider>
   )
