@@ -6,15 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
-import { Mail, X, Pencil, Check, Clock } from "lucide-react";
-import type { Member, PermissionHistory, Role, UserLoginHistory } from "../types/types";
+import { Mail, X, Pencil, Check } from "lucide-react";
+import type { Member, Role, UserLoginHistory } from "../types/types";
 import { usePermissions } from "@/context/permissions";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LoginHistory } from "../login-history/login-history";
-import { PermissionHistorys } from "../permission-history/permission-history";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PermissionEdit } from "@/pages/features/permissions/Layout";
 import { PERMISSION_GROUPS } from "@/pages/features/permissions/types/types";
 import { TemplatePermissionsModal } from "@/pages/features/permissions/Dialog/PolicyPermissions";
@@ -27,6 +25,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { DeleteUserButton } from "./delete/components/DeleteUserButton";
+import { PermissionHistorySection } from "./PermissionHistorySection";
 
 interface MemberDetailsProps {
   member: Member;
@@ -61,8 +60,7 @@ export function MemberDetails({
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
-  const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
-  const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
+ 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
@@ -93,14 +91,7 @@ export function MemberDetails({
           history: loginData.history || [],
           total: loginData.total || 0
         });
-
-        // Fetch permission history
-        const permRes = await fetch(
-          `http://localhost:3000/auth/permissions/${member.id}/history`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const permData = await permRes.json();
-        setPermissionHistory(permData);
+      
       } catch (error) {
         console.error('Error fetching histories:', error);
       } finally {
@@ -386,14 +377,7 @@ export function MemberDetails({
 
                   {canEditPermissions && (
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowPermissionHistoryModal(true)}
-                      >
-                        <Clock className="h-4 w-4 mr-2" />
-                        permission changes History
-                      </Button>
+                      <PermissionHistorySection memberId={member.id} />
 
                       <Button
                         variant="outline"
@@ -407,14 +391,7 @@ export function MemberDetails({
                   )}
                 </div>
 
-                <Dialog open={showPermissionHistoryModal} onOpenChange={setShowPermissionHistoryModal}>
-                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-                    <DialogHeader>
-                      <DialogTitle>Permission History</DialogTitle>
-                    </DialogHeader>
-                    <PermissionHistorys history={permissionHistory} />
-                  </DialogContent>
-                </Dialog>
+
 
                 <div className="space-y-4">
                   <Accordion type="multiple" className="w-full space-y-3">
