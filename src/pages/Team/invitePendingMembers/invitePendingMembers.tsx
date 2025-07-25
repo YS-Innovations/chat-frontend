@@ -8,7 +8,7 @@ import { RefreshCw } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { SearchInput } from '@/components/search-input';
 import { useEffect, useState } from 'react';
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import type { Column, ColumnDef, SortingState, Table } from '@tanstack/react-table';
 import type { InactiveMember } from '../types/types';
 // import { toast } from 'sonner'; // Optional for notification
 
@@ -46,9 +46,13 @@ export function Invitepending() {
     setPage(0);
   }, [sortingState]);
 
-  const getSortableHeader = (label: string, column: any, table: any) => {
+  const getSortableHeader = (
+    label: string,
+    column: Column<InactiveMember>,
+    table: Table<InactiveMember>
+  ) => {
     const sorting = table.getState().sorting;
-    const sortIndex = sorting.findIndex((s: { id: any; }) => s.id === column.id);
+    const sortIndex = sorting.findIndex((s: { id: string }) => s.id === column.id);
     const isSorted = sortIndex > -1;
     const sortDirection = isSorted ? (sorting[sortIndex].desc ? 'desc' : 'asc') : null;
 
