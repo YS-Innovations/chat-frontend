@@ -60,7 +60,7 @@ export function MemberDetails({
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
- 
+
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
   }, [tempPermissions, permissions]);
@@ -68,37 +68,36 @@ export function MemberDetails({
   // Use ref to track if we're already fetching data
   const isFetchingRef = useRef(false);
 
+  const fetchHistories = async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    try {
+      const token = await getAccessTokenSilently();
+      const page = 1;
+      const perPage = 5;
+
+      // Fetch login history
+      const loginRes = await fetch(
+        `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!loginRes.ok) throw new Error('Failed to fetch login history');
+      const loginData = await loginRes.json();
+      setLoginHistory({
+        history: loginData.history || [],
+        total: loginData.total || 0
+      });
+
+    } catch (error) {
+      console.error('Error fetching histories:', error);
+    } finally {
+      isFetchingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (!member) return;
-
-    const fetchHistories = async () => {
-      if (isFetchingRef.current) return;
-      isFetchingRef.current = true;
-
-      try {
-        const token = await getAccessTokenSilently();
-        const page = 1;
-        const perPage = 5;
-
-        // Fetch login history
-        const loginRes = await fetch(
-          `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!loginRes.ok) throw new Error('Failed to fetch login history');
-        const loginData = await loginRes.json();
-        setLoginHistory({
-          history: loginData.history || [],
-          total: loginData.total || 0
-        });
-      
-      } catch (error) {
-        console.error('Error fetching histories:', error);
-      } finally {
-        isFetchingRef.current = false;
-      }
-    };
-
     fetchHistories();
   }, [member, getAccessTokenSilently]);
 

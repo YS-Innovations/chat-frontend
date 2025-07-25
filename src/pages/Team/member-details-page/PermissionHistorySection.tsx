@@ -22,25 +22,25 @@ export function PermissionHistorySection({ memberId, disabled }: Props) {
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
 
-  useEffect(() => {
-    const fetchPermissionHistory = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        const res = await fetch(
-          `http://localhost:3000/auth/permissions/${memberId}/history`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!res.ok) throw new Error("Failed to fetch permission history");
-        const data = await res.json();
-        setPermissionHistory(data);
-      } catch (error) {
-        console.error("Error fetching permission history:", error);
-        toast.error("Could not load permission history");
-      }
-    };
+  const fetchPermissionHistory = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const res = await fetch(
+        `http://localhost:3000/auth/permissions/${memberId}/history`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch permission history");
+      const data = await res.json();
+      setPermissionHistory(data);
+    } catch (error) {
+      console.error("Error fetching permission history:", error);
+      toast.error("Could not load permission history");
+    }
+  };
 
+  useEffect(() => {
     if (showPermissionHistoryModal) {
       fetchPermissionHistory();
     }

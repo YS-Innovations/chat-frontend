@@ -43,33 +43,33 @@ export function useInactiveMembers() {
     return params.toString();
   };
 
- const fetchInactiveMembers = useCallback(async () => {
-  if (!canViewInactive || isFetchingRef.current) return;
+  const fetchInactiveMembers = useCallback(async () => {
+    if (!canViewInactive || isFetchingRef.current) return;
 
-  isFetchingRef.current = true;
-  setError('');
-  setLoading(true);
+    isFetchingRef.current = true;
+    setError('');
+    setLoading(true);
 
-  try {
-    const token = await getAccessTokenSilently();
-    const queryParams = buildQueryParams();
+    try {
+      const token = await getAccessTokenSilently();
+      const queryParams = buildQueryParams();
 
-    const response = await fetch(`http://localhost:3000/auth/inactive-members?${queryParams}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      const response = await fetch(`http://localhost:3000/auth/inactive-members?${queryParams}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!response.ok) throw new Error('Failed to fetch inactive members');
+      if (!response.ok) throw new Error('Failed to fetch inactive members');
 
-    const data = await response.json();
-    setInactiveMembers(data.invitations || []);
-    setTotalCount(data.totalCount || 0);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Unknown error');
-  } finally {
-    setLoading(false);
-    isFetchingRef.current = false;
-  }
-}, [page, pageSize, search, sort, statusFilters, canViewInactive, getAccessTokenSilently]);
+      const data = await response.json();
+      setInactiveMembers(data.invitations || []);
+      setTotalCount(data.totalCount || 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [page, pageSize, search, sort, statusFilters, canViewInactive, getAccessTokenSilently]);
 
 
   const handleResend = async (invitationId: string) => {

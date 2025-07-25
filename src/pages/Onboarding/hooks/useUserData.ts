@@ -21,26 +21,25 @@ export function useUserData() {
 
   // Ref to track whether we've already fetched user data
   const hasFetched = useRef(false);
+  const fetchUserData = async () => {
+    if (!user?.sub) return;
+
+    try {
+      const token = await getAccessTokenSilently();
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/auth/user/${user.sub}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserData(res.data);
+    } catch (err) {
+      setError('Failed to fetch user data.');
+      console.error('Error fetching user data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.sub) return;
-
-      try {
-        const token = await getAccessTokenSilently();
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/auth/user/${user.sub}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setUserData(res.data);
-      } catch (err) {
-        setError('Failed to fetch user data.');
-        console.error('Error fetching user data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (!hasFetched.current && user?.sub) {
       fetchUserData();
       hasFetched.current = true;
