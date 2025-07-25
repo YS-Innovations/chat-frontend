@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 import { UserStatusSwitch } from "./UserStatusSwitch";
 import { DeleteUserButton } from "../../member-details-page/delete/components/DeleteUserButton";
 export const columns: ColumnDef<Member>[] = [
@@ -162,7 +162,7 @@ export const columns: ColumnDef<Member>[] = [
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
+            <EllipsisVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
