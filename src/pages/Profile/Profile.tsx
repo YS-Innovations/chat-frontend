@@ -103,10 +103,6 @@ export default function Profile() {
               
               <div className="space-y-2">
                 <p><span className="font-medium">Nickname:</span> {profile?.nickname || 'Not set'}</p>
-                <p>
-                  <span className="font-medium">Last Login:</span>{' '}
-                  {profile?.lastLogin ? new Date(profile.lastLogin).toLocaleString() : 'Unknown'}
-                </p>
               </div>
               
               <div className="flex gap-2">
