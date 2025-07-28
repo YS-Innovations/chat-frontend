@@ -1,46 +1,45 @@
-import { useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect, useState } from 'react';
+import { SessionExpiredDialog } from './SessionExpiredDialog';
 
 export const useGlobalErrorHandler = () => {
-  const { logout } = useAuth0();
+
+  const [showExpiredDialog, setShowExpiredDialog] = useState(false);
 
   useEffect(() => {
     const handleError = (error: any) => {
-      // Check for Auth0 token-related errors
       if (error?.message?.includes('Missing Refresh Token') || 
           error?.error?.includes('Missing Refresh Token') ||
           error?.message?.includes('invalid_token') ||
           error?.error?.includes('invalid_token') ||
           error?.message?.includes('token expired') ||
           error?.error?.includes('token expired')) {
-        console.error('Authentication error detected, logging out:', error);
-        logout({ logoutParams: { returnTo: window.location.origin } });
+        console.error('Authentication error detected:', error);
+        setShowExpiredDialog(true);
       }
     };
 
-    // Handle uncaught errors
-    const handleUncaughtError = (event: ErrorEvent) => {
-      handleError(event.error);
-    };
+    const handleUncaughtError = (event: ErrorEvent) => handleError(event.error);
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => handleError(event.reason);
 
-    // Handle unhandled promise rejections
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      handleError(event.reason);
-    };
-
-    // Add event listeners
     window.addEventListener('error', handleUncaughtError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
 
-    // Cleanup
     return () => {
       window.removeEventListener('error', handleUncaughtError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, [logout]);
+  }, []);
+
+  return { showExpiredDialog };
 };
 
 export const GlobalErrorHandler = ({ children }: { children: React.ReactNode }) => {
-  useGlobalErrorHandler();
-  return <>{children}</>;
+  const { showExpiredDialog } = useGlobalErrorHandler();
+
+  return (
+    <>
+      {children}
+      <SessionExpiredDialog open={showExpiredDialog} />
+    </>
+  );
 };
