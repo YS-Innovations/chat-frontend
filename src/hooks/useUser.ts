@@ -1,80 +1,90 @@
+// useUser.ts
 import { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
-// Define the user profile interface matching your API response
 interface UserProfile {
   id: string;
   email?: string;
   name?: string;
   nickname?: string;
   picture?: string;
-  // Add other profile fields as needed
+  role?: string;
+  hasOnboarded?: boolean;
 }
 
 export default function useUser() {
   const { user, getAccessTokenSilently } = useAuth0();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Ref to track if fetchUserProfile has already been called
+  const [error, setError] = useState<string | null>(null);
   const hasFetchedProfile = useRef<boolean>(false);
 
-const fetchUserProfile = async (): Promise<UserProfile | undefined> => {
-  try {
-    const token = await getAccessTokenSilently();
-    const response = await fetch(`http://localhost:3000/auth/user/${user?.sub}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const fetchUserProfile = async (): Promise<UserProfile | undefined> => {
+    try {
+      if (!user?.sub) return undefined;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`http://localhost:3000/auth/user/${user.sub}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch profile');
-    }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
+      }
 
-    // Check if response has content before parsing JSON
-    const text = await response.text();
-
-    if (!text) {
-      console.warn('Response body is empty');
+      const data: UserProfile = await response.json();
+      setProfile(data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch profile');
       setProfile(null);
       return undefined;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const data: UserProfile = JSON.parse(text);
-    setProfile(data);
-    return data;
-
-  } catch (error) {
-    console.error('Failed to fetch user profile:', error);
-    setProfile(null);
-    return undefined;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-  const updateProfile = async (formData: Partial<UserProfile>): Promise<UserProfile> => {
+  const updateProfilePicture = async (file: File): Promise<UserProfile> => {
     try {
+      if (!user?.sub) throw new Error('User not authenticated');
+      
+      setIsLoading(true);
+      setError(null);
+      
       const token = await getAccessTokenSilently();
-      const response = await fetch(`http://localhost:3000/auth/user/${user?.sub}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(
+        `http://localhost:3000/auth/user/${user.sub}/picture`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to upload profile picture');
       }
-      
-      const updatedProfile: UserProfile = await response.json();
+
+      const { pictureUrl } = await response.json();
+      const updatedProfile = { ...(profile || {}), picture: pictureUrl } as UserProfile;
       setProfile(updatedProfile);
       return updatedProfile;
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error('Error uploading profile picture:', error);
+      setError(error instanceof Error ? error.message : 'Failed to upload profile picture');
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,9 +94,15 @@ const fetchUserProfile = async (): Promise<UserProfile | undefined> => {
       hasFetchedProfile.current = true;
     } else if (!user) {
       setIsLoading(false);
-      hasFetchedProfile.current = false; // reset for next login
+      hasFetchedProfile.current = false;
     }
   }, [user, getAccessTokenSilently]);
 
-  return { profile, updateProfile, isLoading, fetchUserProfile };
+  return { 
+    profile, 
+    updateProfilePicture,
+    isLoading, 
+    error,
+    fetchUserProfile 
+  };
 }
