@@ -235,6 +235,20 @@ export function MemberDetails({
     return role === 'OWNER' || hasPermission('permission-edit');
   }, [role, member.role, hasPermission]);
 
+
+  function stringToColor(str: string) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    let color = '#';
+    for (let i = 0; i < 3; i++) {
+      const value = (hash >> (i * 8)) & 0xff;
+      color += ('00' + value.toString(16)).slice(-2);
+    }
+    return color;
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center p-4 border-b">
@@ -246,10 +260,17 @@ export function MemberDetails({
 
       <div className="flex flex-col items-center mb-4 pt-4">
         <Avatar className="h-24 w-24 mb-4">
-          {member.picture && (
-            <AvatarImage src={member.picture} alt={member.name || member.email} />
-          )}
-          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-3xl">
+          {member.picture && member.picture.trim() !== "" && member.picture !== "null" ? (
+            <AvatarImage
+              src={member.picture}
+              alt={member.name || member.email}
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          ) : null}
+          <AvatarFallback
+            className="rounded-lg text-white text-3xl"
+            style={{ backgroundColor: stringToColor(member.name || member.email) }}
+          >
             {getInitials(member.name || member.email)}
           </AvatarFallback>
         </Avatar>

@@ -49,9 +49,9 @@ export default function Profile() {
         <CardContent>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              {profilePicture ? (
+              {profilePicture || auth0User ? (
                 <img
-                  src={profilePicture}
+                  src={profilePicture || auth0User?.picture}
                   alt="Profile"
                   className="h-24 w-24 rounded-full object-cover"
                   onError={(e) => {

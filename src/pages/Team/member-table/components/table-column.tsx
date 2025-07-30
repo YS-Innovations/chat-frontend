@@ -51,21 +51,39 @@ export const columns: ColumnDef<Member>[] = [
       const { userStatuses } = useSocket();
       const isOnline = userStatuses[row.original.id]?.isOnline ?? false;
 
+      function stringToColor(str: string) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        let color = '#';
+        for (let i = 0; i < 3; i++) {
+          const value = (hash >> (i * 8)) & 0xff;
+          color += ('00' + value.toString(16)).slice(-2);
+        }
+        return color;
+      }
+
       return (
         <div className="flex items-center gap-x-3">
           <div className="relative">
             <Avatar className="h-8 w-8">
-              {row.original.picture ? (
+              {row.original.picture && row.original.picture.trim() !== "" && row.original.picture !== "null" ? (
                 <AvatarImage
                   src={row.original.picture}
                   alt={row.original.name || row.original.email}
+                  onError={(e) => (e.currentTarget.style.display = "none")}
                 />
-              ) : (
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {getInitials(row.original.name || row.original.email)}
-                </AvatarFallback>
-              )}
+              ) : null}
+              {/* <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white"> */}
+              <AvatarFallback
+                className="rounded-lg text-white"
+                style={{ backgroundColor: stringToColor(row.original.name || row.original.email) }}
+              >
+                {getInitials(row.original.name || row.original.email)}
+              </AvatarFallback>
             </Avatar>
+
             <span
               className={cn(
                 "absolute bottom-0 right-0 block rounded-full border-2 border-background",
@@ -153,35 +171,35 @@ export const columns: ColumnDef<Member>[] = [
     cell: ({ row }) => <UserStatusSwitch member={row.original} />,
     enableSorting: false,
   },
-{
-  id: "actions",
-  cell: ({ row }) => {
-    const member = row.original;
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const member = row.original;
 
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <EllipsisVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <EllipsisVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Edit</DropdownMenuItem>
 
-          <DropdownMenuItem asChild onClick={e => e.stopPropagation()}>
-            <DeleteUserButton
-              userId={member.id}
-              userRole={member.role}
-              onSuccess={() => {}}
-              className="w-full text-left" 
-            />
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  },
-  enableSorting: false,
-}
+            <DropdownMenuItem asChild onClick={e => e.stopPropagation()}>
+              <DeleteUserButton
+                userId={member.id}
+                userRole={member.role}
+                onSuccess={() => { }}
+                className="w-full text-left"
+              />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+    enableSorting: false,
+  }
 
 
 ];
