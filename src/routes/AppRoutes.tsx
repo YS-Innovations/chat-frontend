@@ -8,11 +8,12 @@ import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import ErrorPage from '../pages/ErrorPage';
 import { PermissionTemplates } from '@/pages/Team/permissionTemplates/PermissionTemplates';
-import Dashboard from '@/pages/Conversation';
+
 import Onboarding from '@/pages/Onboarding/Onboarding';
 import EditOrganization from '@/pages/Onboarding/EditOrganization';
 import { Invitepending } from '@/pages/Team/invitePendingMembers/invitePendingMembers';
 import { InviteForm } from '@/pages/Team/invite/invite-form';
+import ChatDashboard from '@/pages/Conversation/chatDashboard';
 
 
 function AppRoutes() {
@@ -30,7 +31,7 @@ function AppRoutes() {
         <Route path="team/invite-pending" element={<Invitepending />}></Route>
         <Route path="team" element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>} />
         <Route path="team/user/:memberId" element={<PermissionGuard permission="member-list"> <Teams /> </PermissionGuard>} />
-        <Route path="conversations" element={<Dashboard />} />
+        <Route path="conversations" element={<ChatDashboard />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
     </Routes>
