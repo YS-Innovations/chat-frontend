@@ -3,9 +3,13 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import LoadingSpinner from './components/Loading/LoadingSpinner';
 import { GlobalErrorHandler } from './providers/GlobalErrorHandler';
+import useBackendHealth from './providers/useBackendHealth';
 
 function App() {
-  const { isLoading } = useAuth0();
+  const { isLoading: authLoading } = useAuth0();
+  const { isBackendUp, checking } = useBackendHealth();
+
+  const isLoading = authLoading || checking || !isBackendUp;
 
   if (isLoading) {
     return <LoadingSpinner />;
