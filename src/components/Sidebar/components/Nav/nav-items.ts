@@ -24,6 +24,7 @@ export const navMainItems: NavItem[] = [
       { title: "All Conversation", url: "/app/conversations", permission: "conversation-list" },
       { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
       { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
+       { title: "canned-responses", url: "/app/canned-responses", permission: "conversation-archived" },
     ],
   },
   {
