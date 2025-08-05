@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/accordion";
 import { DeleteUserButton } from "./delete/components/DeleteUserButton";
 import { PermissionHistorySection } from "../permission-history/PermissionHistorySection";
+import { RoleSwitcher } from "./RoleSwitcher";
 
 interface MemberDetailsProps {
   member: Member;
@@ -302,30 +303,12 @@ export function MemberDetails({
           userRole={member.role}
           onSuccess={onClose}
         />
-        {role === 'OWNER' && (
-          <>
-            {currentRole === 'AGENT' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChangeRole('ADMIN')}
-                disabled={changingRole}
-              >
-                {changingRole ? 'Changing...' : 'Change to Admin'}
-              </Button>
-            )}
-            {currentRole === 'ADMIN' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChangeRole('AGENT')}
-                disabled={changingRole}
-              >
-                {changingRole ? 'Changing...' : 'Change to Agent'}
-              </Button>
-            )}
-          </>
-        )}
+        <RoleSwitcher
+          memberId={member.id}
+          initialRole={member.role}
+          canSwitch={role === 'OWNER'}
+          onRoleUpdate={onRoleUpdate}
+        />
 
       </div>
 
