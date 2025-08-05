@@ -127,7 +127,6 @@ const handleUpdateResponse = async () => {
         name: formData.name,
         message: formData.message,
         visibility: formData.visibility,
-        // Don't send userId and organizationId for updates as they shouldn't change
       },
       {
         headers: {
@@ -136,14 +135,34 @@ const handleUpdateResponse = async () => {
         },
       }
     )
-    // Success handling...
+    
+    // Close the dialog and reset states
+    setIsDialogOpen(false)
+    setEditingResponse(null)
+    setFormData({
+      name: '',
+      message: '',
+      visibility: 'PRIVATE'
+    })
+    
+    // Refresh the responses
+    await fetchResponses()
+    
+    // Optional: Show success toast
+    // toast({
+    //   title: 'Success',
+    //   description: 'Canned response updated successfully',
+    // })
   } catch (error) {
-    console.error('Failed to update canned response:', error)
-    // if (error.response) {
-    //   console.error('Error details:', error.response.data)
-    // }
-    // toast error...
+  if (axios.isAxiosError(error)) {
+    console.error('Axios error:', error.message)
+    if (error.response) {
+      console.error('Error details:', error.response.data)
+    }
+  } else {
+    console.error('Unexpected error:', error)
   }
+}
 }
 
   const handleDeleteClick = (responseId: string) => {
