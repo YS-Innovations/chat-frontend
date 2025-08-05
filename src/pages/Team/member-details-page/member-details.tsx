@@ -60,6 +60,7 @@ export function MemberDetails({
   const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
+  const [currentRole, setCurrentRole] = useState<Role>(member.role);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
@@ -141,6 +142,9 @@ export function MemberDetails({
     }
   };
 
+
+
+
   const handleChangeRole = async (newRole: Role) => {
     if (!member) return;
 
@@ -163,7 +167,7 @@ export function MemberDetails({
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to change role');
       }
-
+      setCurrentRole(newRole);
       onRoleUpdate(newRole);
 
       toast.success("Role changed", {
@@ -178,6 +182,10 @@ export function MemberDetails({
       setChangingRole(false);
     }
   };
+
+  useEffect(() => {
+    setCurrentRole(member.role);
+  }, [member.role]);
 
   const handleSaveAsTemplate = async (templateName: string) => {
     await savePermissions(tempPermissions, true, templateName);
@@ -282,10 +290,10 @@ export function MemberDetails({
         </p>
 
         <Badge
-          variant={member.role === 'OWNER' ? 'destructive' : 'default'}
+          variant={currentRole === 'OWNER' ? 'destructive' : 'default'}
           className="mt-3"
         >
-          {member.role}
+          {currentRole}
         </Badge>
       </div>
       <div className="flex gap-2 justify-end px-4 mb-4">
@@ -296,7 +304,7 @@ export function MemberDetails({
         />
         {role === 'OWNER' && (
           <>
-            {member.role === 'AGENT' && (
+            {currentRole === 'AGENT' && (
               <Button
                 variant="outline"
                 size="sm"
@@ -306,7 +314,7 @@ export function MemberDetails({
                 {changingRole ? 'Changing...' : 'Change to Admin'}
               </Button>
             )}
-            {member.role === 'ADMIN' && (
+            {currentRole === 'ADMIN' && (
               <Button
                 variant="outline"
                 size="sm"
@@ -318,6 +326,7 @@ export function MemberDetails({
             )}
           </>
         )}
+
       </div>
 
       <Tabs
