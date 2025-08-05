@@ -14,6 +14,7 @@ import EditOrganization from '@/pages/Onboarding/EditOrganization';
 import { Invitepending } from '@/pages/Team/invitePendingMembers/invitePendingMembers';
 import { InviteForm } from '@/pages/Team/invite/invite-form';
 import ChatDashboard from '@/pages/Conversation/chatDashboard';
+import { CannedResponsePage } from '@/pages/CannedResponse/CannedResponsePage';
 
 
 function AppRoutes() {
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="team" element={<PermissionGuard permission="member-list"><Teams /></PermissionGuard>} />
         <Route path="team/user/:memberId" element={<PermissionGuard permission="member-list"> <Teams /> </PermissionGuard>} />
         <Route path="conversations" element={<ChatDashboard />} />
+        <Route path="canned-responses" element={<CannedResponsePage />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
       </Route>
     </Routes>
