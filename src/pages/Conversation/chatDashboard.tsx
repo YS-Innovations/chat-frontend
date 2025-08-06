@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
+import { CannedResponseInput } from '../CannedResponse/CannedResponseInput';
 // import Picker from '@emoji-mart/react';
 // import data from '@emoji-mart/data';
 
@@ -501,16 +502,16 @@ const ChatDashboard = () => {
               </div>
             )}
             <div className="flex">
-              <input
-                type="text"
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSendMessage();
-                }}
-                placeholder="Type a message..."
-                className="flex-1 p-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
-              />
+              <CannedResponseInput
+  value={messageInput}
+  onChange={setMessageInput}
+  placeholder="Type a message..."
+  className="flex-1 p-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') handleSendMessage()
+  }}
+/>
+
               <button
                 onClick={handleSendMessage}
                 className="ml-2 px-4 py-2 bg-blue-500 text-white rounded"
