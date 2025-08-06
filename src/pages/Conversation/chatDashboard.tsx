@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
-import { CannedResponseInput } from '../CannedResponse/CannedResponseInput';
+import { CannedResponseInput } from '../CannedResponse/input/CannedResponseInput';
 // import Picker from '@emoji-mart/react';
 // import data from '@emoji-mart/data';
 
