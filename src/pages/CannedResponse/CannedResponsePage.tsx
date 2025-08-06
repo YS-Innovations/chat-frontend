@@ -1,5 +1,6 @@
 // src/pages/CannedResponse/CannedResponsePage.tsx
-import { useState, useEffect } from 'react'
+
+import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { toast } from 'sonner'
 import axios from 'axios'
@@ -23,20 +24,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-type CannedResponse = {
-  id: string
-  name: string
-  message: string
-  visibility: 'PUBLIC' | 'PRIVATE'
-  createdAt: string
-  updatedAt: string
-}
+import { useCannedResponses, type CannedResponse } from './useCannedResponses'
 
 export const CannedResponsePage = () => {
   const { user, getAccessTokenSilently } = useAuth0()
 
-  const [responses, setResponses] = useState<CannedResponse[]>([])
-  const [loading, setLoading] = useState(true)
+  const { responses, loading, fetchResponses } = useCannedResponses()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -46,33 +40,8 @@ export const CannedResponsePage = () => {
   const [formData, setFormData] = useState({
     name: '',
     message: '',
-    visibility: 'PRIVATE' as 'PUBLIC' | 'PRIVATE'
+    visibility: 'PRIVATE' as 'PUBLIC' | 'PRIVATE',
   })
-
-  const fetchResponses = async () => {
-    try {
-      setLoading(true)
-      const token = await getAccessTokenSilently()
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canned-responses/available/${user?.sub}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      setResponses(response.data)
-    } catch (error) {
-      toast.error('Failed to fetch canned responses')
-      setResponses([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (user?.sub) fetchResponses()
-  }, [user?.sub])
 
   const handleCreateResponse = async () => {
     try {
@@ -158,7 +127,7 @@ export const CannedResponsePage = () => {
     setFormData({
       name: response.name,
       message: response.message,
-      visibility: response.visibility
+      visibility: response.visibility,
     })
     setIsDialogOpen(true)
   }
@@ -168,7 +137,7 @@ export const CannedResponsePage = () => {
     setFormData({ name: '', message: '', visibility: 'PRIVATE' })
   }
 
-  const filteredResponses = responses.filter(response =>
+  const filteredResponses = responses.filter((response) =>
     response.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     response.message.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -177,10 +146,13 @@ export const CannedResponsePage = () => {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">Canned Responses</h1>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open)
-          if (!open) resetForm()
-        }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open)
+            if (!open) resetForm()
+          }}
+        >
           <DialogTrigger asChild>
             <Button>Create New</Button>
           </DialogTrigger>
@@ -224,7 +196,10 @@ export const CannedResponsePage = () => {
                   <span>Public</span>
                 </label>
               </div>
-              <Button onClick={editingResponse ? handleUpdateResponse : handleCreateResponse} className="w-full">
+              <Button
+                onClick={editingResponse ? handleUpdateResponse : handleCreateResponse}
+                className="w-full"
+              >
                 {editingResponse ? 'Update' : 'Create'}
               </Button>
             </div>
@@ -263,7 +238,11 @@ export const CannedResponsePage = () => {
                   <TableCell>{response.visibility}</TableCell>
                   <TableCell>{new Date(response.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEditClick(response)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(response)}
+                    >
                       Edit
                     </Button>
                     <Button
