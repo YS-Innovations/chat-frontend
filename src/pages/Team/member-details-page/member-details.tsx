@@ -4,7 +4,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check } from "lucide-react";
 import type { Member, Role, UserLoginHistory } from "../types/types";
@@ -26,6 +25,8 @@ import {
 } from "@/components/ui/accordion";
 import { DeleteUserButton } from "./delete/components/DeleteUserButton";
 import { PermissionHistorySection } from "../permission-history/PermissionHistorySection";
+import { RoleSwitcher } from "./RoleSwitcher";
+import { RoleBadge } from "./RoleBadge";
 
 interface MemberDetailsProps {
   member: Member;
@@ -45,8 +46,7 @@ export function MemberDetails({
   onClose,
   permissions,
   onUpdatePermissions,
-  loading = false,
-  onRoleUpdate,
+  loading = false
 }: MemberDetailsProps) {
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>(permissions);
@@ -57,9 +57,9 @@ export function MemberDetails({
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [changingRole, setChangingRole] = useState(false);
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
+  const [currentRole, setCurrentRole] = useState<Role>(member.role);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
@@ -141,45 +141,9 @@ export function MemberDetails({
     }
   };
 
-  const handleChangeRole = async (newRole: Role) => {
-    if (!member) return;
 
-    setChangingRole(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(
-        `http://localhost:3000/auth/role/${member.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ newRole }),
-        }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to change role');
-      }
-
-      onRoleUpdate(newRole);
-
-      toast.success("Role changed", {
-        description: `User is now ${newRole === 'ADMIN' ? 'Admin' : 'Agent'}`,
-      });
-    } catch (err) {
-      console.error('Role change failed:', err);
-      toast.error("Failed to change role", {
-        description: err instanceof Error ? err.message : 'An error occurred',
-      });
-    } finally {
-      setChangingRole(false);
-    }
-  };
-
-  const handleSaveAsTemplate = async (templateName: string) => {
+ const handleSaveAsTemplate = async (templateName: string) => {
     await savePermissions(tempPermissions, true, templateName);
     fetchTemplates();
   };
@@ -281,12 +245,7 @@ export function MemberDetails({
           {member.email}
         </p>
 
-        <Badge
-          variant={member.role === 'OWNER' ? 'destructive' : 'default'}
-          className="mt-3"
-        >
-          {member.role}
-        </Badge>
+        <RoleBadge role={currentRole} />
       </div>
       <div className="flex gap-2 justify-end px-4 mb-4">
         <DeleteUserButton
@@ -294,30 +253,14 @@ export function MemberDetails({
           userRole={member.role}
           onSuccess={onClose}
         />
-        {role === 'OWNER' && (
-          <>
-            {member.role === 'AGENT' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChangeRole('ADMIN')}
-                disabled={changingRole}
-              >
-                {changingRole ? 'Changing...' : 'Change to Admin'}
-              </Button>
-            )}
-            {member.role === 'ADMIN' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChangeRole('AGENT')}
-                disabled={changingRole}
-              >
-                {changingRole ? 'Changing...' : 'Change to Agent'}
-              </Button>
-            )}
-          </>
-        )}
+        <RoleSwitcher
+  memberId={member.id}
+  initialRole={member.role}
+  canSwitch={role === 'OWNER'}
+  onRoleUpdate={setCurrentRole}
+/>
+
+
       </div>
 
       <Tabs
