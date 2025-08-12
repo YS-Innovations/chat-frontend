@@ -41,6 +41,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Theme vars (keep your existing values) */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -116,5 +117,146 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* final components layer: chat bubble + list + timestamp + status */
+@layer components {
+  /* Bubble sizing/look (tweak max-width to taste) */
+  .chat-bubble-incoming,
+  .chat-bubble-outgoing {
+    display: inline-block;
+    padding: 0.6rem 0.95rem;   /* vertical + horizontal padding */
+    border-radius: 0.9rem;
+    line-height: 1.35;
+    max-width: 60%;
+    box-sizing: border-box;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    /* make room for the timestamp inside the bubble */
+    position: relative;
+    padding-bottom: 1.6rem; /* reserve space for timestamp */
+  }
+
+  /* Incoming (left) */
+  .chat-bubble-incoming {
+    background: var(--color-card, #f3f4f6);
+    color: var(--color-foreground, #111827);
+    border-radius: 12px 12px 12px 6px;
+  }
+
+  /* Outgoing (right) — crisp blue & white text like screenshot */
+  .chat-bubble-outgoing {
+    background: #0b93f6; /* crisp blue */
+    color: #ffffff;
+    border-radius: 12px 12px 6px 12px;
+  }
+
+  /* Timestamp (bottom-right inside bubble) */
+  .chat-bubble-time {
+    position: absolute;
+    right: 0.6rem;       /* distance from bubble right edge */
+    bottom: 0.45rem;     /* distance from bubble bottom */
+    font-size: 0.65rem;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    background: transparent;
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  /* time color variations */
+  .chat-bubble-outgoing .chat-bubble-time .chat-bubble-time-text {
+    color: rgba(255,255,255,0.95);
+  }
+  .chat-bubble-incoming .chat-bubble-time .chat-bubble-time-text {
+    color: var(--muted-foreground, #6b7280);
+  }
+
+  /* status icon sizing and color (double-check) */
+  .chat-bubble-status svg {
+    width: 14px;
+    height: 14px;
+    color: rgba(255,255,255,0.95);
+    vertical-align: middle;
+  }
+
+  .chat-bubble-incoming .chat-bubble-status svg {
+    color: var(--muted-foreground, #6b7280);
+  }
+
+  /* Reset default heading/paragraph margins inside bubbles so layout is predictable */
+  .chat-bubble-content p,
+  .chat-bubble-content h1,
+  .chat-bubble-content h2,
+  .chat-bubble-content h3,
+  .chat-bubble-content h4 {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ensure strong/em/underline don't break layout */
+  .chat-bubble-content strong,
+  .chat-bubble-content b,
+  .chat-bubble-content em,
+  .chat-bubble-content i,
+  .chat-bubble-content u {
+    line-height: inherit;
+  }
+
+  /* --- Robust ordered list using grid so markers never overlap and text wraps properly --- */
+  .chat-bubble-content { counter-reset: chat-ol; }
+
+  .chat-bubble-content ol {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0;
+  }
+
+  /* grid: first column for number (auto width), second for content (wraps) */
+  .chat-bubble-content ol > li {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5ch;
+    align-items: start; /* top-align marker and content */
+    counter-increment: chat-ol;
+    margin: 0.18rem 0;
+  }
+
+  .chat-bubble-content ol > li::before {
+    content: counter(chat-ol) ".";
+    grid-column: 1;
+    grid-row: 1;
+    color: inherit;
+    font-weight: 500;
+    padding-right: 0.25ch;
+  }
+
+  /* unordered list - keep bullets, but use inside positioning */
+  .chat-bubble-content ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    padding-left: 0;
+    margin: 0.25rem 0;
+  }
+
+  .chat-bubble-content ul > li {
+    margin: 0.18rem 0;
+    padding-left: 0.6rem;
+  }
+
+  /* nested lists indent more */
+  .chat-bubble-content ol ol,
+  .chat-bubble-content ul ul {
+    padding-left: 1rem;
+  }
+
+  /* ensure markers (if any) inherit color */
+  .chat-bubble-content li::marker {
+    color: inherit;
   }
 }

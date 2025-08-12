@@ -50,7 +50,8 @@ export function joinConversation(conversationId: string) {
 export function sendMessageSocket(payload: {
   conversationId: string;
   senderId: string; // ✅ Agent or guest ID
-  content: string;
+  content: string; // sanitized HTML from client (server must re-sanitize)
+  mediaUrl?: string;
 }) {
   connectSocket();
   socket.emit('sendMessage', payload);
