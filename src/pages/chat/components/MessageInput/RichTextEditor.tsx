@@ -379,7 +379,7 @@ export default function RichTextEditor({
           onPaste={handlePaste}
           readOnly={disabled || !conversationId}
           // fixed height (h-28 = 7rem). Use h-24 or h-32 to taste.
-          className="h-28 outline-none p-2 border rounded-md w-full overflow-y-auto custom-scroll"
+          className="h-28 outline-none p-2 border rounded-md w-full overflow-y-auto overflow-x-hidden no-scrollbar"
           style={{
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
