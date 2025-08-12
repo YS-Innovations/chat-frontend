@@ -40,6 +40,20 @@ export interface Message {
   content?: string;
   mediaUrl?: string;
   createdAt: string;
+  status?: 'SENT' | 'DELIVERED' | 'SEEN';
+  readReceipts?: ReadReceipt[];
+  isInternalNote?: boolean;
+}
+
+export interface ReadReceipt {
+  userId: string;
+  status: 'SENT' | 'DELIVERED' | 'SEEN';
+  readAt?: string;
+  user?: {
+    id: string;
+    name?: string;
+    picture?: string;
+  };
 }
 
 /**

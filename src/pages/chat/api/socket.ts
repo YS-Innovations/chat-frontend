@@ -1,6 +1,7 @@
 // src/api/socket.ts
 
 import { io, Socket } from 'socket.io-client';
+import type { Message } from './chatService';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 if (!SOCKET_URL) {
@@ -56,5 +57,51 @@ export function sendMessageSocket(payload: {
   socket.emit('sendMessage', payload);
   console.log('[Dashboard] ✉️ Message sent via socket:', payload);
 }
+
+// Add these new functions to your socket.ts file
+
+/**
+ * Mark a message as read
+ */
+export function markMessageAsRead(messageId: string) {
+  connectSocket();
+  socket.emit('messageRead', { messageId });
+}
+
+/**
+ * Mark multiple messages as seen
+ */
+export function markMessagesAsSeen(messageIds: string[]) {
+  connectSocket();
+  socket.emit('markMessagesAsSeen', { messageIds });
+}
+
+/**
+ * Get unread messages count
+ */
+export function getUnreadMessages(conversationId?: string) {
+  connectSocket();
+  return new Promise<{ unreadMessages: Message[] }>((resolve) => {
+    socket.emit('getUnreadMessages', { conversationId }, resolve);
+  });
+}
+
+// Add these event listeners
+socket.on('messageStatusUpdated', (data: {
+  messageId: string;
+  status: 'SENT' | 'DELIVERED' | 'SEEN';
+  readBy?: string;
+  readAt?: string;
+}) => {
+  // You can handle status updates here if needed
+  console.log('Message status updated:', data);
+});
+
+
+export function markMessageAsDelivered(messageId: string) {
+  connectSocket();
+  socket.emit('markMessageAsDelivered', { messageId });
+}
+
 
 export default socket;
