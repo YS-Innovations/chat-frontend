@@ -4,17 +4,17 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import LoadingSpinner from './components/Loading/LoadingSpinner';
 import { GlobalErrorHandler } from './providers/GlobalErrorHandler';
-import useBackendHealth from './providers/useBackendHealth';
+// import useBackendHealth from './providers/useBackendHealth';
 
 function App() {
-  const { isLoading: authLoading, isAuthenticated } = useAuth0();
-  const { isBackendUp, checking } = useBackendHealth();
+  const { isLoading: authLoading, 
+    // isAuthenticated
+   } = useAuth0();
+  // const { isBackendUp, checking } = useBackendHealth();
 
-  // Show loading spinner until:
-  // 1. Auth0 is done loading
-  // 2. Backend health check is complete
-  // 3. Backend is up
-  const isLoading = authLoading || checking || !isBackendUp;
+  const isLoading = authLoading 
+  // || checking || !isBackendUp
+  ;
 
   if (isLoading) {
     return (
