@@ -22,7 +22,6 @@ import {
   Undo,
   Redo,
   Smile,
-  File,
   Mic,
 } from 'lucide-react';
 import { handleEditorShortcut } from '../../lib/shortcuts';
@@ -31,6 +30,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { sendMessageSocket } from '../../api/socket';
 import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
+import FileUploader from './FileUploader';
+import { uploadFileToS3 } from '../../api/uploadService';
 
 interface RichTextEditorProps {
   conversationId: string | null;
@@ -244,6 +245,12 @@ export default function RichTextEditor({
   const [isRecording, setIsRecording] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
+  // staged file (selected but not yet uploaded)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // compute whether there's any text to send
   const hasContent = () => {
     try {
@@ -257,36 +264,75 @@ export default function RichTextEditor({
   };
 
   // send handler: converts Slate -> sanitized HTML and sends via socket
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (!conversationId) {
       alert('Select a conversation first');
+      return;
+    }
+
+    // If an upload is in progress, block sending
+    if (uploading) {
+      alert('Upload in progress, please wait');
       return;
     }
 
     // build sanitized HTML only (no plain-text fallback)
     const html = sanitize(serializeToHtml(value)).trim();
 
-    if (!html) {
-      // nothing meaningful to send
+    // If there's no content and we're not sending an attachment, nothing to send
+    if (!html && !selectedFile) {
       return;
     }
 
-    // send sanitized HTML as content
-    sendMessageSocket({
-      conversationId,
-      senderId: selfId ?? '',
-      content: html,
-    });
+    // Reset any prior upload errors
+    setUploadError(null);
 
-    // Clear the editor UI and internal slate value
-    clearEditor(editor);
-    setValue(initialValue);
+    let mediaMeta: { mediaUrl: string; mediaType?: string; fileName?: string } | null = null;
 
-    // close emoji picker
-    setShowEmojiPicker(false);
+    try {
+      if (selectedFile) {
+        setUploading(true);
+        setUploadProgress(0);
+        // upload the file and get public URL (uses existing helper)
+        const { publicUrl } = await uploadFileToS3(selectedFile, (p) => setUploadProgress(p));
+        mediaMeta = { mediaUrl: publicUrl, mediaType: selectedFile.type || undefined, fileName: selectedFile.name };
+      }
 
-    if (onSent) onSent();
-  }, [conversationId, editor, selfId, value, onSent]);
+      // Build payload: include caption if present, otherwise allow empty if media present
+      const payload: any = {
+        conversationId,
+        senderId: selfId ?? null,
+      };
+      if (mediaMeta) {
+        payload.mediaUrl = mediaMeta.mediaUrl;
+        if (mediaMeta.mediaType) payload.mediaType = mediaMeta.mediaType;
+        if (mediaMeta.fileName) payload.fileName = mediaMeta.fileName;
+      }
+
+      if (html) {
+        payload.content = html;
+      } else {
+        payload.content = ''; // explicit empty if only a media-only message
+      }
+
+      // send socket message
+      sendMessageSocket(payload);
+      // Clear editor content and staged file / preview
+      if (html) {
+        clearEditor(editor);
+        setValue(initialValue);
+      }
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploading(false);
+
+      if (onSent) onSent();
+    } catch (err: any) {
+      console.error('Send/upload failed', err);
+      setUploadError(err?.message || 'Upload or send failed');
+      setUploading(false);
+    }
+  }, [conversationId, editor, selfId, value, selectedFile, uploading, onSent]);
 
   // keyboard handling — uses your existing shortcut handler
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -315,27 +361,22 @@ export default function RichTextEditor({
     });
   };
 
-  // Prevent file attach when no conversation selected
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!conversationId) {
-      alert('Select a conversation before attaching files.');
-      return;
-    }
-    // TODO: upload file to your backend and then send message with mediaUrl
-    alert(`Selected file: ${file.name} — implement upload to backend in handleFileChange.`);
-    e.currentTarget.value = '';
-  };
-
   // if conversationId toggles off, clear local editor state (similar to MessageInput disabling)
   useEffect(() => {
     if (!conversationId) {
       clearEditor(editor);
       setValue(initialValue);
+      setSelectedFile(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
+
+  // Handler called by FileUploader when the user selects or clears a file
+  const handleFileSelect = useCallback((file: File | null) => {
+    setSelectedFile(file);
+    setUploadError(null);
+    setUploadProgress(0);
+  }, []);
 
   return (
     <div className="rich-text-editor border rounded-lg p-3 bg-white shadow-md space-y-2" ref={editorRef}>
@@ -407,26 +448,42 @@ export default function RichTextEditor({
                 <EmojiPicker onEmojiClick={(emoji: EmojiClickData) => { insertEmoji(editor, emoji.emoji); setShowEmojiPicker(false); }} />
               </PopoverContent>
             </Popover>
-            <label htmlFor="file-upload" className="cursor-pointer" title="Attach File">
-              <div className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-                <File />
-              </div>
-            </label>
-            <input type="file" id="file-upload" className="hidden" onChange={handleFileChange} />
+
+            {/* FileUploader now only selects & previews. Upload happens on Send */}
+            <FileUploader
+              conversationId={conversationId}
+              onSelectFile={handleFileSelect}
+              selectedFile={selectedFile}
+              disabled={disabled}
+            />
           </div>
 
-          <button
-            onClick={() => handleSend()}
-            title="Send Message (Enter)"
-            disabled={!conversationId || !hasContent()}
-            className="flex items-center gap-2 bg-primary text-white text-md font-medium px-4 py-2 rounded-sm hover:bg-blue-600 transition disabled:opacity-50"
-          >
-            Send
-            <span className="flex items-center gap-1 bg-white/10 text-white/80 px-2 py-0.5 rounded-sm text-xs font-mono">
-              <Mic className="text-lg" />
-            </span>
-          </button>
+          <div className="flex items-center gap-3">
+            {selectedFile && (
+              <div className="flex items-center gap-2 mr-2">
+                {uploading ? (
+                  <div className="text-xs text-gray-500">{uploadProgress}%</div>
+                ) : (
+                  <div className="text-xs text-gray-500">Ready to send</div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => handleSend()}
+              title="Send Message (Enter)"
+              disabled={!conversationId || (!hasContent() && !selectedFile) || uploading}
+              className="flex items-center gap-2 bg-primary text-white text-md font-medium px-4 py-2 rounded-sm hover:bg-blue-600 transition disabled:opacity-50"
+            >
+              Send
+              <span className="flex items-center gap-1 bg-white/10 text-white/80 px-2 py-0.5 rounded-sm text-xs font-mono">
+                <Mic className="text-lg" />
+              </span>
+            </button>
+          </div>
         </div>
+
+        {uploadError && <div className="text-xs text-red-500">{uploadError}</div>}
       </Slate>
     </div>
   );

@@ -1,4 +1,4 @@
-// src/api/chatService.ts
+// src/pages/chat/api/chatService.ts
 
 import axios from 'axios';
 
@@ -32,13 +32,16 @@ export async function fetchConversations(): Promise<ConversationListItem[]> {
 
 /**
  * Shape matching your backend’s Message model.
+ * Extended to include file attachment metadata used by the dashboard UI.
  */
 export interface Message {
   id: string;
   conversationId: string;
   senderId?: string;
   content?: string;
-  mediaUrl?: string;
+  mediaUrl?: string;   // public URL to the uploaded file (image, doc, etc.)
+  mediaType?: string;  // MIME type, e.g. 'image/png' or 'application/pdf'
+  fileName?: string;   // original filename provided by the uploader
   createdAt: string;
 }
 
