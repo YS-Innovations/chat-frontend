@@ -24,8 +24,6 @@ export const navMainItems: NavItem[] = [
       { title: "All Conversation", url: "/app/conversations", permission: "conversation-list" },
       { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
       { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
-      { title: "canned-responses", url: "/app/canned-responses", permission: "conversation-archived" },
-      { title: "channel-settings", url: "/app/channel-settings", permission: "chennelsettings" },
     ],
   },
   {
@@ -37,7 +35,6 @@ export const navMainItems: NavItem[] = [
       { title: "Members", url: "/app/team", permission: "member-list" },
       { title: "Invite", url: "/app/team/invite", permission: "invite-form" },
       { title: "Pending Invite", url: "/app/team/invite-pending", permission: "pending-invite" },
-      { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
     ],
   },
   {
@@ -56,9 +53,13 @@ export const navMainItems: NavItem[] = [
     icon: Settings2,
     permission: "settings-access",
     items: [
+      { title: "canned-responses", url: "/app/canned-responses", permission: "conversation-archived" },
+      { title: "channel-settings", url: "/app/channel-settings", permission: "chennelsettings" },
+      { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
+      { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
       { title: "General", url: "/app/settings/general", permission: "settings-general" },
       { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
-      { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
+      
     ],
   },
 ];
