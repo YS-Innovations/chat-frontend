@@ -8,14 +8,13 @@ import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
 import ErrorPage from '../pages/ErrorPage';
 import { PermissionTemplates } from '@/pages/Team/permissionTemplates/PermissionTemplates';
-
 import Onboarding from '@/pages/Onboarding/Onboarding';
 import EditOrganization from '@/pages/Onboarding/EditOrganization';
 import { Invitepending } from '@/pages/Team/invitePendingMembers/invitePendingMembers';
 import { InviteForm } from '@/pages/Team/invite/invite-form';
-import ChatDashboard from '@/pages/Conversation/chatDashboard';
 import { CannedResponsePage } from '@/pages/CannedResponse/CannedResponsePage';
 import Dashboard from '@/pages/chat/pages/Dashboard';
+import ChannelsPage from '@/pages/channel/channel';
 
 
 function AppRoutes() {
@@ -36,6 +35,7 @@ function AppRoutes() {
         <Route path="conversations" element={<Dashboard />} />
         <Route path="canned-responses" element={<CannedResponsePage />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
+        <Route path="channel-settings" element={<PermissionGuard permission="chennelsettings"><ChannelsPage /></PermissionGuard>} />
       </Route>
     </Routes>
   );
