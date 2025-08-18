@@ -1,1 +1,0 @@
-export type ChannelType = 'WEB' | 'MOBILE' | 'API' | string;

@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import type { ChannelType } from './types';
 import { toast } from 'sonner';
+
+type ChannelType = 'WEB' | 'WHATSAPP';
+type Theme = 'light' | 'dark';
+type Position = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
 interface ChannelSettings {
   id: string;
   channelId: string;
-  name?: string | null;
-  domain?: string | null;
-  theme: string;
+  name?: string;
+  domain?: string;
+  theme: Theme;
   primaryColor: string;
-  position: string;
-  launcherIcon?: string | null;
-  orgName?: string | null;
-  orgLogo?: string | null;
+  position: Position;
+  launcherIcon?: string;
+  orgName?: string;
+  orgLogo?: string;
   showBranding: boolean;
   showHelpTab: boolean;
   allowUploads: boolean;
   csatEnabled: boolean;
   QuickReply?: any;
-  updatedAt: Date;
+  updatedAt: string;
 }
 
 interface Channel {
@@ -27,14 +30,26 @@ interface Channel {
   uuid: string;
   channelToken: string;
   type: ChannelType;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   channelSettings?: ChannelSettings | null;
+  organization?: {
+    id: string;
+    name: string;
+    website: string;
+  };
 }
 
-interface CreateChannelForm {
+interface ChannelSettingsForm {
   name: string;
-  type: ChannelType;
+  domain: string;
+  theme: Theme;
+  primaryColor: string;
+  position: Position;
+  showBranding: boolean;
+  showHelpTab: boolean;
+  allowUploads: boolean;
+  csatEnabled: boolean;
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -48,57 +63,51 @@ const ChannelsPage: React.FC = () => {
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
-  const [newChannel, setNewChannel] = useState<CreateChannelForm>({
-    name: '',
-    type: 'WEB',
-  });
-  const [generatedToken, setGeneratedToken] = useState<string>('');
-  const [newSettings, setNewSettings] = useState({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newChannel, setNewChannel] = useState<ChannelSettingsForm>({
     name: '',
     domain: '',
     theme: 'light',
     primaryColor: '#2563EB',
     position: 'bottom-right',
-    launcherIcon: '',
-    orgName: '',
-    orgLogo: '',
     showBranding: true,
     showHelpTab: true,
     allowUploads: true,
     csatEnabled: true,
-    QuickReply: null,
   });
+  const [generatedToken, setGeneratedToken] = useState('');
 
   useEffect(() => {
-    fetchChannels();
-  }, []);
+    const fetchChannels = async () => {
+      try {
+        setLoading(true);
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${API_URL}/channels`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const fetchChannels = async () => {
-    try {
-      setLoading(true);
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/channels`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        if (!response.ok) {
+          throw new Error('Failed to fetch channels');
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch channels');
+        const data = await response.json();
+        setChannels(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        toast.error('Failed to load channels');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      setChannels(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      toast.error('Failed to load channels');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchChannels();
+  }, [getAccessTokenSilently]);
 
   const handleCreateChannel = async () => {
     try {
+      setIsSubmitting(true);
       const token = await getAccessTokenSilently();
       const response = await fetch(`${API_URL}/channels/init`, {
         method: 'POST',
@@ -106,10 +115,7 @@ const ChannelsPage: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: newChannel.name,
-          type: newChannel.type,
-        }),
+        body: JSON.stringify(newChannel),
       });
 
       if (!response.ok) {
@@ -121,123 +127,110 @@ const ChannelsPage: React.FC = () => {
       setGeneratedToken(createdChannel.channelToken);
       setShowCreateModal(false);
       setShowTokenModal(true);
-      
-      // Refresh the channels list to include the new channel
-      fetchChannels();
+      setChannels(prev => [...prev, createdChannel]);
+      toast.success('Channel created successfully');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create channel');
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleAddSettings = () => {
-    setShowTokenModal(false);
-    setShowSettingsModal(true);
   };
 
   const handleUpdateSettings = async () => {
     if (!selectedChannel) return;
 
     try {
+      setIsSubmitting(true);
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/channels/${selectedChannel.id}/settings`, {
-        method: selectedChannel.channelSettings ? 'PATCH' : 'POST',
+      const method = selectedChannel.channelSettings ? 'PATCH' : 'POST';
+      const endpoint = `${API_URL}/channels/${selectedChannel.id}/settings`;
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...newSettings,
-          name: newChannel.name, // Use the name from the first form
-        }),
+        body: JSON.stringify(newChannel),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update settings');
+        throw new Error('Failed to update settings');
       }
 
       const updatedSettings = await response.json();
-      const updatedChannels = channels.map(channel => 
-        channel.id === selectedChannel.id 
-          ? { ...channel, channelSettings: updatedSettings } 
-          : channel
+      setChannels(prev =>
+        prev.map(channel =>
+          channel.id === selectedChannel.id
+            ? { ...channel, channelSettings: updatedSettings }
+            : channel
+        )
       );
-      
-      setChannels(updatedChannels);
       setShowSettingsModal(false);
-      resetForms();
       toast.success('Settings updated successfully');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update settings');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDeleteChannel = async (channelId: string) => {
+  const handleDeleteChannel = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this channel?')) return;
 
     try {
+      setIsSubmitting(true);
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+      const response = await fetch(`${API_URL}/channels/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete channel');
-      }
-
-      setChannels(channels.filter(channel => channel.id !== channelId));
+      if (!response.ok) throw new Error('Failed to delete channel');
+      
+      setChannels(prev => prev.filter(channel => channel.id !== id));
       toast.success('Channel deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete channel');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete channel');
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const resetForms = () => {
-    setNewChannel({
-      name: '',
-      type: 'WEB',
-    });
-    setNewSettings({
-      name: '',
-      domain: '',
-      theme: 'light',
-      primaryColor: '#2563EB',
-      position: 'bottom-right',
-      launcherIcon: '',
-      orgName: '',
-      orgLogo: '',
-      showBranding: true,
-      showHelpTab: true,
-      allowUploads: true,
-      csatEnabled: true,
-      QuickReply: null,
-    });
-    setGeneratedToken('');
   };
 
   const openSettingsModal = (channel: Channel) => {
     setSelectedChannel(channel);
     if (channel.channelSettings) {
-      setNewSettings({
-        name: channel.channelSettings.name || '',
-        domain: channel.channelSettings.domain || '',
-        theme: channel.channelSettings.theme,
-        primaryColor: channel.channelSettings.primaryColor,
-        position: channel.channelSettings.position,
-        launcherIcon: channel.channelSettings.launcherIcon || '',
-        orgName: channel.channelSettings.orgName || '',
-        orgLogo: channel.channelSettings.orgLogo || '',
-        showBranding: channel.channelSettings.showBranding,
-        showHelpTab: channel.channelSettings.showHelpTab,
-        allowUploads: channel.channelSettings.allowUploads,
-        csatEnabled: channel.channelSettings.csatEnabled,
-        QuickReply: channel.channelSettings.QuickReply || null,
+      setNewChannel({
+        name: channel.channelSettings?.name || '',
+        domain: channel.channelSettings?.domain || '',
+        theme: (channel.channelSettings?.theme as Theme) || 'light',
+        primaryColor: channel.channelSettings?.primaryColor || '#2563EB',
+        position: (channel.channelSettings?.position as Position) || 'bottom-right',
+        showBranding: channel.channelSettings?.showBranding ?? true,
+        showHelpTab: channel.channelSettings?.showHelpTab ?? true,
+        allowUploads: channel.channelSettings?.allowUploads ?? true,
+        csatEnabled: channel.channelSettings?.csatEnabled ?? true,
       });
     }
     setShowSettingsModal(true);
+  };
+
+  const resetForms = () => {
+    setNewChannel({
+      name: '',
+      domain: '',
+      theme: 'light',
+      primaryColor: '#2563EB',
+      position: 'bottom-right',
+      showBranding: true,
+      showHelpTab: true,
+      allowUploads: true,
+      csatEnabled: true,
+    });
+    setGeneratedToken('');
+    setSelectedChannel(null);
   };
 
   if (loading) {
@@ -269,88 +262,104 @@ const ChannelsPage: React.FC = () => {
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Settings</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {channels.map((channel) => (
-              <tr key={channel.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {channel.channelSettings?.name || 'Unnamed'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{channel.channelToken}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{channel.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(channel.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {channel.channelSettings ? 'Configured' : 'Not Configured'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => openSettingsModal(channel)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => handleDeleteChannel(channel.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
+        {channels.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            No channels found. Create your first channel to get started.
+          </div>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Settings</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {channels.map((channel) => (
+                <tr key={channel.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {channel.channelSettings?.name || 'Unnamed'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                    <span className="truncate max-w-xs inline-block">{channel.channelToken}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{channel.type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(channel.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {channel.channelSettings ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Configured
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Not Configured
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button
+                      onClick={() => openSettingsModal(channel)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => handleDeleteChannel(channel.id)}
+                      className="text-red-600 hover:text-red-900"
+                      disabled={isSubmitting}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {/* Step 1: Create Channel Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Create New Channel</h2>
             
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="channelName">
-                Channel Name
-              </label>
-              <input
-                id="channelName"
-                type="text"
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                value={newChannel.name}
-                onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                placeholder="Enter channel name"
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="channelName">
+                  Channel Name
+                </label>
+                <input
+                  id="channelName"
+                  type="text"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newChannel.name}
+                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
+                  placeholder="Enter channel name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="domain">
+                  Domain (optional)
+                </label>
+                <input
+                  id="domain"
+                  type="text"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newChannel.domain}
+                  onChange={(e) => setNewChannel({...newChannel, domain: e.target.value})}
+                  placeholder="example.com"
+                />
+              </div>
             </div>
             
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="channelType">
-                Channel Type
-              </label>
-              <select
-                id="channelType"
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                value={newChannel.type}
-                onChange={(e) => setNewChannel({...newChannel, type: e.target.value as ChannelType})}
-              >
-                <option value="WEB">Web</option>
-                <option value="MOBILE">Mobile</option>
-                <option value="API">API</option>
-              </select>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 mt-6">
               <button
                 onClick={() => {
                   setShowCreateModal(false);
@@ -362,17 +371,16 @@ const ChannelsPage: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateChannel}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
-                disabled={!newChannel.name}
+                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!newChannel.name || isSubmitting}
               >
-                Create
+                {isSubmitting ? 'Creating...' : 'Create'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Step 2: Show Generated Token Modal */}
       {showTokenModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -401,7 +409,10 @@ const ChannelsPage: React.FC = () => {
                 Close
               </button>
               <button
-                onClick={handleAddSettings}
+                onClick={() => {
+                  setShowTokenModal(false);
+                  setShowSettingsModal(true);
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
               >
                 Configure Settings
@@ -411,24 +422,39 @@ const ChannelsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Step 3: Channel Settings Modal */}
-      {showSettingsModal && (
+      {showSettingsModal && selectedChannel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl my-8">
-            <h2 className="text-xl font-bold mb-4">Configure Channel Settings</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {selectedChannel.channelSettings ? 'Update' : 'Configure'} Channel Settings
+            </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="domain">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="settingsName">
+                  Channel Name
+                </label>
+                <input
+                  id="settingsName"
+                  type="text"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newChannel.name}
+                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
+                  placeholder="Channel name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="settingsDomain">
                   Domain
                 </label>
                 <input
-                  id="domain"
+                  id="settingsDomain"
                   type="text"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newSettings.domain}
-                  onChange={(e) => setNewSettings({...newSettings, domain: e.target.value})}
-                  placeholder="Your domain"
+                  value={newChannel.domain}
+                  onChange={(e) => setNewChannel({...newChannel, domain: e.target.value})}
+                  placeholder="example.com"
                 />
               </div>
               
@@ -439,15 +465,93 @@ const ChannelsPage: React.FC = () => {
                 <select
                   id="theme"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newSettings.theme}
-                  onChange={(e) => setNewSettings({...newSettings, theme: e.target.value})}
+                  value={newChannel.theme}
+                  onChange={(e) => setNewChannel({...newChannel, theme: e.target.value as Theme})}
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                 </select>
               </div>
               
-              {/* Rest of the settings fields... */}
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primaryColor">
+                  Primary Color
+                </label>
+                <div className="flex items-center">
+                  <input
+                    id="primaryColor"
+                    type="color"
+                    className="w-10 h-10 mr-2"
+                    value={newChannel.primaryColor}
+                    onChange={(e) => setNewChannel({...newChannel, primaryColor: e.target.value})}
+                  />
+                  <span>{newChannel.primaryColor}</span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="position">
+                  Position
+                </label>
+                <select
+                  id="position"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newChannel.position}
+                  onChange={(e) => setNewChannel({...newChannel, position: e.target.value as Position})}
+                >
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="top-left">Top Left</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-gray-700 text-sm font-bold mb-2">Features</label>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showBranding"
+                    checked={newChannel.showBranding}
+                    onChange={(e) => setNewChannel({...newChannel, showBranding: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label htmlFor="showBranding">Show Branding</label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showHelpTab"
+                    checked={newChannel.showHelpTab}
+                    onChange={(e) => setNewChannel({...newChannel, showHelpTab: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label htmlFor="showHelpTab">Show Help Tab</label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="allowUploads"
+                    checked={newChannel.allowUploads}
+                    onChange={(e) => setNewChannel({...newChannel, allowUploads: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label htmlFor="allowUploads">Allow File Uploads</label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="csatEnabled"
+                    checked={newChannel.csatEnabled}
+                    onChange={(e) => setNewChannel({...newChannel, csatEnabled: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label htmlFor="csatEnabled">Enable CSAT Surveys</label>
+                </div>
+              </div>
             </div>
             
             <div className="flex justify-end">
@@ -462,9 +566,10 @@ const ChannelsPage: React.FC = () => {
               </button>
               <button
                 onClick={handleUpdateSettings}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
+                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isSubmitting}
               >
-                Save Settings
+                {isSubmitting ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
           </div>
