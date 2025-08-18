@@ -91,6 +91,8 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: 'general', label: 'General Settings', value: 'settings-general' },
       { id: 'billing', label: 'Billing Settings', value: 'settings-billing' },
       { id: 'onboarding', label: 'onboarding', value: 'onboarding' },
+      { id: 'canned-responses', label: 'canned-responses', value: 'canned-responses' },
+      { id: 'channel-settings', label: 'channel-settings', value: 'chennelsettings' },
     ],
   },
 

@@ -53,7 +53,7 @@ export const navMainItems: NavItem[] = [
     icon: Settings2,
     permission: "settings-access",
     items: [
-      { title: "canned-responses", url: "/app/canned-responses", permission: "conversation-archived" },
+      { title: "canned-responses", url: "/app/canned-responses", permission: "canned-responses" },
       { title: "channel-settings", url: "/app/channel-settings", permission: "chennelsettings" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
       { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
