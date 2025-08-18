@@ -35,7 +35,7 @@ function AppRoutes() {
         <Route path="conversations" element={<Dashboard />} />
         <Route path="canned-responses" element={<CannedResponsePage />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
-        <Route path="channel-settings" element={<PermissionGuard permission="channel-management"><ChannelsPage /></PermissionGuard>} />
+        <Route path="channel-settings" element={<PermissionGuard permission="chennelsettings"><ChannelsPage /></PermissionGuard>} />
       </Route>
     </Routes>
   );
