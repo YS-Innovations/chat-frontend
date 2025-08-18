@@ -1,6 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import LoadingSpinner from '@/components/Loading/LoadingSpinner';
+
 
 type ChannelType = 'WEB' | 'WHATSAPP';
 type Theme = 'light' | 'dark';
@@ -176,7 +211,7 @@ const ChannelsPage: React.FC = () => {
   };
 
   const handleDeleteChannel = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this channel?')) return;
+    if (!confirm('Are you sure you want to delete this channel?')) return;
 
     try {
       setIsSubmitting(true);
@@ -189,7 +224,7 @@ const ChannelsPage: React.FC = () => {
       });
 
       if (!response.ok) throw new Error('Failed to delete channel');
-      
+
       setChannels(prev => prev.filter(channel => channel.id !== id));
       toast.success('Channel deleted successfully');
     } catch (err) {
@@ -236,7 +271,7 @@ const ChannelsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -244,7 +279,7 @@ const ChannelsPage: React.FC = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="text-red-500 text-lg">{error}</div>
+        <div className="text-destructive text-lg">{error}</div>
       </div>
     );
   }
@@ -252,329 +287,339 @@ const ChannelsPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Channels</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
-        >
+        <h1 className="text-3xl font-bold text-foreground">Channels</h1>
+        <Button onClick={() => setShowCreateModal(true)}>
           Create Channel
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        {channels.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No channels found. Create your first channel to get started.
-          </div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Settings</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {channels.map((channel) => (
-                <tr key={channel.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {channel.channelSettings?.name || 'Unnamed'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                    <span className="truncate max-w-xs inline-block">{channel.channelToken}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{channel.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(channel.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {channel.channelSettings ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Configured
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Not Configured
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => openSettingsModal(channel)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Settings
-                    </button>
-                    <button
-                      onClick={() => handleDeleteChannel(channel.id)}
-                      className="text-red-600 hover:text-red-900"
-                      disabled={isSubmitting}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Create New Channel</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="channelName">
-                  Channel Name
-                </label>
-                <input
-                  id="channelName"
-                  type="text"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.name}
-                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                  placeholder="Enter channel name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="domain">
-                  Domain (optional)
-                </label>
-                <input
-                  id="domain"
-                  type="text"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.domain}
-                  onChange={(e) => setNewChannel({...newChannel, domain: e.target.value})}
-                  placeholder="example.com"
-                />
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Channels</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {channels.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No channels found. Create your first channel to get started.
             </div>
-            
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  resetForms();
-                }}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateChannel}
-                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={!newChannel.name || isSubmitting}
-              >
-                {isSubmitting ? 'Creating...' : 'Create'}
-              </button>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Token</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Settings</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {channels.map((channel) => (
+                  <TableRow key={channel.id}>
+                    <TableCell className="font-medium">
+                      {channel.channelSettings?.name || 'Unnamed'}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      <span className="truncate max-w-xs inline-block">
+                        {channel.channelToken}
+                      </span>
+                    </TableCell>
+                    <TableCell>{channel.type}</TableCell>
+                    <TableCell>
+                      {new Date(channel.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {channel.channelSettings ? (
+                        <Badge variant="secondary">Configured</Badge>
+                      ) : (
+                        <Badge variant="destructive">Not Configured</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openSettingsModal(channel)}
+                      >
+                        Settings
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteChannel(channel.id)}
+                        disabled={isSubmitting}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Channel Dialog */}
+      <Dialog open={showCreateModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowCreateModal(false);
+          resetForms();
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Channel</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="channelName">Channel Name</Label>
+              <Input
+                id="channelName"
+                value={newChannel.name}
+                onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+                placeholder="Enter channel name"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="domain">Domain (optional)</Label>
+              <Input
+                id="domain"
+                value={newChannel.domain}
+                onChange={(e) => setNewChannel({ ...newChannel, domain: e.target.value })}
+                placeholder="example.com"
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateModal(false);
+                resetForms();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateChannel}
+              disabled={!newChannel.name || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner />
+                  Creating...
+                </>
+              ) : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {showTokenModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Channel Created Successfully</h2>
-            
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Your Channel Token
-              </label>
-              <div className="p-3 bg-gray-100 rounded-md font-mono break-all">
+      {/* Token Dialog */}
+      <Dialog open={showTokenModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowTokenModal(false);
+          resetForms();
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Channel Created Successfully</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Your Channel Token</Label>
+              <div className="p-3 bg-muted rounded-md font-mono break-all">
                 {generatedToken}
               </div>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground">
                 Copy this token and use it to connect your application.
               </p>
             </div>
-            
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => {
-                  setShowTokenModal(false);
-                  resetForms();
-                }}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition duration-200"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowTokenModal(false);
-                  setShowSettingsModal(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
-              >
-                Configure Settings
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTokenModal(false);
+                resetForms();
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                setShowTokenModal(false);
+                setShowSettingsModal(true);
+              }}
+            >
+              Configure Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {showSettingsModal && selectedChannel && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl my-8">
-            <h2 className="text-xl font-bold mb-4">
-              {selectedChannel.channelSettings ? 'Update' : 'Configure'} Channel Settings
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="settingsName">
-                  Channel Name
-                </label>
+      {/* Settings Dialog */}
+      <Dialog open={showSettingsModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowSettingsModal(false);
+          resetForms();
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedChannel?.channelSettings ? 'Update' : 'Configure'} Channel Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="settingsName">Channel Name</Label>
+              <Input
+                id="settingsName"
+                value={newChannel.name}
+                onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+                placeholder="Channel name"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="settingsDomain">Domain</Label>
+              <Input
+                id="settingsDomain"
+                value={newChannel.domain}
+                onChange={(e) => setNewChannel({ ...newChannel, domain: e.target.value })}
+                placeholder="example.com"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="theme">Theme</Label>
+              <Select
+                value={newChannel.theme}
+                onValueChange={(value) => setNewChannel({ ...newChannel, theme: value as Theme })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="primaryColor">Primary Color</Label>
+              <div className="flex items-center gap-2">
                 <input
-                  id="settingsName"
-                  type="text"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.name}
-                  onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                  placeholder="Channel name"
+                  id="primaryColor"
+                  type="color"
+                  className="w-10 h-10 rounded-md border cursor-pointer"
+                  value={newChannel.primaryColor}
+                  onChange={(e) => setNewChannel({ ...newChannel, primaryColor: e.target.value })}
                 />
+                <span className="text-sm">{newChannel.primaryColor}</span>
               </div>
-              
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="settingsDomain">
-                  Domain
-                </label>
-                <input
-                  id="settingsDomain"
-                  type="text"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.domain}
-                  onChange={(e) => setNewChannel({...newChannel, domain: e.target.value})}
-                  placeholder="example.com"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="theme">
-                  Theme
-                </label>
-                <select
-                  id="theme"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.theme}
-                  onChange={(e) => setNewChannel({...newChannel, theme: e.target.value as Theme})}
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primaryColor">
-                  Primary Color
-                </label>
-                <div className="flex items-center">
-                  <input
-                    id="primaryColor"
-                    type="color"
-                    className="w-10 h-10 mr-2"
-                    value={newChannel.primaryColor}
-                    onChange={(e) => setNewChannel({...newChannel, primaryColor: e.target.value})}
-                  />
-                  <span>{newChannel.primaryColor}</span>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="position">
-                  Position
-                </label>
-                <select
-                  id="position"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={newChannel.position}
-                  onChange={(e) => setNewChannel({...newChannel, position: e.target.value as Position})}
-                >
-                  <option value="bottom-right">Bottom Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="top-right">Top Right</option>
-                  <option value="top-left">Top Left</option>
-                </select>
-              </div>
-              
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="position">Position</Label>
+              <Select
+                value={newChannel.position}
+                onValueChange={(value) => setNewChannel({ ...newChannel, position: value as Position })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                  <SelectItem value="top-right">Top Right</SelectItem>
+                  <SelectItem value="top-left">Top Left</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Features</Label>
               <div className="space-y-2">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Features</label>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="showBranding"
                     checked={newChannel.showBranding}
-                    onChange={(e) => setNewChannel({...newChannel, showBranding: e.target.checked})}
-                    className="mr-2"
+                    onCheckedChange={(checked) => setNewChannel({ ...newChannel, showBranding: Boolean(checked) })}
                   />
-                  <label htmlFor="showBranding">Show Branding</label>
+                  <Label htmlFor="showBranding" className="font-normal">
+                    Show Branding
+                  </Label>
                 </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="showHelpTab"
                     checked={newChannel.showHelpTab}
-                    onChange={(e) => setNewChannel({...newChannel, showHelpTab: e.target.checked})}
-                    className="mr-2"
+                    onCheckedChange={(checked) => setNewChannel({ ...newChannel, showHelpTab: Boolean(checked) })}
                   />
-                  <label htmlFor="showHelpTab">Show Help Tab</label>
+                  <Label htmlFor="showHelpTab" className="font-normal">
+                    Show Help Tab
+                  </Label>
                 </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="allowUploads"
                     checked={newChannel.allowUploads}
-                    onChange={(e) => setNewChannel({...newChannel, allowUploads: e.target.checked})}
-                    className="mr-2"
+                    onCheckedChange={(checked) => setNewChannel({ ...newChannel, allowUploads: Boolean(checked) })}
                   />
-                  <label htmlFor="allowUploads">Allow File Uploads</label>
+                  <Label htmlFor="allowUploads" className="font-normal">
+                    Allow File Uploads
+                  </Label>
                 </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="csatEnabled"
                     checked={newChannel.csatEnabled}
-                    onChange={(e) => setNewChannel({...newChannel, csatEnabled: e.target.checked})}
-                    className="mr-2"
+                    onCheckedChange={(checked) => setNewChannel({ ...newChannel, csatEnabled: Boolean(checked) })}
                   />
-                  <label htmlFor="csatEnabled">Enable CSAT Surveys</label>
+                  <Label htmlFor="csatEnabled" className="font-normal">
+                    Enable CSAT Surveys
+                  </Label>
                 </div>
               </div>
             </div>
-            
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSettingsModal(false);
-                  resetForms();
-                }}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition duration-200 mr-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateSettings}
-                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Saving...' : 'Save Settings'}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSettingsModal(false);
+                resetForms();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateSettings}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner />
+                  Saving...
+                </>
+              ) : 'Save Settings'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
