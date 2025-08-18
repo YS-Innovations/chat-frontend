@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
+import CreateChannelDialog from './CreateChannelDialog';
 
 
 type ChannelType = 'WEB' | 'WHATSAPP';
@@ -139,37 +140,6 @@ const ChannelsPage: React.FC = () => {
 
     fetchChannels();
   }, [getAccessTokenSilently]);
-
-  const handleCreateChannel = async () => {
-    try {
-      setIsSubmitting(true);
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/channels/init`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newChannel),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create channel');
-      }
-
-      const createdChannel = await response.json();
-      setGeneratedToken(createdChannel.channelToken);
-      setShowCreateModal(false);
-      setShowTokenModal(true);
-      setChannels(prev => [...prev, createdChannel]);
-      toast.success('Channel created successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create channel');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleUpdateSettings = async () => {
     if (!selectedChannel) return;
@@ -366,60 +336,19 @@ const ChannelsPage: React.FC = () => {
       </Card>
 
       {/* Create Channel Dialog */}
-      <Dialog open={showCreateModal} onOpenChange={(open) => {
-        if (!open) {
-          setShowCreateModal(false);
-          resetForms();
-        }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Channel</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="channelName">Channel Name</Label>
-              <Input
-                id="channelName"
-                value={newChannel.name}
-                onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                placeholder="Enter channel name"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="domain">Domain (optional)</Label>
-              <Input
-                id="domain"
-                value={newChannel.domain}
-                onChange={(e) => setNewChannel({ ...newChannel, domain: e.target.value })}
-                placeholder="example.com"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCreateModal(false);
-                resetForms();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateChannel}
-              disabled={!newChannel.name || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <LoadingSpinner />
-                  Creating...
-                </>
-              ) : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateChannelDialog
+        open={showCreateModal}
+        onOpenChange={(open) => setShowCreateModal(open)}
+        API_URL={API_URL}
+        getAccessToken={getAccessTokenSilently}
+        onSuccess={(createdChannel) => {
+          setChannels(prev => [...prev, createdChannel]);
+          setGeneratedToken(createdChannel.channelToken);
+          setShowTokenModal(true);
+          toast.success('Channel created successfully');
+        }}
+      />
+
 
       {/* Token Dialog */}
       <Dialog open={showTokenModal} onOpenChange={(open) => {
