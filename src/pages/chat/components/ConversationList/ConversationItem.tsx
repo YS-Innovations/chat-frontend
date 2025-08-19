@@ -18,7 +18,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, selec
       className={`cursor-pointer px-4 py-2 flex flex-col space-y-1 rounded-lg transition \
         ${selected ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
     >
-      <span className="font-medium text-gray-800">Guest: {guestId}</span>
+      <span className="font-medium text-gray-800">{guestId}</span>
       <span className="text-xs text-gray-500">Last updated: {formattedTime}</span>
     </div>
   );
