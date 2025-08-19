@@ -25,10 +25,17 @@ export interface ConversationListItem {
  *   @Get('conversations')
  *   findAll(): Promise<ConversationRoom[]> { ... }
  */
-export async function fetchConversations(): Promise<ConversationListItem[]> {
-  const res = await axios.get<ConversationListItem[]>(`${API_BASE}/conversations`);
+
+
+export async function fetchConversations(token: string): Promise<ConversationListItem[]> {
+  const res = await axios.get<ConversationListItem[]>(`${API_BASE}/conversations`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return res.data;
 }
+
 
 /**
  * Shape matching your backend’s Message model.

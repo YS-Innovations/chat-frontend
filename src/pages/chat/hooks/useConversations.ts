@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import socket, { connectSocket, joinConversation } from '../api/socket';
 import { fetchConversations } from '../api/chatService';
 import type { ConversationListItem } from '../api/chatService';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export interface UseConversationsResult {
   conversations: ConversationListItem[];
@@ -15,6 +16,7 @@ export interface UseConversationsResult {
  * with incoming messages via WebSocket.
  */
 export function useConversations(): UseConversationsResult {
+  const { getAccessTokenSilently } = useAuth0();
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -26,7 +28,9 @@ export function useConversations(): UseConversationsResult {
     async function load() {
       try {
         setLoading(true);
-        const data = await fetchConversations();
+        const token = await getAccessTokenSilently();
+        const data = await fetchConversations(token);
+
         if (isMounted) {
           setConversations(data);
           connectSocket();
