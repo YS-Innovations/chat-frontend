@@ -45,12 +45,15 @@ export function joinConversation(conversationId: string) {
 
 /**
  * Send a new message over Socket.IO.
- * Must include `conversationId`, `senderId`, and `content`.
+ * Must include `conversationId`, `senderId` (string | null), and `content`.
+ *
+ * Note: Backend accepts `senderId` as nullable; we reflect that in the type here.
  */
 export function sendMessageSocket(payload: {
   conversationId: string;
-  senderId: string; // ✅ Agent or guest ID
-  content: string;
+  senderId: string | null; // Agent or guest ID, nullable when unknown
+  content: string; // sanitized HTML from client (server must re-sanitize)
+  mediaUrl?: string;
 }) {
   connectSocket();
   socket.emit('sendMessage', payload);

@@ -1,11 +1,10 @@
-// src/pages/Dashboard.tsx
+import RichTextEditor from '../components/MessageInput/RichTextEditor'
 import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
-import MessageInput from '../components/MessageInput/MessageInput';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 
@@ -76,16 +75,18 @@ const Dashboard: React.FC = () => {
 
   // User has at least one channel — show dashboard
   return (
-    <div className="h-screen flex">
-      {/* Sidebar */}
-      <div className="w-80 border-r bg-gray-50">
+    // Prevent page scrolling and make the viewport a fixed-height flex container
+    <div className="h-full flex overflow-hidden">
+      {/* Sidebar: full height so inner list can scroll */}
+      <div className="w-80 border-r bg-gray-50 h-full">
         <ConversationList onSelectConversation={setSelectedConversationId} />
       </div>
 
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col">
+      {/* Chat area: column layout where ChatWindow grows and editor is fixed-height */}
+      {/* min-h-0 is essential so children can scroll (prevents overflowing the flex column) */}
+      <div className="flex-1 flex flex-col min-h-0">
         <ChatWindow conversationId={selectedConversationId} />
-        <MessageInput conversationId={selectedConversationId} />
+        <RichTextEditor conversationId={selectedConversationId} />
       </div>
     </div>
   );
