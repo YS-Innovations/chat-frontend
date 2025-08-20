@@ -14,6 +14,7 @@ if (!API_BASE) {
 export interface ConversationListItem {
   id: string;
   guestId: string;
+  guestName:string;
   channelId: string;
   createdAt: string;
   updatedAt: string;

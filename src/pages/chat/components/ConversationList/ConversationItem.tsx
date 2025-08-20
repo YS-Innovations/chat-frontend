@@ -9,7 +9,7 @@ interface ConversationItemProps {
 }
 
 const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, selected, onSelect, onDelete }) => {
-  const { id, guestId, updatedAt } = conversation;
+  const { id, guestId, updatedAt, guestName } = conversation;
   const formattedTime = new Date(updatedAt).toLocaleString();
 
   return (
@@ -18,8 +18,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, selec
         ${selected ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
     >
       <div onClick={() => onSelect(id)}>
-        <span className="font-medium text-gray-800">{guestId}</span>
-        <span className="text-xs text-gray-500 block">Last updated: {formattedTime}</span>
+        <span className="font-medium text-gray-800">{guestName || guestId}</span>
+        
+        <span className="text-xs text-gray-500 block">Last Message: {formattedTime}</span>
       </div>
 
       <button
