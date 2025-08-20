@@ -62,3 +62,11 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
   );
   return res.data;
 }
+
+export async function deleteConversation(conversationId: string, token: string): Promise<void> {
+  await axios.delete(`${API_BASE}/conversations/${conversationId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

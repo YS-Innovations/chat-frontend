@@ -11,46 +11,31 @@ export interface UseConversationsResult {
   error: Error | null;
 }
 
-/**
- * Hook to load all conversations and keep them up-to-date
- * with incoming messages via WebSocket.
- */
-export function useConversations(): UseConversationsResult {
+export function useConversations(): UseConversationsResult & { refresh: () => Promise<void> } {
   const { getAccessTokenSilently } = useAuth0();
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Initial load of list + join rooms
-  useEffect(() => {
-    let isMounted = true;
-
-    async function load() {
-      try {
-        setLoading(true);
-        const token = await getAccessTokenSilently();
-        const data = await fetchConversations(token);
-
-        if (isMounted) {
-          setConversations(data);
-          connectSocket();
-          // Join each room so we receive incoming messages
-          data.forEach((c) => joinConversation(c.id));
-        }
-      } catch (err: any) {
-        if (isMounted) setError(err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+  async function load() {
+    try {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+      const data = await fetchConversations(token);
+      setConversations(data);
+      connectSocket();
+      data.forEach((c) => joinConversation(c.id));
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     load();
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  // Reorder on incoming message
   useEffect(() => {
     function handleIncoming(msg: { conversationId: string; createdAt: string }) {
       setConversations((prev) => {
@@ -67,5 +52,6 @@ export function useConversations(): UseConversationsResult {
     };
   }, []);
 
-  return { conversations, loading, error };
+  return { conversations, loading, error, refresh: load };
 }
+
