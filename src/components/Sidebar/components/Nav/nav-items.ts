@@ -3,6 +3,7 @@ import {
   Bot,
   Settings2,
   SquareTerminal,
+  TestTubeDiagonal,
   Users,
 } from "lucide-react";
 import { type NavItem } from "./types/nav-types";
@@ -61,5 +62,12 @@ export const navMainItems: NavItem[] = [
       { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
       
     ],
+  },
+  {
+    title: "test",
+    url: "/app/test",
+    icon: TestTubeDiagonal,
+    isActive: true,
+    permission: "inbox-access",
   },
 ];
