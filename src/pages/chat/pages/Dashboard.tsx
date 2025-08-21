@@ -1,17 +1,17 @@
 // src/pages/chat/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+// import { 
+//   Select, 
+//   SelectContent, 
+//   SelectItem, 
+//   SelectTrigger, 
+//   SelectValue 
+// } from '@/components/ui/select';
 
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
@@ -24,7 +24,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
             <h2 className="font-semibold text-lg">
               Conversations
             </h2>
-            <Select
+            {/* <Select
               value={channelId || 'all'}
               onValueChange={(value) => {
                 if (value === 'all') {
@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
