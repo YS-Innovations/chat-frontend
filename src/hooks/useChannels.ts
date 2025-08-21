@@ -1,5 +1,5 @@
 // src/hooks/useChannels.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
 interface UseChannelsOptions {
@@ -10,34 +10,47 @@ interface UseChannelsOptions {
 export function useChannels({ getAccessToken, apiUrl }: UseChannelsOptions) {
   const [channels, setChannels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchChannels = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = await getAccessToken();
+      const res = await fetch(`${apiUrl}/channels`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch channels');
+      const data = await res.json();
+      setChannels(data);
+      return data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to fetch channels');
+      setError(error);
+      console.error(err);
+      toast.error('Failed to load channels');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [getAccessToken, apiUrl]);
+
+  const refresh = useCallback(async () => {
+    return await fetchChannels();
+  }, [fetchChannels]);
 
   useEffect(() => {
-    const fetchChannels = async () => {
-      try {
-        const token = await getAccessToken();
-        const res = await fetch(`${apiUrl}/channels`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch channels');
-        const data = await res.json();
-        setChannels(data);
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to load channels');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchChannels();
-  }, [getAccessToken, apiUrl]);
+  }, [fetchChannels]);
 
   return {
     channels,
-    setChannels, // allows adding new channel after creation
+    setChannels,
     loading,
+    error,
+    refresh, // Add the refresh method
   };
 }
