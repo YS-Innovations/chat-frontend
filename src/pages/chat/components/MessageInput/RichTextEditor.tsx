@@ -18,20 +18,24 @@ import {
   ListOrdered,
   List,
   Heading3,
-  Link,
   Undo,
   Redo,
   Smile,
   Mic,
+  Send,
 } from 'lucide-react';
 import { handleEditorShortcut } from '../../lib/shortcuts';
 import { HistoryEditor, withHistory } from 'slate-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { sendMessageSocket } from '../../api/socket';
 import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
 import FileUploader from './FileUploader';
 import { uploadFileToS3 } from '../../api/uploadService';
+import { useCannedResponses } from '@/pages/CannedResponse/useCannedResponses';
+import { cn } from '@/lib/utils';
 
 interface RichTextEditorProps {
   conversationId: string | null;
@@ -51,6 +55,12 @@ type BlockType =
   | 'bulleted-list'
   | 'code-block'
   | 'link';
+
+interface CannedResponse {
+  id: string;
+  name: string;
+  message: string;
+}
 
 const isMarkActive = (editor: Editor, format: string) => {
   const marks = Editor.marks(editor);
@@ -222,13 +232,24 @@ const ToolbarButton = ({
   };
 
   return (
-    <button
-      onMouseDown={handleMouseDown}
-      title={title ?? format}
-      className={`w-9 h-9 rounded-md flex items-center justify-center hover:bg-gray-200 ${isActive ? 'bg-blue-200 text-blue-700 font-bold' : 'bg-gray-100 text-gray-600'}`}
-    >
-      {icon}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onMouseDown={handleMouseDown}
+          className={cn(
+            "h-8 w-8 text-muted-foreground hover:text-foreground",
+            isActive && "bg-accent text-foreground"
+          )}
+        >
+          {icon}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p>{title ?? format}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -241,17 +262,93 @@ export default function RichTextEditor({
   const editor = useMemo(() => withHistory(withReact(createEditor())), []) as Editor & HistoryEditor;
   const [value, setValue] = useState<Descendant[]>(initialValue);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showFormatting, setShowFormatting] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
-  // staged file (selected but not yet uploaded)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // compute whether there's any text to send
+  const [showCannedResponses, setShowCannedResponses] = useState(false);
+  const [triggerPosition, setTriggerPosition] = useState({ top: 0, left: 0 });
+  const [searchText, setSearchText] = useState('');
+  const [filteredResponses, setFilteredResponses] = useState<CannedResponse[]>([]);
+
+  const { responses } = useCannedResponses();
+
+  const getTextBeforeCursor = useCallback(() => {
+    if (!editor.selection) return '';
+
+    const [start] = Range.edges(editor.selection);
+    const range = { anchor: Editor.start(editor, []), focus: start };
+    return Editor.string(editor, range);
+  }, [editor]);
+
+  const insertCannedResponse = useCallback((response: CannedResponse) => {
+    const textBeforeCursor = getTextBeforeCursor();
+    const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
+
+    if (lastSlashIndex >= 0) {
+      const startPoint = Editor.start(editor, []);
+      const endPoint = Editor.end(editor, []);
+
+      Transforms.delete(editor, {
+        at: {
+          anchor: { path: startPoint.path, offset: lastSlashIndex },
+          focus: endPoint
+        }
+      });
+    }
+
+    Transforms.insertText(editor, response.message);
+    setShowCannedResponses(false);
+    setSearchText('');
+  }, [editor, getTextBeforeCursor]);
+
+  useEffect(() => {
+    if (searchText === '') {
+      setFilteredResponses(responses);
+    } else {
+      const filtered = responses.filter((r) =>
+        r.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        r.message.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredResponses(filtered);
+    }
+  }, [searchText, responses]);
+
+  useEffect(() => {
+    if (!editor.selection) return;
+
+    const textBeforeCursor = getTextBeforeCursor();
+    const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
+
+    if (lastSlashIndex >= 0 && textBeforeCursor.length > lastSlashIndex) {
+      const triggerText = textBeforeCursor.substring(lastSlashIndex + 1);
+
+      if (!triggerText.includes(' ')) {
+        const domSelection = window.getSelection();
+        if (domSelection && domSelection.rangeCount > 0) {
+          const range = domSelection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+
+          setTriggerPosition({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX
+          });
+        }
+
+        setSearchText(triggerText);
+        setShowCannedResponses(true);
+        return;
+      }
+    }
+
+    setShowCannedResponses(false);
+    setSearchText('');
+  }, [editor.selection, getTextBeforeCursor, value]);
+
   const hasContent = () => {
     try {
       const t = Editor.string(editor, []).trim();
@@ -263,28 +360,23 @@ export default function RichTextEditor({
     }
   };
 
-  // send handler: converts Slate -> sanitized HTML and sends via socket
   const handleSend = useCallback(async () => {
     if (!conversationId) {
       alert('Select a conversation first');
       return;
     }
 
-    // If an upload is in progress, block sending
     if (uploading) {
       alert('Upload in progress, please wait');
       return;
     }
 
-    // build sanitized HTML only (no plain-text fallback)
     const html = sanitize(serializeToHtml(value)).trim();
 
-    // If there's no content and we're not sending an attachment, nothing to send
     if (!html && !selectedFile) {
       return;
     }
 
-    // Reset any prior upload errors
     setUploadError(null);
 
     let mediaMeta: { mediaUrl: string; mediaType?: string; fileName?: string } | null = null;
@@ -293,12 +385,10 @@ export default function RichTextEditor({
       if (selectedFile) {
         setUploading(true);
         setUploadProgress(0);
-        // upload the file and get public URL (uses existing helper)
         const { publicUrl } = await uploadFileToS3(selectedFile, (p) => setUploadProgress(p));
         mediaMeta = { mediaUrl: publicUrl, mediaType: selectedFile.type || undefined, fileName: selectedFile.name };
       }
 
-      // Build payload: include caption if present, otherwise allow empty if media present
       const payload: any = {
         conversationId,
         senderId: selfId ?? null,
@@ -312,12 +402,10 @@ export default function RichTextEditor({
       if (html) {
         payload.content = html;
       } else {
-        payload.content = ''; // explicit empty if only a media-only message
+        payload.content = '';
       }
 
-      // send socket message
       sendMessageSocket(payload);
-      // Clear editor content and staged file / preview
       if (html) {
         clearEditor(editor);
         setValue(initialValue);
@@ -334,7 +422,6 @@ export default function RichTextEditor({
     }
   }, [conversationId, editor, selfId, value, selectedFile, uploading, onSent]);
 
-  // keyboard handling — uses your existing shortcut handler
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     handleEditorShortcut(event as any, editor as any, () => {
       handleSend();
@@ -361,17 +448,14 @@ export default function RichTextEditor({
     });
   };
 
-  // if conversationId toggles off, clear local editor state (similar to MessageInput disabling)
   useEffect(() => {
     if (!conversationId) {
       clearEditor(editor);
       setValue(initialValue);
       setSelectedFile(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId]);
+  }, [conversationId, editor]);
 
-  // Handler called by FileUploader when the user selects or clears a file
   const handleFileSelect = useCallback((file: File | null) => {
     setSelectedFile(file);
     setUploadError(null);
@@ -379,112 +463,169 @@ export default function RichTextEditor({
   }, []);
 
   return (
-    <div className="rich-text-editor border rounded-lg p-3 bg-white shadow-md space-y-2" ref={editorRef}>
-      <Slate editor={editor} initialValue={value} onChange={(v) => setValue(v)}>
-        {showFormatting && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <ToolbarButton format="bold" icon={<Bold />} isMark title="Bold (Ctrl + B)" />
-            <ToolbarButton format="italic" icon={<Italic />} isMark title="Italic (Ctrl + I)" />
-            <ToolbarButton format="underline" icon={<Underline />} isMark title="Underline (Ctrl + U)" />
-            <ToolbarButton format="numbered-list" icon={<ListOrdered />} />
-            <ToolbarButton format="bulleted-list" icon={<List />} />
-            <ToolbarButton format="heading-three" icon={<Heading3 />} title="Heading 3" />
+    <TooltipProvider>
+      <div className="rich-text-editor border border-slate-300 rounded-xl bg-background p-3 space-y-3" ref={editorRef}>
+        <Slate editor={editor} initialValue={value} onChange={(v) => setValue(v)}>
+
+          {showCannedResponses && filteredResponses.length > 0 && (
+            <div
+              className={cn(
+                'absolute z-50 max-h-60 w-80 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md',
+                'animate-in fade-in-0 zoom-in-95 transition-all duration-200 ease-out'
+              )}
+              style={{
+                top: triggerPosition.top - 270,
+                left: triggerPosition.left - 260,
+              }}
+            >
+              {filteredResponses.map((resp) => (
+                <div
+                  key={resp.id}
+                  className={cn(
+                    'cursor-pointer select-none px-4 py-2 text-sm transition-colors duration-150',
+                    'hover:bg-accent hover:text-accent-foreground border-b last:border-b-0 border-border'
+                  )}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    insertCannedResponse(resp);
+                  }}
+                >
+                  <div className="font-medium">{resp.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {resp.message.length > 50 ? resp.message.substring(0, 50) + '...' : resp.message}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-1 flex-wrap ">
+            <ToolbarButton format="bold" icon={<Bold className="h-4 w-4" />} isMark title="Bold (Ctrl + B)" />
+            <ToolbarButton format="italic" icon={<Italic className="h-4 w-4" />} isMark title="Italic (Ctrl + I)" />
+            <ToolbarButton format="underline" icon={<Underline className="h-4 w-4" />} isMark title="Underline (Ctrl + U)" />
+            <ToolbarButton format="numbered-list" icon={<ListOrdered className="h-4 w-4" />} title="Numbered List" />
+            <ToolbarButton format="bulleted-list" icon={<List className="h-4 w-4" />} title="Bulleted List" />
+            <ToolbarButton format="heading-three" icon={<Heading3 className="h-4 w-4" />} title="Heading 3" />
             <ToolbarButton
               format="undo"
-              icon={<Undo />}
+              icon={<Undo className="h-4 w-4" />}
               action={() => HistoryEditor.undo(editor)}
               title="Undo (Ctrl + Z)"
             />
             <ToolbarButton
               format="redo"
-              icon={<Redo />}
+              icon={<Redo className="h-4 w-4" />}
               action={() => HistoryEditor.redo(editor)}
               title="Redo (Ctrl + Y)"
             />
-            <ToolbarButton
-              format="link"
-              icon={<Link />}
-              action={() => {
-                const url = prompt('Enter a URL');
-                if (url) wrapLink(editor, url);
-              }}
-              title="Insert Link"
-            />
-          </div>
-        )}
-
-        <Editable
-          renderElement={renderElement}
-          renderLeaf={renderLeaf}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          readOnly={disabled || !conversationId}
-          // fixed height (h-28 = 7rem). Use h-24 or h-32 to taste.
-          className="h-28 outline-none p-2 border rounded-md w-full overflow-y-auto overflow-x-hidden no-scrollbar"
-          style={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word',
-          }}
-          placeholder={conversationId ? 'Type your message...' : 'Select a conversation first'}
-          spellCheck
-        />
-
-        <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button title="Toggle Formatting" onMouseDown={e => { e.preventDefault(); setShowFormatting(p => !p); }} className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-              <Link />
-            </button>
-            <button title="Audio Record" onMouseDown={e => { e.preventDefault(); handleAudioRecord(); }} className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-              <Mic className={isRecording ? 'text-red-500' : ''} />
-            </button>
-            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-              <PopoverTrigger asChild>
-                <button title="Emoji Picker" className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-                  <Smile />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <EmojiPicker onEmojiClick={(emoji: EmojiClickData) => { insertEmoji(editor, emoji.emoji); setShowEmojiPicker(false); }} />
-              </PopoverContent>
-            </Popover>
-
-            {/* FileUploader now only selects & previews. Upload happens on Send */}
-            <FileUploader
-              conversationId={conversationId}
-              onSelectFile={handleFileSelect}
-              selectedFile={selectedFile}
-              disabled={disabled}
-            />
           </div>
 
-          <div className="flex items-center gap-3">
-            {selectedFile && (
-              <div className="flex items-center gap-2 mr-2">
-                {uploading ? (
-                  <div className="text-xs text-gray-500">{uploadProgress}%</div>
-                ) : (
-                  <div className="text-xs text-gray-500">Ready to send</div>
-                )}
-              </div>
-            )}
+          <Editable
+            renderElement={renderElement}
+            renderLeaf={renderLeaf}
+            onKeyDown={(e) => {
+              handleKeyDown(e);
+              if (e.key === 'Escape' && showCannedResponses) {
+                setShowCannedResponses(false);
+                e.preventDefault();
+              }
+            }}
+            onPaste={handlePaste}
+            readOnly={disabled || !conversationId}
+            className="max-h-[200px] rounded-md overflow-y-auto text-sm ml-2"
+            style={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+            }}
+            placeholder={conversationId ? 'Type your message... (Type "/" to see canned responses)' : 'Select a conversation first'}
+            spellCheck
+          />
 
-            <button
-              onClick={() => handleSend()}
-              title="Send Message (Enter)"
-              disabled={!conversationId || (!hasContent() && !selectedFile) || uploading}
-              className="flex items-center gap-2 bg-primary text-white text-md font-medium px-4 py-2 rounded-sm hover:bg-blue-600 transition disabled:opacity-50"
-            >
-              Send
-              <span className="flex items-center gap-1 bg-white/10 text-white/80 px-2 py-0.5 rounded-sm text-xs font-mono">
-                <Mic className="text-lg" />
-              </span>
-            </button>
+          <div className="flex justify-between items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onMouseDown={(e) => { e.preventDefault(); handleAudioRecord(); }}
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  >
+                    <Mic className={cn("h-4 w-4", isRecording && "text-destructive")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{isRecording ? 'Stop recording' : 'Start recording'}</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      >
+                        <Smile className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Add emoji</p>
+                  </TooltipContent>
+                </Tooltip>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <EmojiPicker onEmojiClick={(emoji: EmojiClickData) => { insertEmoji(editor, emoji.emoji); setShowEmojiPicker(false); }} />
+                </PopoverContent>
+              </Popover>
+
+              <FileUploader
+                conversationId={conversationId}
+                onSelectFile={handleFileSelect}
+                selectedFile={selectedFile}
+                disabled={disabled}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {selectedFile && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {uploading ? (
+                    <span>{uploadProgress}% uploading</span>
+                  ) : (
+                    <span>Ready to send</span>
+                  )}
+                </div>
+              )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSend}
+                    size="sm"
+                    disabled={!conversationId || (!hasContent() && !selectedFile) || uploading}
+                    className="h-8 px-3 bg-primary hover:bg-primary/90"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Send message</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </div>
 
-        {uploadError && <div className="text-xs text-red-500">{uploadError}</div>}
-      </Slate>
-    </div>
+          {uploadError && (
+            <div className="text-xs text-destructive bg-destructive/10 p-2 rounded-md">
+              {uploadError}
+            </div>
+          )}
+        </Slate>
+      </div>
+    </TooltipProvider>
   );
 }
