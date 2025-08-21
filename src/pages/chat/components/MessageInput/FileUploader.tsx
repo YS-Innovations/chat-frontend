@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import type { FC, DragEvent, KeyboardEvent } from 'react';
 import { validateFile, isImage } from '../../utils/fileUtils';
 import type { ValidationResult } from '../../utils/fileUtils';
-import { File as FileIcon, UploadCloud, X } from 'lucide-react';
+import { File as FileIcon, Upload, UploadCloud, X } from 'lucide-react';
 
 interface FileUploaderProps {
   conversationId: string | null;
@@ -156,18 +156,18 @@ const FileUploader: FC<FileUploaderProps> = ({
         tabIndex={0}
         aria-disabled={disabled || !conversationId}
         aria-label="Attach file"
-        className={`flex items-center gap-3 cursor-pointer select-none p-2 rounded-md transition border ${
+        className={`flex items-center gap-3 cursor-pointer select-none p-2 rounded-md transition  ${
           dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'
         } ${disabled || !conversationId ? 'opacity-60 cursor-not-allowed' : ''}`}
       >
-        <div className="w-9 h-9 rounded-md bg-gray-100 flex items-center justify-center">
-          <UploadCloud className="w-5 h-5 text-gray-700" />
+        <div className="h-4 w-4 text-muted-foreground hover:text-foreground">
+          <Upload className="w-4 h-4 text-gray-700" />
         </div>
 
-        <div className="flex flex-col text-sm">
+        {/* <div className="flex flex-col text-sm">
           <span className="font-medium text-gray-700">Attach file</span>
           <span className="text-xs text-gray-500">Images & documents (.jpg, .png, .pdf, .docx) — max 10–20 MB</span>
-        </div>
+        </div> */}
 
         <input
           ref={inputRef}
