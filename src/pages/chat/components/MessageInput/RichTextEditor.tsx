@@ -32,6 +32,8 @@ import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
 import FileUploader from './FileUploader';
 import { uploadFileToS3 } from '../../api/uploadService';
+import { useCannedResponses } from '@/pages/CannedResponse/useCannedResponses';
+import { cn } from '@/lib/utils';
 
 interface RichTextEditorProps {
   conversationId: string | null;
@@ -51,6 +53,13 @@ type BlockType =
   | 'bulleted-list'
   | 'code-block'
   | 'link';
+
+// Define the CannedResponse type based on what useCannedResponses returns
+interface CannedResponse {
+  id: string;
+  name: string;
+  message: string;
+}
 
 const isMarkActive = (editor: Editor, format: string) => {
   const marks = Editor.marks(editor);
@@ -251,6 +260,97 @@ export default function RichTextEditor({
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Canned response state
+  const [showCannedResponses, setShowCannedResponses] = useState(false);
+  const [triggerPosition, setTriggerPosition] = useState({ top: 0, left: 0 });
+  const [searchText, setSearchText] = useState('');
+  const [filteredResponses, setFilteredResponses] = useState<CannedResponse[]>([]);
+  
+  // Get canned responses from the hook
+  const { responses, loading } = useCannedResponses();
+
+  // Function to get the current text before the cursor
+  const getTextBeforeCursor = useCallback(() => {
+    if (!editor.selection) return '';
+
+    const [start] = Range.edges(editor.selection);
+    const range = { anchor: Editor.start(editor, []), focus: start };
+    return Editor.string(editor, range);
+  }, [editor]);
+
+  // Function to insert canned response
+  const insertCannedResponse = useCallback((response: CannedResponse) => {
+    // Clear the trigger text (everything after the last '/')
+    const textBeforeCursor = getTextBeforeCursor();
+    const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
+
+    if (lastSlashIndex >= 0) {
+      const startPoint = Editor.start(editor, []);
+      const endPoint = Editor.end(editor, []);
+
+      // Delete the trigger text
+      Transforms.delete(editor, {
+        at: {
+          anchor: { path: startPoint.path, offset: lastSlashIndex },
+          focus: endPoint
+        }
+      });
+    }
+
+    // Insert the canned response content (using message property)
+    Transforms.insertText(editor, response.message);
+    setShowCannedResponses(false);
+    setSearchText('');
+  }, [editor, getTextBeforeCursor]);
+
+  // Filter responses based on search text
+  useEffect(() => {
+    if (searchText === '') {
+      setFilteredResponses(responses);
+    } else {
+      const filtered = responses.filter((r) =>
+        r.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        r.message.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredResponses(filtered);
+    }
+  }, [searchText, responses]);
+
+  // Check for canned response trigger
+  useEffect(() => {
+    if (!editor.selection) return;
+
+    const textBeforeCursor = getTextBeforeCursor();
+    const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
+
+    if (lastSlashIndex >= 0 && textBeforeCursor.length > lastSlashIndex) {
+      const triggerText = textBeforeCursor.substring(lastSlashIndex + 1);
+      
+      // Only show dropdown if there's no space after the slash
+      if (!triggerText.includes(' ')) {
+        // Get the position of the cursor for dropdown placement
+        const domSelection = window.getSelection();
+        if (domSelection && domSelection.rangeCount > 0) {
+          const range = domSelection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+
+          setTriggerPosition({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX
+          });
+        }
+
+        setSearchText(triggerText);
+        setShowCannedResponses(true);
+        return;
+      }
+    }
+    
+    // Hide dropdown if conditions aren't met
+    setShowCannedResponses(false);
+    setSearchText('');
+  }, [editor.selection, getTextBeforeCursor, value]);
+
   // compute whether there's any text to send
   const hasContent = () => {
     try {
@@ -381,6 +481,39 @@ export default function RichTextEditor({
   return (
     <div className="rich-text-editor border rounded-lg p-3 bg-white shadow-md space-y-2" ref={editorRef}>
       <Slate editor={editor} initialValue={value} onChange={(v) => setValue(v)}>
+
+        {showCannedResponses && filteredResponses.length > 0 && (
+          <ul
+            className={cn(
+              'absolute z-50 max-h-60 w-80 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-lg',
+              'animate-in fade-in-0 zoom-in-95 transition-all duration-200 ease-out'
+            )}
+            style={{
+              top: triggerPosition.top,
+              left: triggerPosition.left,
+            }}
+          >
+            {filteredResponses.map((resp) => (
+              <li
+                key={resp.id}
+                className={cn(
+                  'cursor-pointer select-none px-4 py-2 text-sm transition-colors duration-150',
+                  'hover:bg-muted hover:text-foreground border-b last:border-b-0 border-border'
+                )}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  insertCannedResponse(resp);
+                }}
+              >
+                <div className="font-medium">{resp.name}</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {resp.message.length > 50 ? resp.message.substring(0, 50) + '...' : resp.message}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        
         {showFormatting && (
           <div className="flex items-center gap-2 flex-wrap">
             <ToolbarButton format="bold" icon={<Bold />} isMark title="Bold (Ctrl + B)" />
@@ -401,40 +534,34 @@ export default function RichTextEditor({
               action={() => HistoryEditor.redo(editor)}
               title="Redo (Ctrl + Y)"
             />
-            <ToolbarButton
-              format="link"
-              icon={<Link />}
-              action={() => {
-                const url = prompt('Enter a URL');
-                if (url) wrapLink(editor, url);
-              }}
-              title="Insert Link"
-            />
           </div>
         )}
 
         <Editable
           renderElement={renderElement}
           renderLeaf={renderLeaf}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => {
+            handleKeyDown(e);
+            // Close canned responses on escape
+            if (e.key === 'Escape' && showCannedResponses) {
+              setShowCannedResponses(false);
+              e.preventDefault();
+            }
+          }}
           onPaste={handlePaste}
           readOnly={disabled || !conversationId}
-          // fixed height (h-28 = 7rem). Use h-24 or h-32 to taste.
           className="h-28 outline-none p-2 border rounded-md w-full overflow-y-auto overflow-x-hidden no-scrollbar"
           style={{
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
             overflowWrap: 'break-word',
           }}
-          placeholder={conversationId ? 'Type your message...' : 'Select a conversation first'}
+          placeholder={conversationId ? 'Type your message... (Type "/" to see canned responses)' : 'Select a conversation first'}
           spellCheck
         />
 
         <div className="flex justify-between items-center gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <button title="Toggle Formatting" onMouseDown={e => { e.preventDefault(); setShowFormatting(p => !p); }} className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-              <Link />
-            </button>
             <button title="Audio Record" onMouseDown={e => { e.preventDefault(); handleAudioRecord(); }} className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
               <Mic className={isRecording ? 'text-red-500' : ''} />
             </button>
