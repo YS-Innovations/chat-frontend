@@ -1,6 +1,7 @@
-// Dashboard.tsx
-import React, { useState } from 'react';
+// src/pages/chat/pages/Dashboard.tsx
+import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
@@ -14,6 +15,8 @@ import { useChannels } from '@/hooks/useChannels';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
+  const { channelId } = useParams<{ channelId: string }>();
+  const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();
   const { channels, setChannels, loading } = useChannels({
     getAccessToken: getAccessTokenSilently,
@@ -22,6 +25,11 @@ const Dashboard: React.FC = () => {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [currentChannel, setCurrentChannel] = useState<string | undefined>(channelId);
+
+  useEffect(() => {
+    setCurrentChannel(channelId);
+  }, [channelId]);
 
   if (loading) {
     return (
@@ -46,7 +54,7 @@ const Dashboard: React.FC = () => {
           getAccessToken={getAccessTokenSilently}
           API_URL={API_URL}
           onSuccess={(channel) => {
-            setChannels([channel]); // now the dashboard will render
+            setChannels([channel]);
             toast.success('Channel created successfully!');
           }}
         />
@@ -54,10 +62,46 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const selectedChannel = currentChannel 
+    ? channels.find(c => c.id === currentChannel)
+    : null;
+
   return (
     <div className="h-full flex overflow-hidden">
-      <div className="w-80 border-r bg-gray-50 h-full">
-        <ConversationList onSelectConversation={setSelectedConversationId} />
+      <div className="w-80 border-r bg-gray-50 h-full flex flex-col">
+        {/* Channel header */}
+        <div className="p-4 border-b bg-white">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">
+              {selectedChannel 
+                ? selectedChannel.channelSettings?.name || `Channel ${selectedChannel.id.slice(0, 8)}`
+                : 'All Conversations'
+              }
+            </h2>
+            {selectedChannel && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/app')}
+              >
+                View All
+              </Button>
+            )}
+          </div>
+          {selectedChannel && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {selectedChannel.type} • {selectedChannel.channelSettings?.domain || 'No domain'}
+            </p>
+          )}
+        </div>
+
+        {/* Conversation list */}
+        <div className="flex-1 overflow-hidden">
+          <ConversationList 
+            onSelectConversation={setSelectedConversationId}
+            channelId={currentChannel}
+          />
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col min-h-0">

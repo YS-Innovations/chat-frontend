@@ -1,4 +1,4 @@
-// src/components/ConversationList/ConversationList.tsx
+// src/pages/chat/components/ConversationList/ConversationList.tsx
 import React, { useState, useEffect } from 'react';
 import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/useConversations';
@@ -7,11 +7,14 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
+  channelId?: string;
 }
 
-
-const ConversationList: React.FC<ConversationListProps> = ({ onSelectConversation }) => {
-  const { conversations, loading, error, refresh } = useConversations();
+const ConversationList: React.FC<ConversationListProps> = ({ 
+  onSelectConversation, 
+  channelId 
+}) => {
+  const { conversations, loading, error, refresh } = useConversations(channelId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { getAccessTokenSilently } = useAuth0();
 
@@ -46,18 +49,23 @@ const ConversationList: React.FC<ConversationListProps> = ({ onSelectConversatio
 
   return (
     <div className="h-full overflow-y-auto space-y-2 p-2 bg-white">
-      {conversations.map((conv: ConversationListItem) => (
-        <ConversationItem
-          key={conv.id}
-          conversation={conv}
-          selected={conv.id === selectedId}
-          onSelect={(id) => setSelectedId(id)}
-          onDelete={handleDelete}
-        />
-      ))}
+      {conversations.length === 0 ? (
+        <div className="p-4 text-center text-gray-500">
+          {channelId ? 'No conversations found for this channel' : 'No conversations found'}
+        </div>
+      ) : (
+        conversations.map((conv: ConversationListItem) => (
+          <ConversationItem
+            key={conv.id}
+            conversation={conv}
+            selected={conv.id === selectedId}
+            onSelect={(id) => setSelectedId(id)}
+            onDelete={handleDelete}
+          />
+        ))
+      )}
     </div>
   );
 };
-
 
 export default ConversationList;

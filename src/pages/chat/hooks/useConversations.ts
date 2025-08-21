@@ -1,4 +1,4 @@
-// src/hooks/useConversations.ts
+// src/pages/chat/hooks/useConversations.ts
 import { useState, useEffect } from 'react';
 import socket, { connectSocket, joinConversation } from '../api/socket';
 import { fetchConversations } from '../api/chatService';
@@ -11,7 +11,7 @@ export interface UseConversationsResult {
   error: Error | null;
 }
 
-export function useConversations(): UseConversationsResult & { refresh: () => Promise<void> } {
+export function useConversations(channelId?: string): UseConversationsResult & { refresh: () => Promise<void> } {
   const { getAccessTokenSilently } = useAuth0();
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -22,9 +22,15 @@ export function useConversations(): UseConversationsResult & { refresh: () => Pr
       setLoading(true);
       const token = await getAccessTokenSilently();
       const data = await fetchConversations(token);
-      setConversations(data);
+      
+      // Filter conversations by channel if channelId is provided
+      const filteredData = channelId 
+        ? data.filter(conv => conv.channelId === channelId)
+        : data;
+      
+      setConversations(filteredData);
       connectSocket();
-      data.forEach((c) => joinConversation(c.id));
+      filteredData.forEach((c) => joinConversation(c.id));
     } catch (err: any) {
       setError(err);
     } finally {
@@ -34,13 +40,23 @@ export function useConversations(): UseConversationsResult & { refresh: () => Pr
 
   useEffect(() => {
     load();
-  }, []);
+  }, [channelId]); // Reload when channelId changes
 
   useEffect(() => {
-    function handleIncoming(msg: { conversationId: string; createdAt: string }) {
+    function handleIncoming(msg: { conversationId: string; createdAt: string; channelId?: string }) {
       setConversations((prev) => {
+        // If we're filtering by channel, only add messages for that channel
+        if (channelId && msg.channelId !== channelId) {
+          return prev;
+        }
+        
         const idx = prev.findIndex((c) => c.id === msg.conversationId);
-        if (idx === -1) return prev;
+        if (idx === -1) {
+          // New conversation - fetch updated list
+          load();
+          return prev;
+        }
+        
         const updated = { ...prev[idx], updatedAt: msg.createdAt };
         return [updated, ...prev.filter((_, i) => i !== idx)];
       });
@@ -50,8 +66,7 @@ export function useConversations(): UseConversationsResult & { refresh: () => Pr
     return () => {
       socket.off('message', handleIncoming);
     };
-  }, []);
+  }, [channelId]);
 
   return { conversations, loading, error, refresh: load };
 }
-
