@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
   }
   
   return (
-    <div className="h-screen flex overflow-hidden bg-background">
+    <div className="h-full flex overflow-hidden bg-background">
       {/* Sidebar */}
       <div className="w-80 border-r bg-white flex flex-col h-full">
         {/* Channel Header */}
