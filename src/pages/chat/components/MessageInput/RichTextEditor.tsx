@@ -274,7 +274,7 @@ export default function RichTextEditor({
   const [triggerPosition, setTriggerPosition] = useState({ top: 0, left: 0 });
   const [searchText, setSearchText] = useState('');
   const [filteredResponses, setFilteredResponses] = useState<CannedResponse[]>([]);
-  
+
   const { responses } = useCannedResponses();
 
   const getTextBeforeCursor = useCallback(() => {
@@ -326,7 +326,7 @@ export default function RichTextEditor({
 
     if (lastSlashIndex >= 0 && textBeforeCursor.length > lastSlashIndex) {
       const triggerText = textBeforeCursor.substring(lastSlashIndex + 1);
-      
+
       if (!triggerText.includes(' ')) {
         const domSelection = window.getSelection();
         if (domSelection && domSelection.rangeCount > 0) {
@@ -344,7 +344,7 @@ export default function RichTextEditor({
         return;
       }
     }
-    
+
     setShowCannedResponses(false);
     setSearchText('');
   }, [editor.selection, getTextBeforeCursor, value]);
@@ -474,8 +474,8 @@ export default function RichTextEditor({
                 'animate-in fade-in-0 zoom-in-95 transition-all duration-200 ease-out'
               )}
               style={{
-                top: triggerPosition.top,
-                left: triggerPosition.left,
+                top: triggerPosition.top - 270,
+                left: triggerPosition.left - 260,
               }}
             >
               {filteredResponses.map((resp) => (
@@ -498,7 +498,7 @@ export default function RichTextEditor({
               ))}
             </div>
           )}
-          
+
           <div className="flex items-center gap-1 flex-wrap ">
             <ToolbarButton format="bold" icon={<Bold className="h-4 w-4" />} isMark title="Bold (Ctrl + B)" />
             <ToolbarButton format="italic" icon={<Italic className="h-4 w-4" />} isMark title="Italic (Ctrl + I)" />
