@@ -1,9 +1,12 @@
+// src/components/Sidebar/components/Nav/nav-items.ts
 import {
   BookOpen,
   Bot,
   Settings2,
   SquareTerminal,
+  TestTubeDiagonal,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import { type NavItem } from "./types/nav-types";
 
@@ -24,6 +27,15 @@ export const navMainItems: NavItem[] = [
       { title: "All Conversation", url: "/app/conversations", permission: "conversation-list" },
       { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
       { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
+    ],
+  },
+  {
+    title: "Channels",
+    url: "#",
+    icon: MessageSquare,
+    permission: "channels-access",
+    items: [
+      // These will be populated dynamically
     ],
   },
   {
@@ -59,7 +71,13 @@ export const navMainItems: NavItem[] = [
       { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
       { title: "General", url: "/app/settings/general", permission: "settings-general" },
       { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
-      
     ],
+  },
+  {
+    title: "test",
+    url: "/app/test",
+    icon: TestTubeDiagonal,
+    isActive: true,
+    permission: "inbox-access",
   },
 ];

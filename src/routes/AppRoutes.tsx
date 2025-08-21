@@ -15,6 +15,8 @@ import { InviteForm } from '@/pages/Team/invite/invite-form';
 import { CannedResponsePage } from '@/pages/CannedResponse/CannedResponsePage';
 import Dashboard from '@/pages/chat/pages/Dashboard';
 import ChannelsPage from '@/pages/channel/channel';
+import ChannelNamesPage from '@/test';
+import ChannelsPagess from '@/pages/channel/ChannelPage';
 
 
 function AppRoutes() {
@@ -36,6 +38,7 @@ function AppRoutes() {
         <Route path="canned-responses" element={<CannedResponsePage />} />
         <Route path="*" element={<ErrorPage statusCode={404} />} />
         <Route path="channel-settings" element={<PermissionGuard permission="chennelsettings"><ChannelsPage /></PermissionGuard>} />
+        <Route path="channels/:channelId" element={<ChannelsPagess />} />
       </Route>
     </Routes>
   );
