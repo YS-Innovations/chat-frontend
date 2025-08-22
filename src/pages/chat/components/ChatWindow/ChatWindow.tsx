@@ -2,15 +2,24 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
+import ThreadedMessageList from './ThreadedMessageList';
+import type { Message } from '../../api/chatService';
 
 interface ChatWindowProps {
   conversationId: string | null;
   selfId?: string;
+  /**
+   * Optional callback used to start a reply flow. Dashboard provides this to set page-level reply state.
+   */
+  onReply?: (message: Message) => void;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply }) => {
+  // If you want ChatWindow to always request nested data, call:
+  // const { messages, loading, error } = useMessages(conversationId, { threads: 'nested', threadPageSize: 50 });
+  // For flexibility, we call without options and detect threaded shape below.
   const { messages, loading, error } = useMessages(conversationId);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -120,15 +129,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
     );
   }
 
+  // Detect threaded/nested shape — backend will include `replies` for nested results.
+  const isThreaded = messages.some((m) => Array.isArray((m as any).replies) && (m as any).replies.length > 0);
+
   return (
     <div
       ref={containerRef}
       className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
       tabIndex={0}
     >
-      {messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} selfId={selfId} />
-      ))}
+      {isThreaded ? (
+        <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" />
+      ) : (
+        <>
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
+          ))}
+        </>
+      )}
 
       <div ref={bottomRef} />
     </div>

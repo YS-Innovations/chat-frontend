@@ -46,22 +46,39 @@ const isImageMedia = (mediaUrl?: string, mediaType?: string) => {
   return /\.(jpe?g|png|gif|webp|bmp|tiff)$/i.test(mediaUrl);
 };
 
+const truncate = (text: string, n = 120) =>
+  text.length > n ? `${text.slice(0, n).trim()}…` : text;
+
+const stripTags = (html?: string | null) => {
+  if (!html) return '';
+  // sanitize() returns safe html; we still strip tags for the preview text
+  const safe = sanitize(html);
+  return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+};
+
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply }) => {
   const isMe = message.senderId === selfId;
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // debug logs (remove in production)
-  // eslint-disable-next-line no-console
-  console.log('[MessageBubble] raw message.content:', message.content);
+  // Normalize potentially-null fields to undefined so React/TSX props accept them.
+  const safeMediaUrl: string | undefined = typeof message.mediaUrl === 'string' && message.mediaUrl ? message.mediaUrl : undefined;
+  const safeMediaType: string | undefined = typeof message.mediaType === 'string' && message.mediaType ? message.mediaType : undefined;
+  const safeFileName: string | undefined = typeof message.fileName === 'string' && message.fileName ? message.fileName : undefined;
+
   const safeHtml = message.content ? sanitize(message.content) : '';
-  // eslint-disable-next-line no-console
-  console.log('[MessageBubble] after sanitize:', safeHtml);
-
-  // outer wrapper aligns the whole group left or right
   const wrapperClass = `w-full flex ${isMe ? 'justify-end' : 'justify-start'} px-3 py-1`;
+  const hasMedia = Boolean(safeMediaUrl);
+  const mediaIsImage = isImageMedia(safeMediaUrl, safeMediaType);
 
-  const hasMedia = Boolean(message.mediaUrl);
-  const mediaIsImage = isImageMedia(message.mediaUrl, message.mediaType);
+  // parentPreview may be provided by backend (not required). Try to use it for the snippet.
+  // We purposely avoid strict typing here to stay compatible with your backend's shaped responses.
+  const parentPreview = (message as any).parentPreview as Partial<Message> | undefined;
+  const hasParent = Boolean(message.parentId);
+  const previewText = parentPreview?.content
+    ? truncate(stripTags(parentPreview.content as string), 100)
+    : parentPreview?.fileName
+    ? truncate(String(parentPreview.fileName), 100)
+    : '';
 
   const handleReply = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,35 +87,45 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
 
   return (
     <div className={wrapperClass}>
-      {/*
-        group wrapper contains bubble + reply button so we can show the button on hover of the group.
-        Use flex-row for incoming (bubble then button), and flex-row-reverse for outgoing (so button stays on right).
-      */}
       <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-        {/* message bubble */}
         <div
           className={`${isMe ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'} shadow-sm max-w-full`}
-          // make bubble focusable for keyboard hover equivalent
           tabIndex={0}
           aria-label={safeHtml ? undefined : '(empty)'}
         >
+          {/* Reply preview/header (small, muted) */}
+          {(hasParent || previewText) && (
+            <div
+              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600 select-none"
+              aria-hidden
+            >
+              <div className="font-medium text-xs text-gray-500">Replying to</div>
+              <div className="mt-1 text-xs leading-tight text-gray-700 truncate">
+                {previewText ? previewText : 'a message'}
+              </div>
+            </div>
+          )}
+
           {/* Media preview (image) or file card */}
           {hasMedia && (
             <div className="chat-bubble-media mb-2">
               {mediaIsImage ? (
                 <a
-                  href={message.mediaUrl}
+                  href={safeMediaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block"
-                  title={message.fileName ?? 'Open image'}
+                  title={safeFileName ?? 'Open image'}
                 >
-                  <img
-                    src={message.mediaUrl}
-                    alt={message.fileName ?? 'image'}
-                    className="rounded-md max-w-xs max-h-60 object-contain border"
-                    style={{ display: 'block' }}
-                  />
+                  {/* only render img when we have a safe (non-null) url */}
+                  {safeMediaUrl && (
+                    <img
+                      src={safeMediaUrl}
+                      alt={safeFileName ?? 'image'}
+                      className="rounded-md max-w-xs max-h-60 object-contain border"
+                      style={{ display: 'block' }}
+                    />
+                  )}
                 </a>
               ) : (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md border">
@@ -107,13 +134,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{message.fileName ?? message.mediaUrl}</div>
-                    <div className="text-xs text-gray-500 truncate">{message.mediaType ?? 'File'}</div>
+                    <div className="text-sm font-medium truncate">{safeFileName ?? safeMediaUrl}</div>
+                    <div className="text-xs text-gray-500 truncate">{safeMediaType ?? 'File'}</div>
                   </div>
 
                   <div>
                     <a
-                      href={message.mediaUrl}
+                      href={safeMediaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border rounded-md text-sm hover:bg-gray-100"
@@ -129,14 +156,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
           )}
 
           {/* Message content (sanitized HTML) or fallback */}
-          <div
-            className="chat-bubble-content"
-            style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}
-          >
+          <div className="chat-bubble-content" style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}>
             {safeHtml ? (
               <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
             ) : hasMedia ? (
-              // if there's media but no caption/content, show nothing here (media shown above)
               null
             ) : (
               <span className="text-gray-500">(empty)</span>
@@ -159,7 +182,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
           onClick={handleReply}
           aria-label="Reply to message"
           title="Reply"
-          // hidden by default, visible on group hover/focus; small overlap outside bubble via negative margin if desired
           className="ml-2 -mr-1 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
         >
           <ReplyIcon className="w-3 h-3" />

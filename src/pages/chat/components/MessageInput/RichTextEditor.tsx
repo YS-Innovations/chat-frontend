@@ -8,7 +8,7 @@ import {
   Range,
 } from 'slate';
 import type { Descendant } from 'slate';
-import { Slate, Editable, withReact, useSlate } from 'slate-react';
+import { Slate, Editable, withReact, useSlate, ReactEditor } from 'slate-react';
 import EmojiPicker from 'emoji-picker-react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import {
@@ -36,6 +36,8 @@ import FileUploader from './FileUploader';
 import { uploadFileToS3 } from '../../api/uploadService';
 import { useCannedResponses } from '@/pages/CannedResponse/useCannedResponses';
 import { cn } from '@/lib/utils';
+import ReplyBanner from './ReplyBanner';
+import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
 interface RichTextEditorProps {
   conversationId: string | null;
@@ -43,6 +45,17 @@ interface RichTextEditorProps {
   /** optional callback after a message is sent */
   onSent?: () => void;
   disabled?: boolean;
+
+  /**
+   * When replying to a message, the parent message object.
+   * Pass null to indicate normal (non-reply) state.
+   */
+  replyTo?: ApiMessage | null;
+
+  /**
+   * Called when the user cancels the reply (clicks X on the ReplyBanner)
+   */
+  onCancelReply?: () => void;
 }
 
 const initialValue: Descendant[] = [{ type: 'paragraph', children: [{ text: '' }] }];
@@ -258,6 +271,8 @@ export default function RichTextEditor({
   selfId,
   onSent,
   disabled = false,
+  replyTo = null,
+  onCancelReply,
 }: RichTextEditorProps) {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []) as Editor & HistoryEditor;
   const [value, setValue] = useState<Descendant[]>(initialValue);
@@ -349,7 +364,7 @@ export default function RichTextEditor({
     setSearchText('');
   }, [editor.selection, getTextBeforeCursor, value]);
 
-  const hasContent = () => {
+  const hasContent = useCallback(() => {
     try {
       const t = Editor.string(editor, []).trim();
       if (t.length > 0) return true;
@@ -358,7 +373,7 @@ export default function RichTextEditor({
     } catch {
       return false;
     }
-  };
+  }, [editor, value]);
 
   const handleSend = useCallback(async () => {
     if (!conversationId) {
@@ -399,13 +414,23 @@ export default function RichTextEditor({
         if (mediaMeta.fileName) payload.fileName = mediaMeta.fileName;
       }
 
+      // include content (server will sanitize again)
       if (html) {
         payload.content = html;
       } else {
         payload.content = '';
       }
 
-      sendMessageSocket(payload);
+      // include parentId when replying to a message
+      if (replyTo && typeof replyTo.id === 'string') {
+        payload.parentId = replyTo.id;
+      }
+
+      // send via socket — backend expects parentId if this is a reply.
+      // sendMessageSocket's local type may not include parentId; cast to any to ensure runtime payload is correct.
+      sendMessageSocket(payload as any);
+
+      // clear UI on successful send (best-effort; the server will broadcast the persisted message)
       if (html) {
         clearEditor(editor);
         setValue(initialValue);
@@ -414,13 +439,16 @@ export default function RichTextEditor({
       setUploadProgress(0);
       setUploading(false);
 
+      // clear reply UI if any
+      if (onCancelReply) onCancelReply();
+
       if (onSent) onSent();
     } catch (err: any) {
       console.error('Send/upload failed', err);
       setUploadError(err?.message || 'Upload or send failed');
       setUploading(false);
     }
-  }, [conversationId, editor, selfId, value, selectedFile, uploading, onSent]);
+  }, [conversationId, editor, selfId, value, selectedFile, uploading, onSent, replyTo, onCancelReply]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     handleEditorShortcut(event as any, editor as any, () => {
@@ -453,8 +481,10 @@ export default function RichTextEditor({
       clearEditor(editor);
       setValue(initialValue);
       setSelectedFile(null);
+      if (onCancelReply) onCancelReply();
     }
-  }, [conversationId, editor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
 
   const handleFileSelect = useCallback((file: File | null) => {
     setSelectedFile(file);
@@ -465,6 +495,23 @@ export default function RichTextEditor({
   return (
     <TooltipProvider>
       <div className="rich-text-editor border border-slate-300 rounded-xl bg-background p-3 space-y-3" ref={editorRef}>
+        {/* Reply banner (shows when replyTo is provided) */}
+        <ReplyBanner
+          replyTo={replyTo ?? null}
+          selfId={selfId ?? null}
+          onCancel={() => {
+            if (onCancelReply) onCancelReply();
+          }}
+          onFocus={() => {
+            try {
+              ReactEditor.focus(editor);
+            } catch {
+              // best-effort focus
+              if (editorRef.current) (editorRef.current as HTMLDivElement).focus();
+            }
+          }}
+        />
+
         <Slate editor={editor} initialValue={value} onChange={(v) => setValue(v)}>
 
           {showCannedResponses && filteredResponses.length > 0 && (

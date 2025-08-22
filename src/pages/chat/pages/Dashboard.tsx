@@ -5,13 +5,6 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { 
-//   Select, 
-//   SelectContent, 
-//   SelectItem, 
-//   SelectTrigger, 
-//   SelectValue 
-// } from '@/components/ui/select';
 
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
@@ -19,12 +12,12 @@ import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
+import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  // const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
@@ -35,10 +28,21 @@ const Dashboard: React.FC = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
 
+  // Page-level reply state: when non-null, RichTextEditor shows the reply banner
+  // and the outgoing message will include parentId.
+  const [replyTo, setReplyTo] = useState<ApiMessage | null>(null);
+
   useEffect(() => {
     // Reset selected conversation when channel changes
     setSelectedConversationId(null);
+    // also clear any reply state (we're switching channel)
+    setReplyTo(null);
   }, [channelId]);
+
+  // Clear reply state when conversation selection changes (avoid replying to a message from another convo)
+  useEffect(() => {
+    setReplyTo(null);
+  }, [selectedConversationId]);
 
   if (channelsLoading) {
     return (
@@ -80,7 +84,7 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="h-full flex overflow-hidden bg-background">
       {/* Sidebar */}
@@ -88,31 +92,7 @@ const Dashboard: React.FC = () => {
         {/* Channel Header */}
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-lg">
-              Conversations
-            </h2>
-            {/* <Select
-              value={channelId || 'all'}
-              onValueChange={(value) => {
-                if (value === 'all') {
-                  navigate('/app');
-                } else {
-                  navigate(`/app/channels/${value}`);
-                }
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select channel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Channels</SelectItem>
-                {channels.map(channel => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    {channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select> */}
+            <h2 className="font-semibold text-lg">Conversations</h2>
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -126,8 +106,11 @@ const Dashboard: React.FC = () => {
 
         {/* Conversation List */}
         <div className="flex-1 overflow-hidden">
-          <ConversationList 
-            onSelectConversation={setSelectedConversationId}
+          <ConversationList
+            onSelectConversation={(id) => {
+              // ConversationList may call with '' when deleting/clearing selection; normalize to null
+              setSelectedConversationId(id && id.length > 0 ? id : null);
+            }}
             channelId={channelId}
             selectedConversationId={selectedConversationId}
           />
@@ -138,8 +121,31 @@ const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-0">
         {selectedConversationId ? (
           <>
-            <ChatWindow conversationId={selectedConversationId} />
-            <RichTextEditor conversationId={selectedConversationId} />
+            {/* 
+              ChatWindow: forward onReply so MessageBubble -> ChatWindow -> Dashboard
+              can set the replyTo state. ChatWindow should call onReply(message) when
+              the reply icon is clicked in a message bubble.
+            */}
+            <ChatWindow
+              conversationId={selectedConversationId}
+              onReply={(m: ApiMessage) => {
+                // Only set reply when the message belongs to the current conversation (safety)
+                if (m && m.conversationId === selectedConversationId) {
+                  setReplyTo(m);
+                }
+              }}
+            />
+
+            {/* RichTextEditor receives replyTo and handlers to cancel or clear reply after send */}
+            <RichTextEditor
+              conversationId={selectedConversationId}
+              replyTo={replyTo}
+              onCancelReply={() => setReplyTo(null)}
+              onSent={() => {
+                // Clear reply when message has been sent (editor also calls onSent after done)
+                setReplyTo(null);
+              }}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
