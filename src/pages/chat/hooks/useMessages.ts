@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import socket, { joinConversation } from '../api/socket'
 import { fetchMessages } from '../api/chatService'
 import type { Message as ApiMessage } from '../api/chatService'
+import { useAuth0 } from '@auth0/auth0-react';
 
 export interface UseMessagesResult {
   messages: ApiMessage[]
@@ -13,6 +14,7 @@ export interface UseMessagesResult {
 export function useMessages(
   conversationId: string | null
 ): UseMessagesResult {
+  const { getAccessTokenSilently } = useAuth0();
   const [messages, setMessages] = useState<ApiMessage[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
@@ -40,7 +42,8 @@ export function useMessages(
 
     async function loadHistory() {
       try {
-        const history = await fetchMessages(id)
+        const token = await getAccessTokenSilently();
+        const history = await fetchMessages(id, token)
         if (isMounted) setMessages(history)
       } catch (err: any) {
         if (isMounted) setError(err)

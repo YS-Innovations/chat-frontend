@@ -391,7 +391,7 @@ export default function RichTextEditor({
 
       const payload: any = {
         conversationId,
-        senderId: selfId ?? null,
+        senderId: selfId,
       };
       if (mediaMeta) {
         payload.mediaUrl = mediaMeta.mediaUrl;

@@ -45,7 +45,7 @@ export async function fetchConversations(token: string): Promise<ConversationLis
 export interface Message {
   id: string;
   conversationId: string;
-  senderId?: string;
+  senderId: string;
   content?: string;
   mediaUrl?: string;   // public URL to the uploaded file (image, doc, etc.)
   mediaType?: string;  // MIME type, e.g. 'image/png' or 'application/pdf'
@@ -57,9 +57,13 @@ export interface Message {
  * Fetch the full history for one conversation.
  * Hits your existing GET /conversations/:id/messages route.
  */
-export async function fetchMessages(conversationId: string): Promise<Message[]> {
+export async function fetchMessages(conversationId: string, token: string): Promise<Message[]> {
   const res = await axios.get<Message[]>(
-    `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages`
+    `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
   );
   return res.data;
 }

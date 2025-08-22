@@ -51,7 +51,7 @@ export function joinConversation(conversationId: string) {
  */
 export function sendMessageSocket(payload: {
   conversationId: string;
-  senderId: string | null; // Agent or guest ID, nullable when unknown
+  senderId: string; // Agent or guest ID, nullable when unknown
   content: string; // sanitized HTML from client (server must re-sanitize)
   mediaUrl?: string;
 }) {
