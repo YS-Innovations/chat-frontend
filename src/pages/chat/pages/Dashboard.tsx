@@ -25,7 +25,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
   // const navigate = useNavigate();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, user } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,
@@ -139,7 +139,7 @@ const Dashboard: React.FC = () => {
         {selectedConversationId ? (
           <>
             <ChatWindow conversationId={selectedConversationId} />
-            <RichTextEditor conversationId={selectedConversationId} />
+            <RichTextEditor conversationId={selectedConversationId}  selfId={user?.sub} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
