@@ -6,7 +6,7 @@ import { Download, File as FileIcon } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
-  selfId?: string;
+  selfId: string;
 }
 
 /** Small double-check icon (two strokes) */
