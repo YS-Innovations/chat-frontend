@@ -5,7 +5,7 @@ import MessageBubble from './MessageBubble';
 
 interface ChatWindowProps {
   conversationId: string | null;
-  selfId?: string;
+  selfId: string;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
