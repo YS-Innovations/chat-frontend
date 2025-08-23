@@ -39,7 +39,7 @@ import { cn } from '@/lib/utils';
 
 interface RichTextEditorProps {
   conversationId: string | null;
-  selfId?: string;
+  selfId: string;
   /** optional callback after a message is sent */
   onSent?: () => void;
   disabled?: boolean;
@@ -391,7 +391,7 @@ export default function RichTextEditor({
 
       const payload: any = {
         conversationId,
-        senderId: selfId ?? null,
+        senderId: selfId ,
       };
       if (mediaMeta) {
         payload.mediaUrl = mediaMeta.mediaUrl;

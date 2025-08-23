@@ -30,6 +30,9 @@ const Dashboard: React.FC = () => {
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,
   });
+  if (!user?.sub) {
+    return <LoadingSpinner />;
+  }
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -80,7 +83,7 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="h-full flex overflow-hidden bg-background">
       {/* Sidebar */}
@@ -126,7 +129,7 @@ const Dashboard: React.FC = () => {
 
         {/* Conversation List */}
         <div className="flex-1 overflow-hidden">
-          <ConversationList 
+          <ConversationList
             onSelectConversation={setSelectedConversationId}
             channelId={channelId}
             selectedConversationId={selectedConversationId}
@@ -139,7 +142,7 @@ const Dashboard: React.FC = () => {
         {selectedConversationId ? (
           <>
             <ChatWindow conversationId={selectedConversationId} />
-            <RichTextEditor conversationId={selectedConversationId}  selfId={user?.sub} />
+            <RichTextEditor conversationId={selectedConversationId} selfId={user?.sub} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
