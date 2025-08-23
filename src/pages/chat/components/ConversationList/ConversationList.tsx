@@ -1,4 +1,3 @@
-// src/pages/chat/components/ConversationList/ConversationList.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import ConversationItem from './ConversationItem';
@@ -14,12 +13,14 @@ interface ConversationListProps {
   onSelectConversation: (id: string) => void;
   channelId?: string;
   selectedConversationId?: string | null;
+  onAgentAssignmentChange?: () => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({ 
   onSelectConversation, 
   channelId,
-  selectedConversationId
+  selectedConversationId,
+  onAgentAssignmentChange 
 }) => {
   const { conversations, loading, error, refresh, loadMore, hasMore } = useConversations(channelId);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +31,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
     
     return conversations.filter(conv =>
       conv.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.guestId.toLowerCase().includes(searchTerm.toLowerCase())
+      conv.guestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.agent?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [conversations, searchTerm]);
 
@@ -122,6 +125,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 selected={conv.id === selectedConversationId}
                 onSelect={onSelectConversation}
                 onDelete={handleDelete}
+                onAgentAssignmentChange={onAgentAssignmentChange}
               />
             ))}
             

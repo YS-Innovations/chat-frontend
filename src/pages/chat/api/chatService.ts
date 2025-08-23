@@ -71,3 +71,20 @@ export async function deleteConversation(conversationId: string, token: string):
     },
   });
 }
+
+// src/pages/chat/api/chatService.ts
+export interface ConversationListItem {
+  id: string;
+  guestId: string;
+  guestName: string;
+  channelId: string;
+  createdAt: string;
+  updatedAt: string;
+  currentStatus: string;
+  agent?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  agentId?: string | null;
+}

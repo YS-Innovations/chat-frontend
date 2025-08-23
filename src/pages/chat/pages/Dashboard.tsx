@@ -1,47 +1,54 @@
-// src/pages/chat/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { 
-//   Select, 
-//   SelectContent, 
-//   SelectItem, 
-//   SelectTrigger, 
-//   SelectValue 
-// } from '@/components/ui/select';
-
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
+import type { ConversationListItem } from '../api/chatService';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  // const navigate = useNavigate();
   const { getAccessTokenSilently, user } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,
   });
+  
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
+  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+
+  useEffect(() => {
+    setSelectedConversationId(null);
+  }, [channelId]);
+
   if (!user?.sub) {
     return <LoadingSpinner />;
   }
 
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
-
-  useEffect(() => {
-    // Reset selected conversation when channel changes
-    setSelectedConversationId(null);
-  }, [channelId]);
+  const refreshConversations = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${API_URL}/conversations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setConversations(data);
+    } catch (error) {
+      console.error('Failed to refresh conversations:', error);
+    }
+  };
 
   if (channelsLoading) {
     return (
@@ -84,6 +91,8 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+
   return (
     <div className="h-full flex overflow-hidden bg-background">
       {/* Sidebar */}
@@ -91,31 +100,7 @@ const Dashboard: React.FC = () => {
         {/* Channel Header */}
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-lg">
-              Conversations
-            </h2>
-            {/* <Select
-              value={channelId || 'all'}
-              onValueChange={(value) => {
-                if (value === 'all') {
-                  navigate('/app');
-                } else {
-                  navigate(`/app/channels/${value}`);
-                }
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select channel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Channels</SelectItem>
-                {channels.map(channel => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    {channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select> */}
+            <h2 className="font-semibold text-lg">Conversations</h2>
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -133,6 +118,7 @@ const Dashboard: React.FC = () => {
             onSelectConversation={setSelectedConversationId}
             channelId={channelId}
             selectedConversationId={selectedConversationId}
+            onAgentAssignmentChange={refreshConversations}
           />
         </div>
       </div>
@@ -141,8 +127,13 @@ const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-0">
         {selectedConversationId ? (
           <>
-            <ChatWindow conversationId={selectedConversationId} />
-            <RichTextEditor conversationId={selectedConversationId} selfId={user?.sub} />
+            <ChatWindow 
+              conversationId={selectedConversationId} 
+              selfId={user.sub}
+              conversationData={selectedConversation}
+              onAgentAssignmentChange={refreshConversations}
+            />
+            <RichTextEditor conversationId={selectedConversationId} selfId={user.sub} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">

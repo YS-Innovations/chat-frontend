@@ -1,30 +1,39 @@
-// src/components/ChatWindow/ChatWindow.tsx
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
+import ChatHeader from './ChatHeader';
+import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
+import type { ConversationListItem } from '../../api/chatService';
 
 interface ChatWindowProps {
   conversationId: string | null;
   selfId: string;
+  conversationData?: ConversationListItem | null;
+  onAgentAssignmentChange?: () => void;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ 
+  conversationId, 
+  selfId, 
+  conversationData,
+  onAgentAssignmentChange 
+}) => {
   const { messages, loading, error } = useMessages(conversationId);
+  const [showAgentDialog, setShowAgentDialog] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const isNearBottom = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return false; // important: if not mounted, don't assume near-bottom
+    if (!el) return false;
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
     return distance < SCROLL_THRESHOLD_PX;
   }, []);
 
   const scrollToBottom = useCallback((smooth = true) => {
-    // prefer the sentinel
     if (bottomRef.current) {
       try {
         bottomRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
@@ -39,14 +48,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
     else el.scrollTop = el.scrollHeight;
   }, []);
 
-  // When messages change, auto-scroll only if user was near bottom before update.
-  // Depend explicitly on loading, messages.length, and callbacks to avoid stale closures.
   useEffect(() => {
     const el = containerRef.current;
     const nearBottomBefore = isNearBottom(el);
 
     const raf = requestAnimationFrame(() => {
-      // only auto-scroll when messages finished loading and user was near bottom before update
       if (!loading && nearBottomBefore) {
         scrollToBottom(true);
       }
@@ -55,34 +61,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
     return () => cancelAnimationFrame(raf);
   }, [messages.length, loading, isNearBottom, scrollToBottom]);
 
-  // When conversation changes, jump to bottom after messages have loaded.
   useEffect(() => {
-    // when conversation changes we usually want to jump to bottom after initial load
-    // wait until loading is false (i.e. messages fetched or empty)
     if (conversationId == null) return;
-
-    // if already loaded, jump right away
     if (!loading) {
       const id = requestAnimationFrame(() => scrollToBottom(false));
       return () => cancelAnimationFrame(id);
     }
-
-    // otherwise wait for loading -> false (handled by messages effect above);
-    // no need to do anything here when loading === true.
     return;
   }, [conversationId, loading, scrollToBottom]);
 
-  // Optional: handle late content layout changes (images, embeds) by observing container size
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // If browser supports ResizeObserver, watch for height changes and if user is near bottom keep it scrolled.
     if ('ResizeObserver' in window) {
       resizeObserverRef.current = new ResizeObserver(() => {
-        // if user is near bottom, keep it scrolled after layout shifts
         if (isNearBottom(el)) {
-          scrollToBottom(false); // instant to avoid jumpy animation during layout
+          scrollToBottom(false);
         }
       });
       resizeObserverRef.current.observe(el);
@@ -121,17 +116,33 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId }) => {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
-      tabIndex={0}
-    >
-      {messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} selfId={selfId} />
-      ))}
+    <>
+      <div className="flex flex-col h-full">
+        <ChatHeader 
+          conversation={conversationData}
+          onAssignAgent={() => setShowAgentDialog(true)}
+        />
+        
+        <div
+          ref={containerRef}
+          className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
+          tabIndex={0}
+        >
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} selfId={selfId} />
+          ))}
+          <div ref={bottomRef} />
+        </div>
+      </div>
 
-      <div ref={bottomRef} />
-    </div>
+      <AgentAssignmentDialog
+        open={showAgentDialog}
+        onOpenChange={setShowAgentDialog}
+        conversationId={conversationId}
+        currentAgent={conversationData?.agent}
+        onAssignmentChange={onAgentAssignmentChange}
+      />
+    </>
   );
 };
 
