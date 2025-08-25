@@ -27,7 +27,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   onDelete,
   onAgentAssignmentChange 
 }) => {
-  const { id, guestId, updatedAt, guestName, agent, agentId } = conversation;
+  const { id, guestId, updatedAt, guestName, agent } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const { unassignAgent } = useAgentAssignment();
 
@@ -99,7 +99,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             {agent && (
               <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">
                 <User className="h-3 w-3" />
-                <span className="truncate">{agent.name || agent.email || 'Assigned agent'}</span>
+                <span className="truncate">Assigned to {agent.name || agent.email || 'Assigned agent'}</span>
               </div>
             )}
           </div>
@@ -155,7 +155,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         </div>
 
         {/* Online indicator */}
-        <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ${
+        <div className={`absolute bottom-10 left-10 w-3 h-3 rounded-full ${
           selected ? 'bg-blue-500' : agent ? 'bg-green-500' : 'bg-gray-400'
         }`} />
       </div>

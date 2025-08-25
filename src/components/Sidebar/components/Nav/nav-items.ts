@@ -1,10 +1,10 @@
 // src/components/Sidebar/components/Nav/nav-items.ts
 import {
-  BookOpen,
+  // BookOpen,
   Bot,
   Settings2,
   SquareTerminal,
-  TestTubeDiagonal,
+  // TestTubeDiagonal,
   Users,
   MessageSquare,
 } from "lucide-react";
@@ -25,8 +25,9 @@ export const navMainItems: NavItem[] = [
     permission: "conversation-access",
     items: [
       { title: "All Conversation", url: "/app/conversations", permission: "conversation-list" },
-      { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
-      { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
+      { title: "My Inbox", url: "/app/conversations/assigned", permission: "conversation-unread" },
+      // { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
+      // { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
     ],
   },
   {
@@ -49,16 +50,16 @@ export const navMainItems: NavItem[] = [
       { title: "Pending Invite", url: "/app/team/invite-pending", permission: "pending-invite" },
     ],
   },
-  {
-    title: "Documentation",
-    url: "#",
-    icon: BookOpen,
-    permission: "documentation-access",
-    items: [
-      { title: "Introduction", url: "#", permission: "docs-intro" },
-      { title: "Get Started", url: "#", permission: "docs-get-started" },
-    ],
-  },
+  // {
+  //   title: "Documentation",
+  //   url: "#",
+  //   icon: BookOpen,
+  //   permission: "documentation-access",
+  //   items: [
+  //     { title: "Introduction", url: "#", permission: "docs-intro" },
+  //     { title: "Get Started", url: "#", permission: "docs-get-started" },
+  //   ],
+  // },
   {
     title: "Settings",
     url: "#",
@@ -69,15 +70,15 @@ export const navMainItems: NavItem[] = [
       { title: "channel-settings", url: "/app/channel-settings", permission: "chennelsettings" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
       { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
-      { title: "General", url: "/app/settings/general", permission: "settings-general" },
-      { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
+      // { title: "General", url: "/app/settings/general", permission: "settings-general" },
+      // { title: "Billing", url: "/app/settings/billing", permission: "settings-billing" },
     ],
   },
-  {
-    title: "test",
-    url: "/app/test",
-    icon: TestTubeDiagonal,
-    isActive: true,
-    permission: "inbox-access",
-  },
+  // {
+  //   title: "test",
+  //   url: "/app/test",
+  //   icon: TestTubeDiagonal,
+  //   isActive: true,
+  //   permission: "inbox-access",
+  // },
 ];
