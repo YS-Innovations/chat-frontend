@@ -1,4 +1,3 @@
-// src/pages/chat/components/ConversationList/ConversationList.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import ConversationItem from './ConversationItem';
@@ -14,14 +13,22 @@ interface ConversationListProps {
   onSelectConversation: (id: string) => void;
   channelId?: string;
   selectedConversationId?: string | null;
+  onAgentAssignmentChange?: () => void;
+  conversations: ConversationListItem[];
+  loading: boolean;
+  onRefresh: () => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({ 
   onSelectConversation, 
   channelId,
-  selectedConversationId
+  selectedConversationId,
+  onAgentAssignmentChange,
+  conversations,
+  loading,
+  onRefresh
 }) => {
-  const { conversations, loading, error, refresh, loadMore, hasMore } = useConversations(channelId);
+  const { error, refresh, loadMore, hasMore } = useConversations(channelId);
   const [searchTerm, setSearchTerm] = useState('');
   const { getAccessTokenSilently } = useAuth0();
 
@@ -30,7 +37,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
     
     return conversations.filter(conv =>
       conv.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.guestId.toLowerCase().includes(searchTerm.toLowerCase())
+      conv.guestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.agent?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [conversations, searchTerm]);
 
@@ -41,7 +50,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     try {
       const token = await getAccessTokenSilently();
       await deleteConversation(id, token);
-      await refresh();
+      await onRefresh();
       if (selectedConversationId === id) {
         onSelectConversation('');
       }
@@ -122,6 +131,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 selected={conv.id === selectedConversationId}
                 onSelect={onSelectConversation}
                 onDelete={handleDelete}
+                onAgentAssignmentChange={onAgentAssignmentChange}
               />
             ))}
             

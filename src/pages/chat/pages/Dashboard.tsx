@@ -1,47 +1,118 @@
-// src/pages/chat/pages/Dashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { 
-//   Select, 
-//   SelectContent, 
-//   SelectItem, 
-//   SelectTrigger, 
-//   SelectValue 
-// } from '@/components/ui/select';
-
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
+import type { ConversationListItem } from '../api/chatService';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  // const navigate = useNavigate();
   const { getAccessTokenSilently, user } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,
   });
-  if (!user?.sub) {
-    return <LoadingSpinner />;
-  }
-
+  
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<ConversationListItem | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
+  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
 
   useEffect(() => {
-    // Reset selected conversation when channel changes
     setSelectedConversationId(null);
+    setSelectedConversation(null);
   }, [channelId]);
+
+  const refreshConversations = useCallback(async () => {
+    try {
+      setLoadingConversations(true);
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${API_URL}/conversations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch conversations: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Ensure agent data is properly formatted
+      const formattedConversations = data.map((conv: any) => ({
+        ...conv,
+        agent: conv.agent || undefined,
+        agentId: conv.agent?.id || conv.agentId || null
+      }));
+      
+      setConversations(formattedConversations);
+      
+      // Update selected conversation if it exists
+      if (selectedConversationId) {
+        const updatedConversation = formattedConversations.find((c: ConversationListItem) => c.id === selectedConversationId);
+        setSelectedConversation(updatedConversation || null);
+      }
+    } catch (error) {
+      console.error('Failed to refresh conversations:', error);
+      toast.error('Failed to load conversations');
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, [getAccessTokenSilently, selectedConversationId]);
+
+  const handleSelectConversation = useCallback((id: string) => {
+    setSelectedConversationId(id);
+    const foundConversation = conversations.find(c => c.id === id);
+    setSelectedConversation(foundConversation || null);
+  }, [conversations]);
+
+  const handleAgentAssignmentChange = useCallback(async () => {
+    await refreshConversations();
+    
+    // Update the selected conversation with latest data
+    if (selectedConversationId) {
+      const token = await getAccessTokenSilently();
+      try {
+        const response = await fetch(`${API_URL}/conversations/${selectedConversationId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const updatedConv = await response.json();
+          setSelectedConversation(updatedConv);
+        }
+      } catch (error) {
+        console.error('Failed to fetch updated conversation:', error);
+      }
+    }
+  }, [refreshConversations, selectedConversationId, getAccessTokenSilently]);
+
+  // Load conversations on component mount and when channel changes
+  useEffect(() => {
+    refreshConversations();
+  }, [refreshConversations, channelId]);
+
+  if (!user?.sub) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (channelsLoading) {
     return (
@@ -91,31 +162,15 @@ const Dashboard: React.FC = () => {
         {/* Channel Header */}
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-lg">
-              Conversations
-            </h2>
-            {/* <Select
-              value={channelId || 'all'}
-              onValueChange={(value) => {
-                if (value === 'all') {
-                  navigate('/app');
-                } else {
-                  navigate(`/app/channels/${value}`);
-                }
-              }}
+            <h2 className="font-semibold text-lg">Conversations</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshConversations}
+              disabled={loadingConversations}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select channel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Channels</SelectItem>
-                {channels.map(channel => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    {channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select> */}
+              {loadingConversations ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -130,9 +185,13 @@ const Dashboard: React.FC = () => {
         {/* Conversation List */}
         <div className="flex-1 overflow-hidden">
           <ConversationList
-            onSelectConversation={setSelectedConversationId}
+            onSelectConversation={handleSelectConversation}
             channelId={channelId}
             selectedConversationId={selectedConversationId}
+            onAgentAssignmentChange={handleAgentAssignmentChange}
+            conversations={conversations}
+            loading={loadingConversations}
+            onRefresh={refreshConversations}
           />
         </div>
       </div>
@@ -141,8 +200,19 @@ const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-0">
         {selectedConversationId ? (
           <>
-            <ChatWindow conversationId={selectedConversationId} />
-            <RichTextEditor conversationId={selectedConversationId} selfId={user?.sub} />
+            <ChatWindow 
+              conversationId={selectedConversationId} 
+              selfId={user.sub}
+              conversationData={selectedConversation}
+              onAgentAssignmentChange={handleAgentAssignmentChange}
+            />
+            <div className="p-4 border-t bg-white">
+              <RichTextEditor 
+                conversationId={selectedConversationId} 
+                selfId={user.sub} 
+                onSent={refreshConversations}
+              />
+            </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">

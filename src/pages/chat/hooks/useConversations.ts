@@ -24,7 +24,7 @@ export function useConversations(channelId?: string, page = 1, limit = 50): UseC
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(page);
 
-  const load = useCallback(async (pageNum: number = 1, append: boolean = false) => {
+ const load = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
@@ -35,9 +35,16 @@ export function useConversations(channelId?: string, page = 1, limit = 50): UseC
         ? data.filter(conv => conv.channelId === channelId)
         : data;
 
-      // Simple pagination (replace with backend pagination if available)
+      // Ensure agent data is properly included
+      const conversationsWithAgent = filteredData.map(conv => ({
+        ...conv,
+        agent: conv.agent || undefined, // Ensure agent is either object or undefined
+        agentId: conv.agent?.id || null // Ensure agentId is properly set
+      }));
+      
+      // Simple pagination
       const startIndex = (pageNum - 1) * limit;
-      const paginatedData = filteredData.slice(0, startIndex + limit);
+      const paginatedData = conversationsWithAgent.slice(0, startIndex + limit);
       
       setConversations(prev => append ? [...prev, ...paginatedData] : paginatedData);
       setHasMore(paginatedData.length < filteredData.length);
