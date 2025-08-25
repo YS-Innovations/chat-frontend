@@ -2,6 +2,7 @@ import React from 'react';
 import { User, MoreVertical } from 'lucide-react';
 import type { ConversationListItem } from '../../api/chatService';
 
+// src/pages/chat/components/ChatHeader/ChatHeader.tsx
 interface ChatHeaderProps {
   conversation: ConversationListItem | null | undefined;
   onAssignAgent?: () => void;
@@ -9,6 +10,10 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent }) => {
   if (!conversation) return null;
+
+  // Safely extract agent information
+  const agent = conversation.agent || (conversation as any).agentData;
+  const agentId = conversation.agentId || agent?.id;
 
   return (
     <div className="flex items-center justify-between p-4 border-b bg-white">
@@ -22,17 +27,25 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent }) 
             {conversation.guestName || `Guest ${conversation.guestId.slice(0, 8)}`}
           </h3>
           
-          {conversation.agent && (
+          {agent && (
             <div className="flex items-center gap-1 text-sm text-blue-600">
               <User className="w-3 h-3" />
-              <span>Assigned to {conversation.agent.name || conversation.agent.email}</span>
+              <span>Assigned to {agent.name || agent.email || 'Agent'}</span>
+            </div>
+          )}
+          
+          {/* Show agent ID if agent object is missing but agentId exists */}
+          {!agent && agentId && (
+            <div className="flex items-center gap-1 text-sm text-blue-600">
+              <User className="w-3 h-3" />
+              <span>Assigned to agent {agentId.slice(0, 8)}</span>
             </div>
           )}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        {conversation.agent ? (
+        {agent || agentId ? (
           <button
             onClick={onAssignAgent}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
