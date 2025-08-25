@@ -163,14 +163,14 @@ const Dashboard: React.FC = () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">Conversations</h2>
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={refreshConversations}
               disabled={loadingConversations}
             >
               {loadingConversations ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            </Button> */}
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
