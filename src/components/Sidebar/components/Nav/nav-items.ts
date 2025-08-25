@@ -25,7 +25,7 @@ export const navMainItems: NavItem[] = [
     permission: "conversation-access",
     items: [
       { title: "All Conversation", url: "/app/conversations", permission: "conversation-list" },
-      { title: "AssignedConversations", url: "/app/conversations/assigned", permission: "conversation-unread" },
+      { title: "My Inbox", url: "/app/conversations/assigned", permission: "conversation-unread" },
       // { title: "Unread", url: "/app/conversations/unread", permission: "conversation-unread" },
       // { title: "Archived", url: "/app/conversations/archived", permission: "conversation-archived" },
     ],
