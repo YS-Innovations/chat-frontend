@@ -72,11 +72,30 @@ const Dashboard: React.FC = () => {
     }
   }, [getAccessTokenSilently, selectedConversationId]);
 
-  const handleSelectConversation = useCallback((id: string) => {
+
+    const markConversationAsSeen = useCallback(async (conversationId: string) => {
+      try {
+        const token = await getAccessTokenSilently();
+        await fetch(`${API_URL}/conversations/${conversationId}/mark-seen`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        // Remove the conversation from the inbox list after marking as seen
+        setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+      } catch (error) {
+        console.error('Failed to mark conversation as seen:', error);
+      }
+    }, [getAccessTokenSilently]);
+
+  const handleSelectConversation = useCallback(async(id: string) => {
     setSelectedConversationId(id);
     const foundConversation = conversations.find(c => c.id === id);
     setSelectedConversation(foundConversation || null);
-  }, [conversations]);
+    await markConversationAsSeen(id);
+  }, [conversations,markConversationAsSeen]);
 
   const handleAgentAssignmentChange = useCallback(async () => {
     await refreshConversations();
