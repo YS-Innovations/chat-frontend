@@ -14,10 +14,18 @@ if (!API_BASE) {
 export interface ConversationListItem {
   id: string;
   guestId: string;
-  guestName:string;
+  guestName: string;
   channelId: string;
   createdAt: string;
   updatedAt: string;
+  currentStatus: string;
+  seen: boolean; // Add this
+  agent?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  agentId?: string | null;
 }
 
 /**
@@ -72,7 +80,7 @@ export async function deleteConversation(conversationId: string, token: string):
   });
 }
 
-// src/pages/chat/api/chatService.ts
+
 export interface ConversationListItem {
   id: string;
   guestId: string;
@@ -81,6 +89,7 @@ export interface ConversationListItem {
   createdAt: string;
   updatedAt: string;
   currentStatus: string;
+  seen: boolean; // Add this property
   agent?: {
     id: string;
     name: string | null;

@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/home/Home';
 import Profile from '../pages/Profile/Profile';
 import { Teams } from '../pages/Team/Members';
-import ApplicationPage from '../pages/inbox/ApplicationPage';
+// import ApplicationPage from '../pages/inbox/ApplicationPage';
 import AcceptInvite from '../pages/AcceptInvite';
 import { PermissionGuard } from '../components/guards/PermissionGuard';
 import { ProtectedRoutes } from './ProtectedRoutes';
@@ -16,6 +16,7 @@ import { CannedResponsePage } from '@/pages/CannedResponse/CannedResponsePage';
 import Dashboard from '@/pages/chat/pages/Dashboard';
 import ChannelsPage from '@/pages/channel/channel';
 import { AssignedConversations } from '@/pages/chat/AssignedConversations/AssignedConversations';
+import Inbox from '@/pages/chat/Inbox/inbox';
 
 
 function AppRoutes() {
@@ -25,7 +26,8 @@ function AppRoutes() {
       <Route path="/accept-invite" element={<AcceptInvite />} errorElement={<ErrorPage />} />
       <Route path="/onboarding" element={<Onboarding />} errorElement={<ErrorPage />} />
       <Route path="/app/*" element={<ProtectedRoutes />} errorElement={<ErrorPage />}>
-        <Route index element={<ApplicationPage />} />
+        {/* <Route index element={<ApplicationPage />} /> */}
+        <Route index element={<Inbox />} />
         <Route path="onboarding/edit" element={<EditOrganization />} errorElement={<ErrorPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="team/permission-templates" element={<PermissionTemplates />} />
