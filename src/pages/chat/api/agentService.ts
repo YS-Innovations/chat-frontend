@@ -19,10 +19,10 @@ export interface AssignAgentRequest {
 
 export interface AssignmentEntry {
   id: string;
-  conversationId: string;
-  assignedAt: string;
-  unassignedAt?: string | null;
-  agent: Agent;
+  action: 'ASSIGNED' | 'UNASSIGNED';
+  timestamp: string; // ISO string
+  agent: Pick<Agent, 'id' | 'name' | 'email'>;
+  assignedBy?: { id: string; name: string | null; email: string | null } | null;
 }
 
 export async function getAvailableAgents(token: string): Promise<Agent[]> {

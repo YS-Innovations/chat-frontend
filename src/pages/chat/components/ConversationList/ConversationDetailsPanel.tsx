@@ -69,6 +69,25 @@ const ConversationDetailsPanel: React.FC<ConversationDetailsPanelProps> = ({ con
         <code className="px-1.5 py-0.5 bg-muted rounded text-xs truncate">{conversationId}</code>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="space-y-1">
+          <div className="text-muted-foreground">Created at</div>
+          <div className="font-medium">{conversation?.createdAt ? new Date(conversation.createdAt).toLocaleString() : 'null'}</div>
+        </div>
+        <div className="space-y-1">
+          <div className="text-muted-foreground">Updated at</div>
+          <div className="font-medium">{conversation?.updatedAt ? new Date(conversation.updatedAt).toLocaleString() : 'null'}</div>
+        </div>
+        <div className="space-y-1">
+          <div className="text-muted-foreground">Guest email</div>
+          <div className="font-medium">{conversation?.guest?.email ?? 'null'}</div>
+        </div>
+        <div className="space-y-1">
+          <div className="text-muted-foreground">Guest phone</div>
+          <div className="font-medium">{(conversation as any)?.guest?.phoneNumber ?? 'null'}</div>
+        </div>
+      </div>
+
       {currentAssignee && (
         <div className="flex items-center gap-2">
           <Badge variant="secondary">Assigned to</Badge>
@@ -99,8 +118,8 @@ const ConversationDetailsPanel: React.FC<ConversationDetailsPanelProps> = ({ con
       {!loading && !error && history.length > 0 && (
         <ul className="space-y-3">
           {history.map((entry) => {
-            const from = new Date(entry.assignedAt).toLocaleString();
-            const to = entry.unassignedAt ? new Date(entry.unassignedAt).toLocaleString() : null;
+            const ts = new Date(entry.timestamp).toLocaleString();
+            const assignedByDisplay = entry.assignedBy?.name || entry.assignedBy?.email || 'null';
             return (
               <li key={entry.id} className="flex items-start gap-3">
                 <Avatar className="h-8 w-8 mt-0.5">
@@ -111,9 +130,15 @@ const ConversationDetailsPanel: React.FC<ConversationDetailsPanelProps> = ({ con
                 <div className="min-w-0">
                   <div className="text-sm">
                     <span className="font-medium">{entry.agent.name || entry.agent.email || 'Agent'}</span>
+                    <span className="ml-2 inline-block rounded px-1.5 py-0.5 text-xs bg-muted text-muted-foreground">
+                      {entry.action}
+                    </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {from} {to ? `→ ${to}` : '(current)'}
+                    {ts}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    by: {assignedByDisplay}
                   </div>
                 </div>
               </li>
