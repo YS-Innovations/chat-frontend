@@ -532,7 +532,7 @@ export default function RichTextEditor({
             }}
             onPaste={handlePaste}
             readOnly={disabled || !conversationId}
-            className="max-h-[200px] rounded-md overflow-y-auto text-sm ml-2"
+            className="max-h-[200px] rounded-md overflow-y-auto text-sm ml-2 outline-none"
             style={{
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
