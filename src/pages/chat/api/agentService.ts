@@ -17,6 +17,14 @@ export interface AssignAgentRequest {
   agentId: string;
 }
 
+export interface AssignmentEntry {
+  id: string;
+  conversationId: string;
+  assignedAt: string;
+  unassignedAt?: string | null;
+  agent: Agent;
+}
+
 export async function getAvailableAgents(token: string): Promise<Agent[]> {
   const res = await axios.get<Agent[]>(`${API_BASE}/conversations/available-agents`, {
     headers: {
@@ -55,6 +63,21 @@ export async function unassignAgentFromConversation(
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+      },
+    }
+  );
+  return res.data;
+}
+
+export async function getAssignmentHistory(
+  conversationId: string,
+  token: string
+): Promise<AssignmentEntry[]> {
+  const res = await axios.get<AssignmentEntry[]>(
+    `${API_BASE}/conversations/${conversationId}/assignment-history`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     }
   );
