@@ -99,7 +99,8 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
               {/* Render the message bubble and wire up the onReply callback */}
               <MessageBubble
                 message={msg}
-                onReply={onReply}
+                onReply={onReply} 
+                selfId={''}                
               />
             </div>
 
