@@ -186,6 +186,7 @@ const ChannelsPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = await getAccessTokenSilently();
+      const deletedChannel = channels.find((c) => c.id === id) || null;
       const response = await fetch(`${API_URL}/channels/${id}`, {
         method: 'DELETE',
         headers: {
@@ -196,9 +197,60 @@ const ChannelsPage: React.FC = () => {
       if (!response.ok) throw new Error('Failed to delete channel');
 
       setChannels(prev => prev.filter(channel => channel.id !== id));
-      toast.success('Channel deleted successfully');
+      toast.success('Channel deleted. Undo?', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              const restoreToken = await getAccessTokenSilently();
+              const restoreRes = await fetch(`${API_URL}/channels/${id}/restore`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${restoreToken}` },
+              });
+              if (!restoreRes.ok) throw new Error('Failed to restore channel');
+              // Optimistically restore previous item
+              if (deletedChannel) {
+                setChannels((prev) => [...prev, deletedChannel]);
+              } else {
+                // Fallback: refresh list
+                const res = await fetch(`${API_URL}/channels`, {
+                  headers: { Authorization: `Bearer ${restoreToken}` },
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setChannels(data);
+                }
+              }
+              toast.success('Channel restored');
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Failed to restore channel');
+            }
+          },
+        },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete channel');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePurgeChannel = async (id: string) => {
+    if (!confirm('This will permanently delete the channel and all related data. Continue?')) return;
+    try {
+      setIsSubmitting(true);
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${API_URL}/channels/${id}/purge`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to permanently delete channel');
+      setChannels(prev => prev.filter(channel => channel.id !== id));
+      toast.success('Channel permanently deleted');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to permanently delete channel');
     } finally {
       setIsSubmitting(false);
     }
@@ -325,6 +377,14 @@ const ChannelsPage: React.FC = () => {
                         disabled={isSubmitting}
                       >
                         Delete
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handlePurgeChannel(channel.id)}
+                        disabled={isSubmitting}
+                      >
+                        Purge
                       </Button>
                     </TableCell>
                   </TableRow>
