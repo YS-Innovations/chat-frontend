@@ -3,13 +3,11 @@ import React from 'react';
 import type { Message } from '../../api/chatService';
 import { sanitize } from '../../utils/sanitize';
 import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-react';
-
 interface MessageBubbleProps {
   message: Message;
   selfId: string;
   onReply?: (message: Message) => void;
 }
-
 /** Small double-check icon (two strokes) */
 const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -33,7 +31,6 @@ const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
     />
   </svg>
 );
-
 /**
  * determine whether a mediaUrl + mediaType corresponds to an image
  * fall back to extension check when mediaType is not available
@@ -44,67 +41,115 @@ const isImageMedia = (mediaUrl?: string, mediaType?: string) => {
   // fallback to extension check
   return /\.(jpe?g|png|gif|webp|bmp|tiff)$/i.test(mediaUrl);
 };
-
-const truncate = (text: string, n = 120) =>
-  text.length > n ? `${text.slice(0, n).trim()}…` : text;
-
 const stripTags = (html?: string | null) => {
   if (!html) return '';
   // sanitize() returns safe html; we still strip tags for the preview text
   const safe = sanitize(html);
+  // preserve spacing/newlines, collapse runs of whitespace into single spaces
   return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
-
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply }) => {
   const isMe = message.senderId === selfId;
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
   // Normalize potentially-null fields to undefined so React/TSX props accept them.
   const safeMediaUrl: string | undefined = typeof message.mediaUrl === 'string' && message.mediaUrl ? message.mediaUrl : undefined;
   const safeMediaType: string | undefined = typeof message.mediaType === 'string' && message.mediaType ? message.mediaType : undefined;
   const safeFileName: string | undefined = typeof message.fileName === 'string' && message.fileName ? message.fileName : undefined;
-
   const safeHtml = message.content ? sanitize(message.content) : '';
   const wrapperClass = `w-full flex ${isMe ? 'justify-end' : 'justify-start'} px-3 py-1`;
   const hasMedia = Boolean(safeMediaUrl);
   const mediaIsImage = isImageMedia(safeMediaUrl, safeMediaType);
-
-  // parentPreview may be provided by backend (not required). Try to use it for the snippet.
-  // We purposely avoid strict typing here to stay compatible with your backend's shaped responses.
-  const parentPreview = (message as any).parentPreview as Partial<Message> | undefined;
-  const hasParent = Boolean(message.parentId);
-  const previewText = parentPreview?.content
-    ? truncate(stripTags(parentPreview.content as string), 100)
-    : parentPreview?.fileName
-    ? truncate(String(parentPreview.fileName), 100)
-    : '';
-
+  // Prefer backend `parentMessage` (threaded API). Fall back to older `parentPreview`.
+  const parentObj = (message as any).parentMessage ?? (message as any).parentPreview;
+  const hasParent = Boolean(message.parentId || parentObj);
+  // Build preview text for parent: do NOT truncate here (show full/plain text), wrap instead.
+  let previewText = '';
+  if (parentObj?.content && typeof parentObj.content === 'string') {
+    previewText = stripTags(parentObj.content as string);
+  } else if (parentObj?.fileName) {
+    previewText = String(parentObj.fileName);
+  } else if (parentObj?.mediaUrl) {
+    previewText = '(attachment)';
+  } else {
+    previewText = '';
+  }
   const handleReply = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onReply) onReply(message);
   };
-
+  // Jump-to-parent behavior (click or keyboard)
+  const handleJumpToParent = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.stopPropagation();
+    // prefer explicit parent object id -> parentObj.clientMsgId -> message.parentId
+    const parentId =
+      (parentObj && (parentObj.id ?? (parentObj as any).clientMsgId)) ??
+      message.parentId ??
+      null;
+    if (!parentId) return;
+    const selector = `[data-message-id="${String(parentId)}"]`;
+    const el = document.querySelector(selector) as HTMLElement | null;
+    // fallback to getElementById
+    const target = el ?? (document.getElementById(String(parentId)) as HTMLElement | null);
+    if (!target) return;
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try {
+        target.focus?.();
+      } catch {
+        // ignore
+      }
+      // briefly highlight the parent bubble
+      const originalBg = target.style.backgroundColor ?? '';
+      target.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
+      target.style.transition = 'background-color 700ms ease';
+      window.setTimeout(() => {
+        target.style.backgroundColor = originalBg;
+        window.setTimeout(() => {
+          target.style.transition = '';
+        }, 300);
+      }, 1400);
+    } catch {
+      // ignore scroll errors
+    }
+  };
+  // keyboard handler for preview button
+  const handlePreviewKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleJumpToParent(e);
+    }
+  };
+  // Determine stable message id for data attribute (support clientMsgId fallback)
+  const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} data-message-id={stableMessageId}>
       <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
         <div
           className={`${isMe ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'} shadow-sm max-w-full`}
           tabIndex={0}
           aria-label={safeHtml ? undefined : '(empty)'}
         >
-          {/* Reply preview/header (small, muted) */}
+          {/* Reply preview/header (small, muted) - now interactive */}
           {(hasParent || previewText) && (
             <div
-              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600 select-none"
-              aria-hidden
+              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600"
             >
               <div className="font-medium text-xs text-gray-500">Replying to</div>
-              <div className="mt-1 text-xs leading-tight text-gray-700 truncate">
+              {/* Make the preview interactive so users can click/keyboard to jump */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={handleJumpToParent}
+                onKeyDown={handlePreviewKey}
+                title={previewText || undefined}
+                aria-label="Jump to original message"
+                className="mt-1 text-xs leading-tight text-gray-700 cursor-pointer focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+              >
                 {previewText ? previewText : 'a message'}
               </div>
             </div>
           )}
-
           {/* Media preview (image) or file card */}
           {hasMedia && (
             <div className="chat-bubble-media mb-2">
@@ -131,12 +176,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
                   <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md border">
                     <FileIcon className="w-5 h-5 text-gray-600" />
                   </div>
-
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{safeFileName ?? safeMediaUrl}</div>
                     <div className="text-xs text-gray-500 truncate">{safeMediaType ?? 'File'}</div>
                   </div>
-
                   <div>
                     <a
                       href={safeMediaUrl}
@@ -153,7 +196,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
               )}
             </div>
           )}
-
           {/* Message content (sanitized HTML) or fallback */}
           <div className="chat-bubble-content" style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}>
             {safeHtml ? (
@@ -164,7 +206,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
               <span className="text-gray-500">(empty)</span>
             )}
           </div>
-
           <div className="chat-bubble-time mt-2" aria-hidden>
             <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
             {isMe && (
@@ -174,7 +215,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
             )}
           </div>
         </div>
-
         {/* reply button shown only on hover/focus of the group */}
         <button
           type="button"
@@ -189,5 +229,4 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
     </div>
   );
 };
-
 export default MessageBubble;
