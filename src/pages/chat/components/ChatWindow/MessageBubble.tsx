@@ -89,23 +89,86 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
     if (onReply) onReply(message);
   };
 
+  // Jump-to-parent behavior (click or keyboard)
+  const handleJumpToParent = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.stopPropagation();
+
+    // prefer explicit parent object id -> parentObj.clientMsgId -> message.parentId
+    const parentId =
+      (parentObj && (parentObj.id ?? (parentObj as any).clientMsgId)) ??
+      message.parentId ??
+      null;
+
+    if (!parentId) return;
+
+    const selector = `[data-message-id="${String(parentId)}"]`;
+    const el = document.querySelector(selector) as HTMLElement | null;
+
+    // fallback to getElementById
+    const target = el ?? (document.getElementById(String(parentId)) as HTMLElement | null);
+    if (!target) return;
+
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try {
+        target.focus?.();
+      } catch {
+        // ignore
+      }
+
+      // briefly highlight the parent bubble
+      const originalBg = target.style.backgroundColor ?? '';
+      target.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
+      target.style.transition = 'background-color 700ms ease';
+
+      window.setTimeout(() => {
+        target.style.backgroundColor = originalBg;
+        window.setTimeout(() => {
+          target.style.transition = '';
+        }, 300);
+      }, 1400);
+    } catch {
+      // ignore scroll errors
+    }
+  };
+
+  // keyboard handler for preview button
+  const handlePreviewKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleJumpToParent(e);
+    }
+  };
+
+  // Determine stable message id for data attribute (support clientMsgId fallback)
+  const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
+
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} data-message-id={stableMessageId}>
       <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
         <div
           className={`${isMe ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'} shadow-sm max-w-full`}
           tabIndex={0}
           aria-label={safeHtml ? undefined : '(empty)'}
         >
-          {/* Reply preview/header (small, muted) */}
+          {/* Reply preview/header (small, muted) - now interactive */}
           {(hasParent || previewText) && (
             <div
-              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600 select-none"
-              aria-hidden
+              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600"
             >
               <div className="font-medium text-xs text-gray-500">Replying to</div>
-              {/* Show full preview (wrapped) instead of truncating */}
-              <div className="mt-1 text-xs leading-tight text-gray-700 whitespace-pre-wrap break-words">
+
+              {/* Make the preview interactive so users can click/keyboard to jump */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={handleJumpToParent}
+                onKeyDown={handlePreviewKey}
+                title={previewText || undefined}
+                aria-label="Jump to original message"
+                className="mt-1 text-xs leading-tight text-gray-700 cursor-pointer focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+              >
                 {previewText ? previewText : 'a message'}
               </div>
             </div>
