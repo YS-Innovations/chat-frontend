@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
+import ThreadedMessageList from './ThreadedMessageList';
+import type { Message } from '../../api/chatService';
 import ChatHeader from './ChatHeader';
 import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -12,6 +14,7 @@ interface ChatWindowProps {
   selfId: string;
   conversationData?: ConversationListItem | null;
   onAgentAssignmentChange?: () => void;
+  onReply?: (message: Message) => void;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
@@ -20,7 +23,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationId, 
   selfId, 
   conversationData,
-  onAgentAssignmentChange 
+  onAgentAssignmentChange, onReply
 }) => {
   const { messages, loading, error } = useMessages(conversationId);
   const [showAgentDialog, setShowAgentDialog] = useState(false);
@@ -118,6 +121,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     );
   }
 
+  // Detect threaded/nested shape — backend will include `replies` for nested results.
+  const isThreaded = messages.some((m) => Array.isArray((m as any).replies) && (m as any).replies.length > 0);
+
   return (
     <>
       <div className="flex flex-col h-full">
@@ -132,9 +138,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
           tabIndex={0}
         >
+          {isThreaded ? (
+        <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" />
+      ) : (
+        <>
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} selfId={selfId} />
+            <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
           ))}
+        </>
+      )}
           <div ref={bottomRef} />
         </div>
       </div>

@@ -4,6 +4,14 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import { 
+//   Select, 
+//   SelectContent, 
+//   SelectItem, 
+//   SelectTrigger, 
+//   SelectValue 
+// } from '@/components/ui/select';
+
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
@@ -11,6 +19,7 @@ import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
 import type { ConversationListItem } from '../api/chatService';
+import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -29,9 +38,15 @@ const Dashboard: React.FC = () => {
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
 
+  // Page-level reply state: when non-null, RichTextEditor shows the reply banner
+  // and the outgoing message will include parentId.
+  const [replyTo, setReplyTo] = useState<ApiMessage | null>(null);
+
   useEffect(() => {
     setSelectedConversationId(null);
     setSelectedConversation(null);
+    // also clear any reply state (we're switching channel)
+    setReplyTo(null);
   }, [channelId]);
 
   const refreshConversations = useCallback(async () => {
@@ -58,6 +73,7 @@ const Dashboard: React.FC = () => {
       }));
       
       setConversations(formattedConversations);
+       setReplyTo(null);
       
       // Update selected conversation if it exists
       if (selectedConversationId) {
@@ -221,6 +237,12 @@ const Dashboard: React.FC = () => {
           <>
             <ChatWindow 
               conversationId={selectedConversationId} 
+              onReply={(m: ApiMessage) => {
+                // Only set reply when the message belongs to the current conversation (safety)
+                if (m && m.conversationId === selectedConversationId) {
+                  setReplyTo(m);
+                }
+              }}
               selfId={user.sub}
               conversationData={selectedConversation}
               onAgentAssignmentChange={handleAgentAssignmentChange}
@@ -228,6 +250,8 @@ const Dashboard: React.FC = () => {
             <div className="p-4 border-t bg-white">
               <RichTextEditor 
                 conversationId={selectedConversationId} 
+                replyTo={replyTo}
+              onCancelReply={() => setReplyTo(null)}
                 selfId={user.sub} 
                 onSent={refreshConversations}
               />
