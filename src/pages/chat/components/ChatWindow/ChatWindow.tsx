@@ -3,6 +3,8 @@ import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
 import ChatHeader from './ChatHeader';
 import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
 
 interface ChatWindowProps {
@@ -22,6 +24,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const { messages, loading, error } = useMessages(conversationId);
   const [showAgentDialog, setShowAgentDialog] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -121,6 +124,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <ChatHeader 
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
+          onShowDetails={() => setShowDetails(true)}
         />
         
         <div
@@ -142,6 +146,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         currentAgent={conversationData?.agent}
         onAssignmentChange={onAgentAssignmentChange}
       />
+
+      <Sheet open={showDetails} onOpenChange={setShowDetails}>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>User Details</SheetTitle>
+          </SheetHeader>
+          {conversationId && (
+            <ConversationDetailsPanel 
+              conversationId={conversationId}
+              conversation={conversationData}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };

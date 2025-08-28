@@ -6,9 +6,10 @@ import type { ConversationListItem } from '../../api/chatService';
 interface ChatHeaderProps {
   conversation: ConversationListItem | null | undefined;
   onAssignAgent?: () => void;
+  onShowDetails?: () => void;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent, onShowDetails }) => {
   if (!conversation) return null;
 
   // Safely extract agent information
@@ -17,7 +18,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent }) 
 
   return (
     <div className="flex items-center justify-between p-4 border-b bg-white">
-      <div className="flex items-center gap-3">
+      <div 
+        className="flex items-center gap-3 cursor-pointer select-none"
+        onClick={onShowDetails}
+        role="button"
+        aria-label="Show conversation details"
+      >
         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium">
           {getInitials(conversation.guestName || conversation.guestId)}
         </div>
