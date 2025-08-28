@@ -1,3 +1,4 @@
+// src/components/MessageInput/ReplyBanner.tsx
 import { useMemo } from 'react';
 import type { FC } from 'react';
 import { X as CloseIcon } from 'lucide-react';
@@ -21,7 +22,7 @@ interface ReplyBannerProps {
    */
   onFocus?: () => void;
 
-  /** Maximum characters to show from the original message text */
+  /** Maximum characters to show from the original message text (if omitted, show full message) */
   maxPreviewLength?: number;
 }
 
@@ -42,7 +43,7 @@ const ReplyBanner: FC<ReplyBannerProps> = ({
   selfId = null,
   onCancel,
   onFocus,
-  maxPreviewLength = 200,
+  maxPreviewLength,
 }) => {
   // Nothing to render when there is no reply target
   if (!replyTo) return null;
@@ -53,22 +54,32 @@ const ReplyBanner: FC<ReplyBannerProps> = ({
     if (replyTo.content && typeof replyTo.content === 'string' && replyTo.content.trim() !== '') {
       try {
         const safeHtml = sanitize(replyTo.content);
-        // Strip any remaining tags to get a plain-text preview
+        // Strip any remaining tags to get a plain-text preview; preserve spacing/newlines a bit
         const text = safeHtml.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
         if (!text) return '(message)';
-        return text.length > maxPreviewLength ? `${text.slice(0, maxPreviewLength).trim()}…` : text;
+        // If caller explicitly set a numeric maxPreviewLength, honor it; otherwise show full text
+        if (typeof maxPreviewLength === 'number' && Number.isFinite(maxPreviewLength) && maxPreviewLength > 0) {
+          return text.length > maxPreviewLength ? `${text.slice(0, maxPreviewLength).trim()}…` : text;
+        }
+        return text;
       } catch {
         // Fallback to raw trimmed text if sanitize unexpectedly fails
         const fallback = replyTo.content.replace(/<[^>]*>/g, '').trim();
-        return fallback.length > maxPreviewLength ? `${fallback.slice(0, maxPreviewLength).trim()}…` : fallback;
+        if (typeof maxPreviewLength === 'number' && Number.isFinite(maxPreviewLength) && maxPreviewLength > 0) {
+          return fallback.length > maxPreviewLength ? `${fallback.slice(0, maxPreviewLength).trim()}…` : fallback;
+        }
+        return fallback;
       }
     }
 
     // If no text content, but fileName exists (attachment with caption absent)
     if (replyTo.fileName && typeof replyTo.fileName === 'string') {
-      return replyTo.fileName.length > maxPreviewLength
-        ? `${replyTo.fileName.slice(0, maxPreviewLength).trim()}…`
-        : replyTo.fileName;
+      if (typeof maxPreviewLength === 'number' && Number.isFinite(maxPreviewLength) && maxPreviewLength > 0) {
+        return replyTo.fileName.length > maxPreviewLength
+          ? `${replyTo.fileName.slice(0, maxPreviewLength).trim()}…`
+          : replyTo.fileName;
+      }
+      return replyTo.fileName;
     }
 
     // If only mediaUrl exists, show a generic label
@@ -116,7 +127,8 @@ const ReplyBanner: FC<ReplyBannerProps> = ({
           Replying to <span className="font-medium text-gray-700">{senderLabel}</span>
         </div>
 
-        <div className="text-sm text-gray-700 truncate break-words">
+        {/* show full/wrapped preview instead of truncating with ellipsis */}
+        <div className="text-sm text-gray-700 whitespace-pre-wrap break-words">
           {previewText}
         </div>
       </div>

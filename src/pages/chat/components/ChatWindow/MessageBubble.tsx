@@ -46,13 +46,11 @@ const isImageMedia = (mediaUrl?: string, mediaType?: string) => {
   return /\.(jpe?g|png|gif|webp|bmp|tiff)$/i.test(mediaUrl);
 };
 
-const truncate = (text: string, n = 120) =>
-  text.length > n ? `${text.slice(0, n).trim()}…` : text;
-
 const stripTags = (html?: string | null) => {
   if (!html) return '';
   // sanitize() returns safe html; we still strip tags for the preview text
   const safe = sanitize(html);
+  // preserve spacing/newlines, collapse runs of whitespace into single spaces
   return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
@@ -70,15 +68,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
   const hasMedia = Boolean(safeMediaUrl);
   const mediaIsImage = isImageMedia(safeMediaUrl, safeMediaType);
 
-  // parentPreview may be provided by backend (not required). Try to use it for the snippet.
-  // We purposely avoid strict typing here to stay compatible with your backend's shaped responses.
-  const parentPreview = (message as any).parentPreview as Partial<Message> | undefined;
-  const hasParent = Boolean(message.parentId);
-  const previewText = parentPreview?.content
-    ? truncate(stripTags(parentPreview.content as string), 100)
-    : parentPreview?.fileName
-    ? truncate(String(parentPreview.fileName), 100)
-    : '';
+  // Prefer backend `parentMessage` (threaded API). Fall back to older `parentPreview`.
+  const parentObj = (message as any).parentMessage ?? (message as any).parentPreview;
+  const hasParent = Boolean(message.parentId || parentObj);
+
+  // Build preview text for parent: do NOT truncate here (show full/plain text), wrap instead.
+  let previewText = '';
+  if (parentObj?.content && typeof parentObj.content === 'string') {
+    previewText = stripTags(parentObj.content as string);
+  } else if (parentObj?.fileName) {
+    previewText = String(parentObj.fileName);
+  } else if (parentObj?.mediaUrl) {
+    previewText = '(attachment)';
+  } else {
+    previewText = '';
+  }
 
   const handleReply = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,7 +104,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
               aria-hidden
             >
               <div className="font-medium text-xs text-gray-500">Replying to</div>
-              <div className="mt-1 text-xs leading-tight text-gray-700 truncate">
+              {/* Show full preview (wrapped) instead of truncating */}
+              <div className="mt-1 text-xs leading-tight text-gray-700 whitespace-pre-wrap break-words">
                 {previewText ? previewText : 'a message'}
               </div>
             </div>
