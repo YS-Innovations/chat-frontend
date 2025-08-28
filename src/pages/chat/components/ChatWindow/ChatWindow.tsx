@@ -150,7 +150,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       <Sheet open={showDetails} onOpenChange={setShowDetails}>
         <SheetContent side="right">
           <SheetHeader>
-            <SheetTitle>Conversation Details</SheetTitle>
+            <SheetTitle>User Details</SheetTitle>
           </SheetHeader>
           {conversationId && (
             <ConversationDetailsPanel 
