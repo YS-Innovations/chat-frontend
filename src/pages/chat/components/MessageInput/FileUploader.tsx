@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import type { FC, DragEvent, KeyboardEvent } from 'react';
 import { validateFile, isImage } from '../../utils/fileUtils';
 import type { ValidationResult } from '../../utils/fileUtils';
-import { File as FileIcon, Upload, UploadCloud, X } from 'lucide-react';
+import { File as FileIcon, Upload, X } from 'lucide-react';
 
 interface FileUploaderProps {
   conversationId: string | null;

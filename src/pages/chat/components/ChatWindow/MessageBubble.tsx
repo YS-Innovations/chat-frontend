@@ -2,13 +2,12 @@
 import React from 'react';
 import type { Message } from '../../api/chatService';
 import { sanitize } from '../../utils/sanitize';
-import { Download, File as FileIcon } from 'lucide-react';
-
+import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-react';
 interface MessageBubbleProps {
   message: Message;
   selfId: string;
+  onReply?: (message: Message) => void;
 }
-
 /** Small double-check icon (two strokes) */
 const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -32,7 +31,6 @@ const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
     />
   </svg>
 );
-
 /**
  * determine whether a mediaUrl + mediaType corresponds to an image
  * fall back to extension check when mediaType is not available
@@ -43,99 +41,192 @@ const isImageMedia = (mediaUrl?: string, mediaType?: string) => {
   // fallback to extension check
   return /\.(jpe?g|png|gif|webp|bmp|tiff)$/i.test(mediaUrl);
 };
-
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId }) => {
+const stripTags = (html?: string | null) => {
+  if (!html) return '';
+  // sanitize() returns safe html; we still strip tags for the preview text
+  const safe = sanitize(html);
+  // preserve spacing/newlines, collapse runs of whitespace into single spaces
+  return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+};
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply }) => {
   const isMe = message.senderId === selfId;
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  // debug logs (remove in production)
-  // eslint-disable-next-line no-console
-  console.log('[MessageBubble] raw message.content:', message.content);
+  // Normalize potentially-null fields to undefined so React/TSX props accept them.
+  const safeMediaUrl: string | undefined = typeof message.mediaUrl === 'string' && message.mediaUrl ? message.mediaUrl : undefined;
+  const safeMediaType: string | undefined = typeof message.mediaType === 'string' && message.mediaType ? message.mediaType : undefined;
+  const safeFileName: string | undefined = typeof message.fileName === 'string' && message.fileName ? message.fileName : undefined;
   const safeHtml = message.content ? sanitize(message.content) : '';
-  // eslint-disable-next-line no-console
-  console.log('[MessageBubble] after sanitize:', safeHtml);
-
   const wrapperClass = `w-full flex ${isMe ? 'justify-end' : 'justify-start'} px-3 py-1`;
-
-  const hasMedia = Boolean(message.mediaUrl);
-  const mediaIsImage = isImageMedia(message.mediaUrl, message.mediaType);
-
+  const hasMedia = Boolean(safeMediaUrl);
+  const mediaIsImage = isImageMedia(safeMediaUrl, safeMediaType);
+  // Prefer backend `parentMessage` (threaded API). Fall back to older `parentPreview`.
+  const parentObj = (message as any).parentMessage ?? (message as any).parentPreview;
+  const hasParent = Boolean(message.parentId || parentObj);
+  // Build preview text for parent: do NOT truncate here (show full/plain text), wrap instead.
+  let previewText = '';
+  if (parentObj?.content && typeof parentObj.content === 'string') {
+    previewText = stripTags(parentObj.content as string);
+  } else if (parentObj?.fileName) {
+    previewText = String(parentObj.fileName);
+  } else if (parentObj?.mediaUrl) {
+    previewText = '(attachment)';
+  } else {
+    previewText = '';
+  }
+  const handleReply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onReply) onReply(message);
+  };
+  // Jump-to-parent behavior (click or keyboard)
+  const handleJumpToParent = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.stopPropagation();
+    // prefer explicit parent object id -> parentObj.clientMsgId -> message.parentId
+    const parentId =
+      (parentObj && (parentObj.id ?? (parentObj as any).clientMsgId)) ??
+      message.parentId ??
+      null;
+    if (!parentId) return;
+    const selector = `[data-message-id="${String(parentId)}"]`;
+    const el = document.querySelector(selector) as HTMLElement | null;
+    // fallback to getElementById
+    const target = el ?? (document.getElementById(String(parentId)) as HTMLElement | null);
+    if (!target) return;
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try {
+        target.focus?.();
+      } catch {
+        // ignore
+      }
+      // briefly highlight the parent bubble
+      const originalBg = target.style.backgroundColor ?? '';
+      target.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
+      target.style.transition = 'background-color 700ms ease';
+      window.setTimeout(() => {
+        target.style.backgroundColor = originalBg;
+        window.setTimeout(() => {
+          target.style.transition = '';
+        }, 300);
+      }, 1400);
+    } catch {
+      // ignore scroll errors
+    }
+  };
+  // keyboard handler for preview button
+  const handlePreviewKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleJumpToParent(e);
+    }
+  };
+  // Determine stable message id for data attribute (support clientMsgId fallback)
+  const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
   return (
-    <div className={wrapperClass}>
-      <div className={`${isMe ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'} shadow-sm max-w-full`}>
-
-        {/* Media preview (image) or file card */}
-        {hasMedia && (
-          <div className="chat-bubble-media mb-2">
-            {mediaIsImage ? (
-              <a
-                href={message.mediaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block"
-                title={message.fileName ?? 'Open image'}
+    <div className={wrapperClass} data-message-id={stableMessageId}>
+      <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+        <div
+          className={`${isMe ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'} shadow-sm max-w-full`}
+          tabIndex={0}
+          aria-label={safeHtml ? undefined : '(empty)'}
+        >
+          {/* Reply preview/header (small, muted) - now interactive */}
+          {(hasParent || previewText) && (
+            <div
+              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600"
+            >
+              <div className="font-medium text-xs text-gray-500">Replying to</div>
+              {/* Make the preview interactive so users can click/keyboard to jump */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={handleJumpToParent}
+                onKeyDown={handlePreviewKey}
+                title={previewText || undefined}
+                aria-label="Jump to original message"
+                className="mt-1 text-xs leading-tight text-gray-700 cursor-pointer focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
               >
-                <img
-                  src={message.mediaUrl}
-                  alt={message.fileName ?? 'image'}
-                  className="rounded-md max-w-xs max-h-60 object-contain border"
-                  style={{ display: 'block' }}
-                />
-              </a>
-            ) : (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md border">
-                <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md border">
-                  <FileIcon className="w-5 h-5 text-gray-600" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{message.fileName ?? message.mediaUrl}</div>
-                  <div className="text-xs text-gray-500 truncate">{message.mediaType ?? 'File'}</div>
-                </div>
-
-                <div>
-                  <a
-                    href={message.mediaUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border rounded-md text-sm hover:bg-gray-100"
-                    title="Download file"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Download</span>
-                  </a>
-                </div>
+                {previewText ? previewText : 'a message'}
               </div>
+            </div>
+          )}
+          {/* Media preview (image) or file card */}
+          {hasMedia && (
+            <div className="chat-bubble-media mb-2">
+              {mediaIsImage ? (
+                <a
+                  href={safeMediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
+                  title={safeFileName ?? 'Open image'}
+                >
+                  {/* only render img when we have a safe (non-null) url */}
+                  {safeMediaUrl && (
+                    <img
+                      src={safeMediaUrl}
+                      alt={safeFileName ?? 'image'}
+                      className="rounded-md max-w-xs max-h-60 object-contain border"
+                      style={{ display: 'block' }}
+                    />
+                  )}
+                </a>
+              ) : (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md border">
+                  <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md border">
+                    <FileIcon className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{safeFileName ?? safeMediaUrl}</div>
+                    <div className="text-xs text-gray-500 truncate">{safeMediaType ?? 'File'}</div>
+                  </div>
+                  <div>
+                    <a
+                      href={safeMediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border rounded-md text-sm hover:bg-gray-100"
+                      title="Download file"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Download</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Message content (sanitized HTML) or fallback */}
+          <div className="chat-bubble-content" style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}>
+            {safeHtml ? (
+              <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
+            ) : hasMedia ? (
+              null
+            ) : (
+              <span className="text-gray-500">(empty)</span>
             )}
           </div>
-        )}
-
-        {/* Message content (sanitized HTML) or fallback */}
-        <div
-          className="chat-bubble-content"
-          style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}
+          <div className="chat-bubble-time mt-2" aria-hidden>
+            <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
+            {isMe && (
+              <span className="chat-bubble-status ml-2" title="Sent / Delivered">
+                <DoubleCheckIcon className="inline-block w-4 h-4 text-gray-400" />
+              </span>
+            )}
+          </div>
+        </div>
+        {/* reply button shown only on hover/focus of the group */}
+        <button
+          type="button"
+          onClick={handleReply}
+          aria-label="Reply to message"
+          title="Reply"
+          className="ml-2 -mr-1 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
         >
-          {safeHtml ? (
-            <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
-          ) : hasMedia ? (
-            // if there's media but no caption/content, show nothing here (media shown above)
-            null
-          ) : (
-            <span className="text-gray-500">(empty)</span>
-          )}
-        </div>
-
-        <div className="chat-bubble-time mt-2" aria-hidden>
-          <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
-          {isMe && (
-            <span className="chat-bubble-status ml-2" title="Sent / Delivered">
-              <DoubleCheckIcon className="inline-block w-4 h-4 text-gray-400" />
-            </span>
-          )}
-        </div>
+          <ReplyIcon className="w-3 h-3" />
+        </button>
       </div>
     </div>
   );
 };
-
 export default MessageBubble;

@@ -68,6 +68,7 @@ export const navMainItems: NavItem[] = [
     items: [
       { title: "canned-responses", url: "/app/canned-responses", permission: "canned-responses" },
       { title: "channel-settings", url: "/app/channel-settings", permission: "chennelsettings" },
+      { title: "Channel Restore", url: "/app/channel-restore", permission: "chennelsettings" },
       { title: "Permission Templates", url: "/app/team/permission-templates", permission: "Permission-Templates" },
       { title: "onboarding", url: "/app/onboarding/edit", permission: "onboarding" },
       // { title: "General", url: "/app/settings/general", permission: "settings-general" },
