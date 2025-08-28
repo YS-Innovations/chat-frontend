@@ -17,6 +17,14 @@ export interface ConversationListItem {
   channelId: string;
   createdAt: string;
   updatedAt: string;
+  currentStatus: string;
+  seen: boolean; // Add this
+  agent?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  agentId?: string | null;
 }
 
 /**
@@ -110,4 +118,22 @@ export async function deleteConversation(conversationId: string, token: string):
       Authorization: `Bearer ${token}`,
     },
   });
+}
+
+
+export interface ConversationListItem {
+  id: string;
+  guestId: string;
+  guestName: string;
+  channelId: string;
+  createdAt: string;
+  updatedAt: string;
+  currentStatus: string;
+  seen: boolean; // Add this property
+  agent?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  agentId?: string | null;
 }

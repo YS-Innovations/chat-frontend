@@ -1,10 +1,16 @@
-// src/pages/chat/pages/Dashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import { 
+//   Select, 
+//   SelectContent, 
+//   SelectItem, 
+//   SelectTrigger, 
+//   SelectValue 
+// } from '@/components/ui/select';
 
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
@@ -12,37 +18,136 @@ import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
+import type { ConversationListItem } from '../api/chatService';
 import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, user } = useAuth0();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,
   });
-
+  
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<ConversationListItem | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
+  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
 
   // Page-level reply state: when non-null, RichTextEditor shows the reply banner
   // and the outgoing message will include parentId.
   const [replyTo, setReplyTo] = useState<ApiMessage | null>(null);
 
   useEffect(() => {
-    // Reset selected conversation when channel changes
     setSelectedConversationId(null);
+    setSelectedConversation(null);
     // also clear any reply state (we're switching channel)
     setReplyTo(null);
   }, [channelId]);
 
-  // Clear reply state when conversation selection changes (avoid replying to a message from another convo)
+  const refreshConversations = useCallback(async () => {
+    try {
+      setLoadingConversations(true);
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${API_URL}/conversations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch conversations: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Ensure agent data is properly formatted
+      const formattedConversations = data.map((conv: any) => ({
+        ...conv,
+        agent: conv.agent || undefined,
+        agentId: conv.agent?.id || conv.agentId || null
+      }));
+      
+      setConversations(formattedConversations);
+       setReplyTo(null);
+      
+      // Update selected conversation if it exists
+      if (selectedConversationId) {
+        const updatedConversation = formattedConversations.find((c: ConversationListItem) => c.id === selectedConversationId);
+        setSelectedConversation(updatedConversation || null);
+      }
+    } catch (error) {
+      console.error('Failed to refresh conversations:', error);
+      toast.error('Failed to load conversations');
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, [getAccessTokenSilently, selectedConversationId]);
+
+
+    const markConversationAsSeen = useCallback(async (conversationId: string) => {
+      try {
+        const token = await getAccessTokenSilently();
+        await fetch(`${API_URL}/conversations/${conversationId}/mark-seen`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        // Remove the conversation from the inbox list after marking as seen
+        setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+      } catch (error) {
+        console.error('Failed to mark conversation as seen:', error);
+      }
+    }, [getAccessTokenSilently]);
+
+  const handleSelectConversation = useCallback(async(id: string) => {
+    setSelectedConversationId(id);
+    const foundConversation = conversations.find(c => c.id === id);
+    setSelectedConversation(foundConversation || null);
+    await markConversationAsSeen(id);
+  }, [conversations,markConversationAsSeen]);
+
+  const handleAgentAssignmentChange = useCallback(async () => {
+    await refreshConversations();
+    
+    // Update the selected conversation with latest data
+    if (selectedConversationId) {
+      const token = await getAccessTokenSilently();
+      try {
+        const response = await fetch(`${API_URL}/conversations/${selectedConversationId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const updatedConv = await response.json();
+          setSelectedConversation(updatedConv);
+        }
+      } catch (error) {
+        console.error('Failed to fetch updated conversation:', error);
+      }
+    }
+  }, [refreshConversations, selectedConversationId, getAccessTokenSilently]);
+
+  // Load conversations on component mount and when channel changes
   useEffect(() => {
-    setReplyTo(null);
-  }, [selectedConversationId]);
+    refreshConversations();
+  }, [refreshConversations, channelId]);
+
+  if (!user?.sub) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (channelsLoading) {
     return (
@@ -93,6 +198,14 @@ const Dashboard: React.FC = () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">Conversations</h2>
+            {/* <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshConversations}
+              disabled={loadingConversations}
+            >
+              {loadingConversations ? 'Refreshing...' : 'Refresh'}
+            </Button> */}
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -107,12 +220,13 @@ const Dashboard: React.FC = () => {
         {/* Conversation List */}
         <div className="flex-1 overflow-hidden">
           <ConversationList
-            onSelectConversation={(id) => {
-              // ConversationList may call with '' when deleting/clearing selection; normalize to null
-              setSelectedConversationId(id && id.length > 0 ? id : null);
-            }}
+            onSelectConversation={handleSelectConversation}
             channelId={channelId}
             selectedConversationId={selectedConversationId}
+            onAgentAssignmentChange={handleAgentAssignmentChange}
+            conversations={conversations}
+            loading={loadingConversations}
+            onRefresh={refreshConversations}
           />
         </div>
       </div>
@@ -121,31 +235,27 @@ const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-0">
         {selectedConversationId ? (
           <>
-            {/* 
-              ChatWindow: forward onReply so MessageBubble -> ChatWindow -> Dashboard
-              can set the replyTo state. ChatWindow should call onReply(message) when
-              the reply icon is clicked in a message bubble.
-            */}
-            <ChatWindow
-              conversationId={selectedConversationId}
+            <ChatWindow 
+              conversationId={selectedConversationId} 
               onReply={(m: ApiMessage) => {
                 // Only set reply when the message belongs to the current conversation (safety)
                 if (m && m.conversationId === selectedConversationId) {
                   setReplyTo(m);
                 }
               }}
+              selfId={user.sub}
+              conversationData={selectedConversation}
+              onAgentAssignmentChange={handleAgentAssignmentChange}
             />
-
-            {/* RichTextEditor receives replyTo and handlers to cancel or clear reply after send */}
-            <RichTextEditor
-              conversationId={selectedConversationId}
-              replyTo={replyTo}
+            <div className="p-4 border-t bg-white">
+              <RichTextEditor 
+                conversationId={selectedConversationId} 
+                replyTo={replyTo}
               onCancelReply={() => setReplyTo(null)}
-              onSent={() => {
-                // Clear reply when message has been sent (editor also calls onSent after done)
-                setReplyTo(null);
-              }}
-            />
+                selfId={user.sub} 
+                onSent={refreshConversations}
+              />
+            </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">

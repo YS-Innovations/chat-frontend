@@ -1,39 +1,45 @@
-// src/components/ChatWindow/ChatWindow.tsx
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
 import ThreadedMessageList from './ThreadedMessageList';
 import type { Message } from '../../api/chatService';
+import ChatHeader from './ChatHeader';
+import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
+import type { ConversationListItem } from '../../api/chatService';
 
 interface ChatWindowProps {
   conversationId: string | null;
-  selfId?: string;
-  /**
-   * Optional callback used to start a reply flow. Dashboard provides this to set page-level reply state.
-   */
+  selfId: string;
+  conversationData?: ConversationListItem | null;
+  onAgentAssignmentChange?: () => void;
   onReply?: (message: Message) => void;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply }) => {
-  // If you want ChatWindow to always request nested data, call:
-  // const { messages, loading, error } = useMessages(conversationId, { threads: 'nested', threadPageSize: 50 });
-  // For flexibility, we call without options and detect threaded shape below.
+const ChatWindow: React.FC<ChatWindowProps> = ({ 
+  conversationId, 
+  selfId, 
+  conversationData,
+  onAgentAssignmentChange, onReply
+}) => {
   const { messages, loading, error } = useMessages(conversationId);
+  const [showAgentDialog, setShowAgentDialog] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const isNearBottom = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return false; // important: if not mounted, don't assume near-bottom
+    if (!el) return false;
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
     return distance < SCROLL_THRESHOLD_PX;
   }, []);
 
   const scrollToBottom = useCallback((smooth = true) => {
-    // prefer the sentinel
     if (bottomRef.current) {
       try {
         bottomRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
@@ -48,14 +54,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply
     else el.scrollTop = el.scrollHeight;
   }, []);
 
-  // When messages change, auto-scroll only if user was near bottom before update.
-  // Depend explicitly on loading, messages.length, and callbacks to avoid stale closures.
   useEffect(() => {
     const el = containerRef.current;
     const nearBottomBefore = isNearBottom(el);
 
     const raf = requestAnimationFrame(() => {
-      // only auto-scroll when messages finished loading and user was near bottom before update
       if (!loading && nearBottomBefore) {
         scrollToBottom(true);
       }
@@ -64,34 +67,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply
     return () => cancelAnimationFrame(raf);
   }, [messages.length, loading, isNearBottom, scrollToBottom]);
 
-  // When conversation changes, jump to bottom after messages have loaded.
   useEffect(() => {
-    // when conversation changes we usually want to jump to bottom after initial load
-    // wait until loading is false (i.e. messages fetched or empty)
     if (conversationId == null) return;
-
-    // if already loaded, jump right away
     if (!loading) {
       const id = requestAnimationFrame(() => scrollToBottom(false));
       return () => cancelAnimationFrame(id);
     }
-
-    // otherwise wait for loading -> false (handled by messages effect above);
-    // no need to do anything here when loading === true.
     return;
   }, [conversationId, loading, scrollToBottom]);
 
-  // Optional: handle late content layout changes (images, embeds) by observing container size
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // If browser supports ResizeObserver, watch for height changes and if user is near bottom keep it scrolled.
     if ('ResizeObserver' in window) {
       resizeObserverRef.current = new ResizeObserver(() => {
-        // if user is near bottom, keep it scrolled after layout shifts
         if (isNearBottom(el)) {
-          scrollToBottom(false); // instant to avoid jumpy animation during layout
+          scrollToBottom(false);
         }
       });
       resizeObserverRef.current.observe(el);
@@ -133,12 +125,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply
   const isThreaded = messages.some((m) => Array.isArray((m as any).replies) && (m as any).replies.length > 0);
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
-      tabIndex={0}
-    >
-      {isThreaded ? (
+    <>
+      <div className="flex flex-col h-full">
+        <ChatHeader 
+          conversation={conversationData}
+          onAssignAgent={() => setShowAgentDialog(true)}
+          onShowDetails={() => setShowDetails(true)}
+        />
+        
+        <div
+          ref={containerRef}
+          className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
+          tabIndex={0}
+        >
+          {isThreaded ? (
         <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" />
       ) : (
         <>
@@ -147,9 +147,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, selfId, onReply
           ))}
         </>
       )}
+          <div ref={bottomRef} />
+        </div>
+      </div>
 
-      <div ref={bottomRef} />
-    </div>
+      <AgentAssignmentDialog
+        open={showAgentDialog}
+        onOpenChange={setShowAgentDialog}
+        conversationId={conversationId}
+        currentAgent={conversationData?.agent}
+        onAssignmentChange={onAgentAssignmentChange}
+      />
+
+      <Sheet open={showDetails} onOpenChange={setShowDetails}>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>User Details</SheetTitle>
+          </SheetHeader>
+          {conversationId && (
+            <ConversationDetailsPanel 
+              conversationId={conversationId}
+              conversation={conversationData}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
 

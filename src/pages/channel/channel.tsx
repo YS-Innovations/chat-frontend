@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,7 +34,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from './CreateChannelDialog';
 
@@ -186,6 +186,7 @@ const ChannelsPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const token = await getAccessTokenSilently();
+      const deletedChannel = channels.find((c) => c.id === id) || null;
       const response = await fetch(`${API_URL}/channels/${id}`, {
         method: 'DELETE',
         headers: {
@@ -196,13 +197,64 @@ const ChannelsPage: React.FC = () => {
       if (!response.ok) throw new Error('Failed to delete channel');
 
       setChannels(prev => prev.filter(channel => channel.id !== id));
-      toast.success('Channel deleted successfully');
+      toast.success('Channel deleted. Undo?', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              const restoreToken = await getAccessTokenSilently();
+              const restoreRes = await fetch(`${API_URL}/channels/${id}/restore`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${restoreToken}` },
+              });
+              if (!restoreRes.ok) throw new Error('Failed to restore channel');
+              // Optimistically restore previous item
+              if (deletedChannel) {
+                setChannels((prev) => [...prev, deletedChannel]);
+              } else {
+                // Fallback: refresh list
+                const res = await fetch(`${API_URL}/channels`, {
+                  headers: { Authorization: `Bearer ${restoreToken}` },
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setChannels(data);
+                }
+              }
+              toast.success('Channel restored');
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Failed to restore channel');
+            }
+          },
+        },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete channel');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // const handlePurgeChannel = async (id: string) => {
+  //   if (!confirm('This will permanently delete the channel and all related data. Continue?')) return;
+  //   try {
+  //     setIsSubmitting(true);
+  //     const token = await getAccessTokenSilently();
+  //     const response = await fetch(`${API_URL}/channels/${id}/purge`, {
+  //       method: 'DELETE',
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     if (!response.ok) throw new Error('Failed to permanently delete channel');
+  //     setChannels(prev => prev.filter(channel => channel.id !== id));
+  //     toast.success('Channel permanently deleted');
+  //   } catch (err) {
+  //     toast.error(err instanceof Error ? err.message : 'Failed to permanently delete channel');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const openSettingsModal = (channel: Channel) => {
     setSelectedChannel(channel);
@@ -258,9 +310,14 @@ const ChannelsPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-foreground">Channels</h1>
-        <Button onClick={() => setShowCreateModal(true)}>
-          Create Channel
-        </Button>
+        <div className="space-x-2">
+          <Link to="/app/channel-restore">
+            <Button variant="outline">Trash / Restore</Button>
+          </Link>
+          <Button onClick={() => setShowCreateModal(true)}>
+            Create Channel
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -280,7 +337,6 @@ const ChannelsPage: React.FC = () => {
                   <TableHead>Token</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead>Settings</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -303,13 +359,6 @@ const ChannelsPage: React.FC = () => {
                         year: 'numeric',
                       })}
                     </TableCell>
-                    <TableCell>
-                      {channel.channelSettings ? (
-                        <Badge variant="secondary">Configured</Badge>
-                      ) : (
-                        <Badge variant="destructive">Not Configured</Badge>
-                      )}
-                    </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
                         variant="outline"
@@ -326,6 +375,14 @@ const ChannelsPage: React.FC = () => {
                       >
                         Delete
                       </Button>
+                      {/* <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handlePurgeChannel(channel.id)}
+                        disabled={isSubmitting}
+                      >
+                        Purge
+                      </Button> */}
                     </TableCell>
                   </TableRow>
                 ))}

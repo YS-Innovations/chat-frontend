@@ -6,8 +6,7 @@ import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-re
 
 interface MessageBubbleProps {
   message: Message;
-  selfId?: string;
-  /** optional callback when user clicks the reply icon */
+  selfId: string;
   onReply?: (message: Message) => void;
 }
 

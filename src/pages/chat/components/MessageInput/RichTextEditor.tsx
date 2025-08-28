@@ -41,7 +41,7 @@ import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
 interface RichTextEditorProps {
   conversationId: string | null;
-  selfId?: string;
+  selfId: string;
   /** optional callback after a message is sent */
   onSent?: () => void;
   disabled?: boolean;
@@ -406,7 +406,7 @@ export default function RichTextEditor({
 
       const payload: any = {
         conversationId,
-        senderId: selfId ?? null,
+        senderId: selfId ,
       };
       if (mediaMeta) {
         payload.mediaUrl = mediaMeta.mediaUrl;
@@ -579,7 +579,7 @@ export default function RichTextEditor({
             }}
             onPaste={handlePaste}
             readOnly={disabled || !conversationId}
-            className="max-h-[200px] rounded-md overflow-y-auto text-sm ml-2"
+            className="max-h-[200px] rounded-md overflow-y-auto text-sm ml-2 outline-none"
             style={{
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
