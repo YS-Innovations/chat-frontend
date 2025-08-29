@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { getAssignmentHistory, type AssignmentEntry } from '../../api/agentService';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ interface ConversationDetailsPanelProps {
 }
 
 const ConversationDetailsPanel: React.FC<ConversationDetailsPanelProps> = ({ conversationId, conversation }) => {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuthShared();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<AssignmentEntry[]>([]);

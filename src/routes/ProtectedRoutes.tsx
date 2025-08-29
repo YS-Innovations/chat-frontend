@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AppLayout from '../layouts/AppLayout';
@@ -13,7 +13,7 @@ export const ProtectedRoutes = () => {
     error,
     user,
     getAccessTokenSilently,
-  } = useAuth0();
+  } = useAuthShared();
 
   const location = useLocation();
   const navigate = useNavigate();

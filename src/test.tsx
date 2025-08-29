@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 
@@ -18,7 +18,7 @@ interface Channel {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ChannelNamesPage: React.FC = () => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

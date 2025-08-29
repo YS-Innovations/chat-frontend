@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useMatch } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { usePermissions } from '@/context/permissions';
 import { useMembers } from './useMembers';
 import type { Member, Role } from '../types/types';
 
 export function useContactsLogic() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const { hasPermission, role } = usePermissions();
   const navigate = useNavigate();
   const { memberId } = useParams<{ memberId?: string }>();

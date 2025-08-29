@@ -8,7 +8,7 @@ import { getInitials } from "@/lib/utils";
 import { Mail, X, Pencil, Check } from "lucide-react";
 import type { Member, Role, UserLoginHistory } from "../types/types";
 import { usePermissions } from "@/context/permissions";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LoginHistory } from "../login-history/login-history";
@@ -51,7 +51,7 @@ export function MemberDetails({
   const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [tempPermissions, setTempPermissions] = useState<Record<string, boolean>>(permissions);
   const { hasPermission, role } = usePermissions();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);

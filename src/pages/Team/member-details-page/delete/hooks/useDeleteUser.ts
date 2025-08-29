@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import { toast } from "sonner";
 import { deleteUser } from "../api/deleteUser";
 
 export function useDeleteUser(onSuccess?: () => void) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async (userId: string) => {

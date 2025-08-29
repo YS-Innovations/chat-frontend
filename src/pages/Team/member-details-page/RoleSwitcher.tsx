@@ -1,7 +1,7 @@
 // src/pages/contacts/components/RoleSwitcher.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import { toast } from "sonner";
 import type { Role } from "../types/types";
 
@@ -18,7 +18,7 @@ export function RoleSwitcher({
   canSwitch,
   onRoleUpdate,
 }: RoleSwitcherProps) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [currentRole, setCurrentRole] = useState<Role>(initialRole);
   const [changingRole, setChangingRole] = useState(false);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function PermissionHistorySection({ memberId, disabled }: Props) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [showPermissionHistoryModal, setShowPermissionHistoryModal] = useState(false);
   const [permissionHistory, setPermissionHistory] = useState<PermissionHistory[]>([]);
   const [skip, setSkip] = useState(0);

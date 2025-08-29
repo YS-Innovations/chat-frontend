@@ -1,13 +1,13 @@
 "use client";
 
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useProfilePicture } from "@/pages/Profile/useProfilePicture";
 
 export function useNavUser() {
   const { isCollapsed } = useSidebar();
-  const { user: auth0User, isLoading, logout } = useAuth0();
+  const { user: auth0User, isLoading, logout } = useAuthShared();
   const navigate = useNavigate();
   const { profilePicture } = useProfilePicture();
   const handleLogout = () => {

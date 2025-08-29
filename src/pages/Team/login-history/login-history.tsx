@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import type { UserLoginHistory } from "../types/types";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 
 interface LoginHistoryProps {
   history: UserLoginHistory[];
@@ -24,7 +24,7 @@ export function LoginHistory({ history, total, memberId }: LoginHistoryProps) {
   const [displayedHistory, setDisplayedHistory] = useState(history);
   const itemsPerPage = 5;
   const hasMore = page * itemsPerPage < total;
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   
   // Use ref to track if we're already loading more
   const isLoadingMoreRef = useRef(false);
