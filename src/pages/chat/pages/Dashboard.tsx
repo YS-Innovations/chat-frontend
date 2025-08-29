@@ -53,7 +53,11 @@ const Dashboard: React.FC = () => {
     try {
       setLoadingConversations(true);
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/conversations`, {
+      const url = new URL(`${API_URL}/conversations`);
+      if (channelId) {
+        url.searchParams.set('channelId', channelId);
+      }
+      const response = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -86,7 +90,7 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoadingConversations(false);
     }
-  }, [getAccessTokenSilently, selectedConversationId]);
+  }, [getAccessTokenSilently, selectedConversationId, channelId]);
 
 
     const markConversationAsSeen = useCallback(async (conversationId: string) => {
