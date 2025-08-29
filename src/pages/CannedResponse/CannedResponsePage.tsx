@@ -1,7 +1,7 @@
 // src/pages/CannedResponse/CannedResponsePage.tsx
 
 import { useState } from 'react'
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuthShared } from '@/hooks/useAuthShared'
 import { toast } from 'sonner'
 import axios from 'axios'
 
@@ -27,7 +27,7 @@ import {
 import { useCannedResponses, type CannedResponse } from './useCannedResponses'
 
 export const CannedResponsePage = () => {
-  const { user, getAccessTokenSilently } = useAuth0()
+  const { user, getAccessTokenSilently } = useAuthShared()
 
   const { responses, loading, fetchResponses } = useCannedResponses()
 

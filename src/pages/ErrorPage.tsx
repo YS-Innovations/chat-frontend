@@ -1,6 +1,6 @@
 import { useRouteError, isRouteErrorResponse } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 
 type ErrorPageProps = {
   statusCode?: number;
@@ -9,7 +9,7 @@ type ErrorPageProps = {
 
 const ErrorPage = ({ statusCode, error: propError }: ErrorPageProps) => {
   const routeError = useRouteError();
-  const { logout } = useAuth0();
+  const { logout } = useAuthShared();
   
   // Combine different error sources
   const error = propError || routeError || null;

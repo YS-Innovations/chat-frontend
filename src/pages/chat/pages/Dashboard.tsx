@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();
-  const { getAccessTokenSilently, user } = useAuth0();
+  const { getAccessTokenSilently, user } = useAuthShared();
   const { channels, setChannels, loading: channelsLoading, refresh: refreshChannels } = useChannels({
     getAccessToken: getAccessTokenSilently,
     apiUrl: API_URL,

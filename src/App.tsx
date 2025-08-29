@@ -1,5 +1,5 @@
 // App.tsx
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import LoadingSpinner from './components/Loading/LoadingSpinner';
@@ -9,7 +9,7 @@ import { GlobalErrorHandler } from './providers/GlobalErrorHandler';
 function App() {
   const { isLoading: authLoading, 
     // isAuthenticated
-   } = useAuth0();
+   } = useAuthShared();
   // const { isBackendUp, checking } = useBackendHealth();
 
   const isLoading = authLoading 

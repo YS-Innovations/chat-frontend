@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 
 export function useAcceptInvite() {
-  const { loginWithRedirect } = useAuth0();
+  const { loginWithRedirect } = useAuthShared();
   const location = useLocation();
 
   const [token, setToken] = useState('');

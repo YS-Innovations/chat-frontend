@@ -1,6 +1,6 @@
 // src/layouts/AppLayout.tsx
 import { Outlet } from "react-router-dom";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,7 +12,7 @@ import LoadingScreen from "@/components/Loading/LoadingScreen";
 import { AppSidebar } from "@/components/Sidebar/app-sidebar";
 
 export default function AppLayout() {
-  const { user, isLoading, error } = useAuth0();
+  const { user, isLoading, error } = useAuthShared();
 
   useClientInfo(user);
 

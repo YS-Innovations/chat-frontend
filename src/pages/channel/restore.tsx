@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,7 @@ function daysLeftUntil(dateStr: string | null | undefined) {
 }
 
 const ChannelRestorePage: React.FC = () => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

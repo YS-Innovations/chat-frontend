@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import axios from 'axios';
 import { useUserData } from './hooks/useUserData';
 import {
@@ -22,7 +22,7 @@ interface OnboardingFormValues {
 }
 
 function Onboarding() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const navigate = useNavigate();
   const { userData, setUserData, loading } = useUserData();
   const [submitting, setSubmitting] = useState(false);

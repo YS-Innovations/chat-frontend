@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { PermissionsContext } from './PermissionsContext';
 import { type PermissionsContextType } from './types/types';
 
 export const PermissionsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently } = useAuthShared();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [role, setRole] = useState<'OWNER' | 'AGENT' | 'ADMIN' | null>(null);
   const [isLoading, setIsLoading] = useState(true);

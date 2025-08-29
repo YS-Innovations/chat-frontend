@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { PERMISSION_GROUPS } from '../../features/permissions/types/types';
 import { DataTable } from '@/components/data-table/data-table';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ interface Template {
 }
 
 export const PermissionTemplates: React.FC = () => {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated } = useAuthShared();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);

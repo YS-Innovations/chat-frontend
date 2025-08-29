@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuthShared } from "@/hooks/useAuthShared";
 import type { Role } from "../types/types";
 import { usePermissions } from "@/context/permissions";
 
@@ -9,7 +9,7 @@ import { sendInvite } from "../api/invite";
 
 
 export function useInviteForm() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const { role: currentUserRole } = usePermissions();
 
   const [email, setEmail] = useState('');

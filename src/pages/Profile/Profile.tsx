@@ -1,5 +1,5 @@
 // Profile.tsx
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Skeleton } from '../../components/ui/skeleton';
@@ -7,7 +7,7 @@ import { useProfilePicture } from './useProfilePicture'; // <-- import the hook
 import { toast } from 'sonner';
 
 export default function Profile() {
-  const { user: auth0User, logout } = useAuth0();
+  const { user: auth0User, logout } = useAuthShared();
   const {
     profilePicture,
     isLoading,

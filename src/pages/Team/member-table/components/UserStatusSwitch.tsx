@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Switch } from "@/components/ui/switch";
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import type { Member } from '../../types/types';
 import { blockUser, unblockUser } from '../../api/auth0Api';
@@ -9,7 +9,7 @@ export const UserStatusSwitch = ({ member }: { member: Member }) => {
   const [loading, setLoading] = useState(false);
   const [isBlocked, setIsBlocked] = useState<boolean>(member.blocked);
 
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
 
   const handleStatusChange = async (checked: boolean) => {
     setLoading(true);
