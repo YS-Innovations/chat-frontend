@@ -575,7 +575,7 @@ const ChannelsPage: React.FC = () => {
         API_URL={API_URL}
         getAccessToken={getAccessTokenSilently}
         onSuccess={(createdChannel) => {
-          setChannels(prev => [...prev, createdChannel]);
+          // setChannels(prev => [...prev, createdChannel]);
           setGeneratedToken(createdChannel.channelToken);
           setShowTokenModal(true);
           toast.success('Channel created successfully');
