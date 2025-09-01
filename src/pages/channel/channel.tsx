@@ -351,53 +351,167 @@ const ChannelsPage: React.FC = () => {
     toast.error('Connection error occurred');
   });
 
+   const unsubscribeSettingsCreate = on('channelSettings:created', (data) => {
+    console.log('Channel settings created via WebSocket:', data);
+    
+    // Update the channel with new settings
+    setChannels(prev => prev.map(channel => 
+      channel.id === data.channelId 
+        ? { ...channel, channelSettings: data.settings }
+        : channel
+    ));
+    
+    toast.success('Channel settings created');
+  });
+
+  // Listen for channel settings update events
+  const unsubscribeSettingsUpdate = on('channelSettings:updated', (data) => {
+    console.log('Channel settings updated via WebSocket:', data);
+    
+    // Update the channel with updated settings
+    setChannels(prev => prev.map(channel => 
+      channel.id === data.channelId 
+        ? { ...channel, channelSettings: data.settings }
+        : channel
+    ));
+    
+    // If the settings modal is open for this channel, update the form
+    if (selectedChannel && selectedChannel.id === data.channelId) {
+      setNewChannel({
+        name: data.settings.name || '',
+        domain: data.settings.domain || '',
+        theme: (data.settings.theme as Theme) || 'light',
+        primaryColor: data.settings.primaryColor || '#2563EB',
+        position: (data.settings.position as Position) || 'bottom-right',
+        showBranding: data.settings.showBranding ?? true,
+        showHelpTab: data.settings.showHelpTab ?? true,
+        allowUploads: data.settings.allowUploads ?? true,
+        csatEnabled: data.settings.csatEnabled ?? true,
+      });
+    }
+    
+    toast.success('Channel settings updated');
+  });
+
+  // Listen for channel settings deletion events
+  const unsubscribeSettingsDelete = on('channelSettings:deleted', (data) => {
+    console.log('Channel settings deleted via WebSocket:', data);
+    
+    // Remove settings from the channel
+    setChannels(prev => prev.map(channel => 
+      channel.id === data.channelId 
+        ? { ...channel, channelSettings: null }
+        : channel
+    ));
+    
+    toast.info('Channel settings deleted');
+  });
+
+  // Listen for channel settings bulk deletion events
+  const unsubscribeSettingsBulkDelete = on('channelSettings:bulkDeleted', (data) => {
+    console.log('Channel settings bulk deleted via WebSocket:', data);
+    
+    // Remove settings from the channel
+    setChannels(prev => prev.map(channel => 
+      channel.id === data.channelId 
+        ? { ...channel, channelSettings: null }
+        : channel
+    ));
+    
+    toast.info('Channel settings deleted');
+  });
+
   return () => {
     unsubscribeCreate();
     unsubscribeUpdate();
     unsubscribeDelete();
     unsubscribeRestore();
     unsubscribeError();
+    unsubscribeSettingsCreate();
+    unsubscribeSettingsUpdate();
+    unsubscribeSettingsDelete();
+    unsubscribeSettingsBulkDelete();
   };
 }, [on, fetchChannels]);
 
   const handleUpdateSettings = async () => {
-    if (!selectedChannel) return;
+  if (!selectedChannel) return;
 
-    try {
-      setIsSubmitting(true);
-      const token = await getAccessTokenSilently();
-      const method = selectedChannel.channelSettings ? 'PATCH' : 'POST';
-      const endpoint = `${API_URL}/channels/${selectedChannel.id}/settings`;
+  try {
+    setIsSubmitting(true);
+    
+    // Create optimistic update
+    const optimisticSettings: ChannelSettings = {
+      id: selectedChannel.channelSettings?.id || `temp-${Date.now()}`,
+      channelId: selectedChannel.id,
+      name: newChannel.name,
+      domain: newChannel.domain,
+      theme: newChannel.theme,
+      primaryColor: newChannel.primaryColor,
+      position: newChannel.position,
+      launcherIcon: selectedChannel.channelSettings?.launcherIcon,
+      orgName: selectedChannel.channelSettings?.orgName,
+      orgLogo: selectedChannel.channelSettings?.orgLogo,
+      showBranding: newChannel.showBranding,
+      showHelpTab: newChannel.showHelpTab,
+      allowUploads: newChannel.allowUploads,
+      csatEnabled: newChannel.csatEnabled,
+      QuickReply: selectedChannel.channelSettings?.QuickReply,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    // Update UI immediately
+    setChannels(prev => prev.map(channel =>
+      channel.id === selectedChannel.id
+        ? { ...channel, channelSettings: optimisticSettings }
+        : channel
+    ));
+    
+    const token = await getAccessTokenSilently();
+    const method = selectedChannel.channelSettings ? 'PATCH' : 'POST';
+    const endpoint = `${API_URL}/channels/${selectedChannel.id}/settings`;
 
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newChannel),
-      });
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(newChannel),
+    });
 
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
-
-      const updatedSettings = await response.json();
-      setChannels(prev =>
-        prev.map(channel =>
-          channel.id === selectedChannel.id
-            ? { ...channel, channelSettings: updatedSettings }
-            : channel
-        )
-      );
-      setShowSettingsModal(false);
-      toast.success('Settings updated successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update settings');
-    } finally {
-      setIsSubmitting(false);
+    if (!response.ok) {
+      throw new Error('Failed to update settings');
     }
-  };
+
+    const updatedSettings = await response.json();
+    
+    // Update with real data from server
+    setChannels(prev =>
+      prev.map(channel =>
+        channel.id === selectedChannel.id
+          ? { ...channel, channelSettings: updatedSettings }
+          : channel
+      )
+    );
+    
+    setShowSettingsModal(false);
+    toast.success('Settings updated successfully');
+  } catch (err) {
+    // Revert optimistic update on error
+    setChannels(prev =>
+      prev.map(channel =>
+        channel.id === selectedChannel.id
+          ? { ...channel, channelSettings: selectedChannel.channelSettings }
+          : channel
+      )
+    );
+    
+    toast.error(err instanceof Error ? err.message : 'Failed to update settings');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleDeleteChannel = async (id: string) => {
     if (!confirm('Are you sure you want to delete this channel?')) return;
