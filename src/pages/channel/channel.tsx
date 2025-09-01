@@ -294,50 +294,71 @@ const ChannelsPage: React.FC = () => {
     fetchChannels();
   }, [fetchChannels]);
 
-  useEffect(() => {
-    // Listen for channel creation events
-    const unsubscribeCreate = on('channel:created', (data) => {
-      console.log('Channel created via WebSocket:', data);
-      toast.success('New channel created');
-      fetchChannels();
+ useEffect(() => {
+  // Listen for channel creation events
+  const unsubscribeCreate = on('channel:created', (data) => {
+    console.log('Channel created via WebSocket:', data);
+    
+    // Add the new channel to the list
+    setChannels(prev => {
+      // Check if channel already exists to avoid duplicates
+      const channelExists = prev.some(channel => channel.id === data.id);
+      if (channelExists) return prev;
+      
+      // Format the new channel to match the existing structure
+      const newChannel: Channel = {
+        id: data.id,
+        uuid: data.uuid || '', // Add a fallback if uuid is not provided
+        channelToken: data.channelToken,
+        type: data.type,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        channelSettings: data.channelSettings || null,
+        organization: data.organization || undefined
+      };
+      
+      return [...prev, newChannel];
     });
+    
+    toast.success('New channel created');
+  });
 
-    // Listen for channel update events
-    const unsubscribeUpdate = on('channel:updated', (data) => {
-      console.log('Channel updated via WebSocket:', data);
-      setChannels(prev => prev.map(channel => 
-        channel.id === data.id ? { ...channel, ...data } : channel
-      ));
-    });
+  // Listen for channel update events
+  const unsubscribeUpdate = on('channel:updated', (data) => {
+    console.log('Channel updated via WebSocket:', data);
+    setChannels(prev => prev.map(channel => 
+      channel.id === data.id ? { ...channel, ...data } : channel
+    ));
+  });
 
-    // Listen for channel deletion events
-    const unsubscribeDelete = on('channel:deleted', (data) => {
-      console.log('Channel deleted via WebSocket:', data);
-      setChannels(prev => prev.filter(channel => channel.id !== data.channelId));
-      toast.info('Channel was deleted');
-    });
+  // Listen for channel deletion events
+  const unsubscribeDelete = on('channel:deleted', (data) => {
+    console.log('Channel deleted via WebSocket:', data);
+    setChannels(prev => prev.filter(channel => channel.id !== data.channelId));
+    toast.info('Channel was deleted');
+  });
 
-    // Listen for channel restoration events
-    const unsubscribeRestore = on('channel:restored', (data) => {
-      console.log('Channel restored via WebSocket:', data);
-      toast.success('Channel restored');
-      fetchChannels();
-    });
+  // Listen for channel restoration events
+  const unsubscribeRestore = on('channel:restored', (data) => {
+    console.log('Channel restored via WebSocket:', data);
+    toast.success('Channel restored');
+    fetchChannels(); // Refetch to get the restored channel
+  });
 
-    // Listen for connection errors
-    const unsubscribeError = on('connection:error', (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('Connection error occurred');
-    });
+  // Listen for connection errors
+  const unsubscribeError = on('connection:error', (error) => {
+    console.error('WebSocket error:', error);
+    toast.error('Connection error occurred');
+  });
 
-    return () => {
-      unsubscribeCreate();
-      unsubscribeUpdate();
-      unsubscribeDelete();
-      unsubscribeRestore();
-      unsubscribeError();
-    };
-  }, [on, fetchChannels]);
+  return () => {
+    unsubscribeCreate();
+    unsubscribeUpdate();
+    unsubscribeDelete();
+    unsubscribeRestore();
+    unsubscribeError();
+  };
+}, [on, fetchChannels]);
 
   const handleUpdateSettings = async () => {
     if (!selectedChannel) return;
