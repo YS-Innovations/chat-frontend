@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { usePermissions } from '@/context/permissions';
 import type { InactiveMember } from '../types/types';
 
 export function useInactiveMembers() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const { hasPermission, role } = usePermissions();
 
   const [inactiveMembers, setInactiveMembers] = useState<InactiveMember[]>([]);

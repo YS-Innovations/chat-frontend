@@ -1,6 +1,6 @@
 // src/components/Sidebar/components/Nav/hooks/use-channels.ts
 import { useState, useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 
 export interface Channel {
   id: string;
@@ -26,7 +26,7 @@ export interface Channel {
 }
 
 export function useChannels() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

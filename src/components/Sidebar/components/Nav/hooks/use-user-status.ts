@@ -1,7 +1,7 @@
 // src/hooks/use-user-status.ts
 
 import { useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { io, Socket } from 'socket.io-client';
 
 interface StatusUpdate {
@@ -11,7 +11,7 @@ interface StatusUpdate {
 }
 
 export const useUserStatus = () => {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuthShared();
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {

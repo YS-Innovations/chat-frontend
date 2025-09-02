@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/useConversations';
 import { deleteConversation, type ConversationListItem } from '../../api/chatService';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
 }) => {
   const { error, refresh, loadMore, hasMore } = useConversations(channelId);
   const [searchTerm, setSearchTerm] = useState('');
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
 
   const filteredConversations = useMemo(() => {
     if (!searchTerm) return conversations;

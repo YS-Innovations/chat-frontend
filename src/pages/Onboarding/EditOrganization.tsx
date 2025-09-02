@@ -1,6 +1,6 @@
 // pages/EditOrganization.tsx
 import { useForm } from 'react-hook-form';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import axios from 'axios';
 import { useUserData } from './hooks/useUserData';
 import { 
@@ -21,7 +21,7 @@ interface OrganizationFormValues {
 }
 
 function EditOrganization() {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuthShared();
   const { userData, setUserData, loading } = useUserData();
 
   const form = useForm<OrganizationFormValues>({

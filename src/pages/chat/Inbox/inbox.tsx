@@ -1,6 +1,6 @@
 // src/pages/chat/pages/Inbox.tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ConversationList from '../components/ConversationList/ConversationList';
@@ -12,7 +12,7 @@ import type { ConversationListItem } from '../api/chatService';
 const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 export const Inbox: React.FC = () => {
-  const { getAccessTokenSilently, user } = useAuth0();
+  const { getAccessTokenSilently, user } = useAuthShared();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<ConversationListItem | null>(null);
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);

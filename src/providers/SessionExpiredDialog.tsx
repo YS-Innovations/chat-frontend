@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 
 export const SessionExpiredDialog = ({ open }: { open: boolean }) => {
-  const { logout } = useAuth0();
+  const { logout } = useAuthShared();
 
   useEffect(() => {
     if (open) {

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import socket, { connectSocket, joinConversation, disconnectSocket } from '../api/socket';
 import { fetchConversations } from '../api/chatService';
 import type { ConversationListItem } from '../api/chatService';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 
 export interface UseConversationsResult {
   conversations: ConversationListItem[];
@@ -17,7 +17,7 @@ export function useConversations(channelId?: string, page = 1, limit = 50): UseC
   loadMore: () => void;
   reset: () => void;
 } {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);

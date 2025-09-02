@@ -1,7 +1,7 @@
 // src/context/SocketContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 
 type UserStatus = {
   userId: string;
@@ -30,7 +30,7 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>({});
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated } = useAuthShared();
 
   const initSocket = async () => {
     const token = await getAccessTokenSilently();

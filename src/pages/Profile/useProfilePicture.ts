@@ -1,10 +1,10 @@
 // hooks/useProfilePicture.ts
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 
 export function useProfilePicture() {
-  const { user: auth0User, getAccessTokenSilently } = useAuth0();
+  const { user: auth0User, getAccessTokenSilently } = useAuthShared();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

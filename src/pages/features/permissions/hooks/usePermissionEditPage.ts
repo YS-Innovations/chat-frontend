@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { useNavigate } from 'react-router-dom';
 import { arrayToPermissionObject } from '../helper/utils';
 import { 
@@ -13,7 +13,7 @@ import type { PermissionTemplate, PermissionValue } from '../types/types';
 import { toast } from 'sonner';
 
 export function usePermissionEditPage(userId?: string) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const navigate = useNavigate();
   const [permissions, setPermissions] = useState<PermissionValue>({});
   const [loading, setLoading] = useState(true);

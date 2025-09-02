@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import axios from 'axios';
 
 export interface Organization {
@@ -14,7 +14,7 @@ export interface UserData {
 }
 
 export function useUserData() {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuthShared();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import type { Member, SortingState, SortField } from '../types/types';
 import { fetchMembersFromApi } from '../api/fetchMembers';
 
@@ -12,7 +12,7 @@ export function useMemberFetcher(
   sorting: SortingState = [],
   roles?: string[]
 ) {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuthShared();
   const [members, setMembers] = useState<Member[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);

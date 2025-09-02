@@ -1,6 +1,6 @@
 // src/pages/chat/hooks/useAgentAssignment.ts
 import { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuthShared } from '@/hooks/useAuthShared';
 import { 
   getAvailableAgents, 
   assignAgentToConversation, 
@@ -9,7 +9,7 @@ import {
 } from '../api/agentService';
 
 export function useAgentAssignment() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuthShared();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
