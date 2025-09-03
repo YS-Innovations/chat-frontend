@@ -126,7 +126,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full min-h-0">
         <ChatHeader 
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
