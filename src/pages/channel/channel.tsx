@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import {
@@ -34,10 +34,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from './CreateChannelDialog';
-import { io, Socket } from 'socket.io-client';
+
+
 type ChannelType = 'WEB' | 'WHATSAPP';
 type Theme = 'light' | 'dark';
 type Position = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -88,163 +88,10 @@ interface ChannelSettingsForm {
   csatEnabled: boolean;
 }
 
-interface WebSocketEvent {
-  type: string;
-  data: any;
-}
-
-class WebSocketService {
-  private socket: Socket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectInterval = 3000;
-  private eventHandlers: Map<string, ((data: any) => void)[]> = new Map();
-  private isConnected = false;
-
-  constructor() {
-    this.connect();
-  }
-
-  connect() {
-    try {
-      // Use the same origin as your API with Socket.io path
-      const socketUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
-      this.socket = io(socketUrl, {
-        path: '/socket.io', // This is the default Socket.io path
-        transports: ['websocket', 'polling'] // Fallback to polling if websocket fails
-      });
-
-      this.socket.on('connect', () => {
-        console.log('Socket.io connected');
-        this.isConnected = true;
-        this.reconnectAttempts = 0;
-        this.emitEvent('connection:established', { timestamp: Date.now() });
-      });
-
-      this.socket.on('disconnect', (reason) => {
-        console.log('Socket.io disconnected:', reason);
-        this.isConnected = false;
-        this.emitEvent('connection:lost', { timestamp: Date.now(), reason });
-        this.handleReconnection();
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Socket.io connection error:', error);
-        this.emitEvent('connection:error', { error });
-      });
-
-      // Listen for all events from server
-      this.socket.onAny((event, data) => {
-        this.handleMessage({ type: event, data });
-      });
-
-    } catch (error) {
-      console.error('Socket.io connection failed:', error);
-    }
-  }
-
-  private handleReconnection() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      setTimeout(() => {
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-        this.connect();
-      }, this.reconnectInterval);
-    } else {
-      console.error('Max reconnection attempts reached');
-      this.emitEvent('connection:failed', { message: 'Max reconnection attempts reached' });
-    }
-  }
-
-  private handleMessage(message: { type: string; data: any }) {
-    const handlers = this.eventHandlers.get(message.type) || [];
-    handlers.forEach(handler => handler(message.data));
-  }
-
-  on(event: string, handler: (data: any) => void) {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
-    }
-    this.eventHandlers.get(event)!.push(handler);
-  }
-
-  off(event: string, handler: (data: any) => void) {
-    const handlers = this.eventHandlers.get(event);
-    if (handlers) {
-      const index = handlers.indexOf(handler);
-      if (index > -1) {
-        handlers.splice(index, 1);
-      }
-    }
-  }
-
-  emit(event: string, data: any) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(event, data);
-    }
-  }
-
-  emitEvent(event: string, data: any) {
-    const handlers = this.eventHandlers.get(event) || [];
-    handlers.forEach(handler => handler(data));
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-    this.isConnected = false;
-  }
-
-  getConnectionStatus() {
-    return this.isConnected;
-  }
-}
-
-// Create a singleton instance
-const webSocketService = new WebSocketService();
-
-// Custom hook for using WebSocket
-const useWebSocket = () => {
-  const [isConnected, setIsConnected] = useState(webSocketService.getConnectionStatus());
-
-  useEffect(() => {
-    const handleConnectionChange = () => {
-      setIsConnected(webSocketService.getConnectionStatus());
-    };
-
-    webSocketService.on('connection:established', handleConnectionChange);
-    webSocketService.on('connection:lost', handleConnectionChange);
-
-    return () => {
-      webSocketService.off('connection:established', handleConnectionChange);
-      webSocketService.off('connection:lost', handleConnectionChange);
-    };
-  }, []);
-
-  const on = useCallback((event: string, handler: (data: any) => void) => {
-    webSocketService.on(event, handler);
-    return () => webSocketService.off(event, handler);
-  }, []);
-
-  const emit = useCallback((event: string, data: any) => {
-    webSocketService.emit(event, data);
-  }, []);
-
-  return {
-    isConnected,
-    on,
-    emit,
-    webSocketService
-  };
-};
-
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ChannelsPage: React.FC = () => {
   const { getAccessTokenSilently } = useAuthShared();
-  const { isConnected, on } = useWebSocket();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -266,252 +113,72 @@ const ChannelsPage: React.FC = () => {
   });
   const [generatedToken, setGeneratedToken] = useState('');
 
-  const fetchChannels = useCallback(async () => {
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        setLoading(true);
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${API_URL}/channels`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch channels');
+        }
+
+        const data = await response.json();
+        setChannels(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        toast.error('Failed to load channels');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChannels();
+  }, [getAccessTokenSilently]);
+
+  const handleUpdateSettings = async () => {
+    if (!selectedChannel) return;
+
     try {
-      setLoading(true);
+      setIsSubmitting(true);
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${API_URL}/channels`, {
+      const method = selectedChannel.channelSettings ? 'PATCH' : 'POST';
+      const endpoint = `${API_URL}/channels/${selectedChannel.id}/settings`;
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(newChannel),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch channels');
+        throw new Error('Failed to update settings');
       }
 
-      const data = await response.json();
-      setChannels(data);
+      const updatedSettings = await response.json();
+      setChannels(prev =>
+        prev.map(channel =>
+          channel.id === selectedChannel.id
+            ? { ...channel, channelSettings: updatedSettings }
+            : channel
+        )
+      );
+      setShowSettingsModal(false);
+      toast.success('Settings updated successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      toast.error('Failed to load channels');
+      toast.error(err instanceof Error ? err.message : 'Failed to update settings');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
-  }, [getAccessTokenSilently]);
-
-  useEffect(() => {
-    fetchChannels();
-  }, [fetchChannels]);
-
- useEffect(() => {
-  // Listen for channel creation events
-  const unsubscribeCreate = on('channel:created', (data) => {
-    console.log('Channel created via WebSocket:', data);
-    
-    // Add the new channel to the list
-    setChannels(prev => {
-      // Check if channel already exists to avoid duplicates
-      const channelExists = prev.some(channel => channel.id === data.id);
-      if (channelExists) return prev;
-      
-      // Format the new channel to match the existing structure
-      const newChannel: Channel = {
-        id: data.id,
-        uuid: data.uuid || '', // Add a fallback if uuid is not provided
-        channelToken: data.channelToken,
-        type: data.type,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-        channelSettings: data.channelSettings || null,
-        organization: data.organization || undefined
-      };
-      
-      return [...prev, newChannel];
-    });
-    
-    toast.success('New channel created');
-  });
-
-  // Listen for channel update events
-  const unsubscribeUpdate = on('channel:updated', (data) => {
-    console.log('Channel updated via WebSocket:', data);
-    setChannels(prev => prev.map(channel => 
-      channel.id === data.id ? { ...channel, ...data } : channel
-    ));
-  });
-
-  // Listen for channel deletion events
-  const unsubscribeDelete = on('channel:deleted', (data) => {
-    console.log('Channel deleted via WebSocket:', data);
-    setChannels(prev => prev.filter(channel => channel.id !== data.channelId));
-    toast.info('Channel was deleted');
-  });
-
-  // Listen for channel restoration events
-  const unsubscribeRestore = on('channel:restored', (data) => {
-    console.log('Channel restored via WebSocket:', data);
-    toast.success('Channel restored');
-    fetchChannels(); // Refetch to get the restored channel
-  });
-
-  // Listen for connection errors
-  const unsubscribeError = on('connection:error', (error) => {
-    console.error('WebSocket error:', error);
-    toast.error('Connection error occurred');
-  });
-
-   const unsubscribeSettingsCreate = on('channelSettings:created', (data) => {
-    console.log('Channel settings created via WebSocket:', data);
-    
-    // Update the channel with new settings
-    setChannels(prev => prev.map(channel => 
-      channel.id === data.channelId 
-        ? { ...channel, channelSettings: data.settings }
-        : channel
-    ));
-    
-    toast.success('Channel settings created');
-  });
-
-  // Listen for channel settings update events
-  const unsubscribeSettingsUpdate = on('channelSettings:updated', (data) => {
-    console.log('Channel settings updated via WebSocket:', data);
-    
-    // Update the channel with updated settings
-    setChannels(prev => prev.map(channel => 
-      channel.id === data.channelId 
-        ? { ...channel, channelSettings: data.settings }
-        : channel
-    ));
-    
-    // If the settings modal is open for this channel, update the form
-    if (selectedChannel && selectedChannel.id === data.channelId) {
-      setNewChannel({
-        name: data.settings.name || '',
-        domain: data.settings.domain || '',
-        theme: (data.settings.theme as Theme) || 'light',
-        primaryColor: data.settings.primaryColor || '#2563EB',
-        position: (data.settings.position as Position) || 'bottom-right',
-        showBranding: data.settings.showBranding ?? true,
-        showHelpTab: data.settings.showHelpTab ?? true,
-        allowUploads: data.settings.allowUploads ?? true,
-        csatEnabled: data.settings.csatEnabled ?? true,
-      });
-    }
-    
-    toast.success('Channel settings updated');
-  });
-
-  // Listen for channel settings deletion events
-  const unsubscribeSettingsDelete = on('channelSettings:deleted', (data) => {
-    console.log('Channel settings deleted via WebSocket:', data);
-    
-    // Remove settings from the channel
-    setChannels(prev => prev.map(channel => 
-      channel.id === data.channelId 
-        ? { ...channel, channelSettings: null }
-        : channel
-    ));
-    
-    toast.info('Channel settings deleted');
-  });
-
-  // Listen for channel settings bulk deletion events
-  const unsubscribeSettingsBulkDelete = on('channelSettings:bulkDeleted', (data) => {
-    console.log('Channel settings bulk deleted via WebSocket:', data);
-    
-    // Remove settings from the channel
-    setChannels(prev => prev.map(channel => 
-      channel.id === data.channelId 
-        ? { ...channel, channelSettings: null }
-        : channel
-    ));
-    
-    toast.info('Channel settings deleted');
-  });
-
-  return () => {
-    unsubscribeCreate();
-    unsubscribeUpdate();
-    unsubscribeDelete();
-    unsubscribeRestore();
-    unsubscribeError();
-    unsubscribeSettingsCreate();
-    unsubscribeSettingsUpdate();
-    unsubscribeSettingsDelete();
-    unsubscribeSettingsBulkDelete();
   };
-}, [on, fetchChannels]);
-
-  const handleUpdateSettings = async () => {
-  if (!selectedChannel) return;
-
-  try {
-    setIsSubmitting(true);
-    
-    // Create optimistic update
-    const optimisticSettings: ChannelSettings = {
-      id: selectedChannel.channelSettings?.id || `temp-${Date.now()}`,
-      channelId: selectedChannel.id,
-      name: newChannel.name,
-      domain: newChannel.domain,
-      theme: newChannel.theme,
-      primaryColor: newChannel.primaryColor,
-      position: newChannel.position,
-      launcherIcon: selectedChannel.channelSettings?.launcherIcon,
-      orgName: selectedChannel.channelSettings?.orgName,
-      orgLogo: selectedChannel.channelSettings?.orgLogo,
-      showBranding: newChannel.showBranding,
-      showHelpTab: newChannel.showHelpTab,
-      allowUploads: newChannel.allowUploads,
-      csatEnabled: newChannel.csatEnabled,
-      QuickReply: selectedChannel.channelSettings?.QuickReply,
-      updatedAt: new Date().toISOString(),
-    };
-    
-    // Update UI immediately
-    setChannels(prev => prev.map(channel =>
-      channel.id === selectedChannel.id
-        ? { ...channel, channelSettings: optimisticSettings }
-        : channel
-    ));
-    
-    const token = await getAccessTokenSilently();
-    const method = selectedChannel.channelSettings ? 'PATCH' : 'POST';
-    const endpoint = `${API_URL}/channels/${selectedChannel.id}/settings`;
-
-    const response = await fetch(endpoint, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(newChannel),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update settings');
-    }
-
-    const updatedSettings = await response.json();
-    
-    // Update with real data from server
-    setChannels(prev =>
-      prev.map(channel =>
-        channel.id === selectedChannel.id
-          ? { ...channel, channelSettings: updatedSettings }
-          : channel
-      )
-    );
-    
-    setShowSettingsModal(false);
-    toast.success('Settings updated successfully');
-  } catch (err) {
-    // Revert optimistic update on error
-    setChannels(prev =>
-      prev.map(channel =>
-        channel.id === selectedChannel.id
-          ? { ...channel, channelSettings: selectedChannel.channelSettings }
-          : channel
-      )
-    );
-    
-    toast.error(err instanceof Error ? err.message : 'Failed to update settings');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
   const handleDeleteChannel = async (id: string) => {
     if (!confirm('Are you sure you want to delete this channel?')) return;
@@ -541,9 +208,11 @@ const ChannelsPage: React.FC = () => {
                 headers: { Authorization: `Bearer ${restoreToken}` },
               });
               if (!restoreRes.ok) throw new Error('Failed to restore channel');
+              // Optimistically restore previous item
               if (deletedChannel) {
                 setChannels((prev) => [...prev, deletedChannel]);
               } else {
+                // Fallback: refresh list
                 const res = await fetch(`${API_URL}/channels`, {
                   headers: { Authorization: `Bearer ${restoreToken}` },
                 });
@@ -565,6 +234,27 @@ const ChannelsPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  // const handlePurgeChannel = async (id: string) => {
+  //   if (!confirm('This will permanently delete the channel and all related data. Continue?')) return;
+  //   try {
+  //     setIsSubmitting(true);
+  //     const token = await getAccessTokenSilently();
+  //     const response = await fetch(`${API_URL}/channels/${id}/purge`, {
+  //       method: 'DELETE',
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     if (!response.ok) throw new Error('Failed to permanently delete channel');
+  //     setChannels(prev => prev.filter(channel => channel.id !== id));
+  //     toast.success('Channel permanently deleted');
+  //   } catch (err) {
+  //     toast.error(err instanceof Error ? err.message : 'Failed to permanently delete channel');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const openSettingsModal = (channel: Channel) => {
     setSelectedChannel(channel);
@@ -619,16 +309,7 @@ const ChannelsPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-foreground">Channels</h1>
-          <Badge 
-            variant={isConnected ? "default" : "destructive"} 
-            className="flex items-center gap-1"
-          >
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </Badge>
-        </div>
+        <h1 className="text-3xl font-bold text-foreground">Channels</h1>
         <div className="space-x-2">
           <Link to="/app/channel-restore">
             <Button variant="outline">Trash / Restore</Button>
@@ -694,6 +375,14 @@ const ChannelsPage: React.FC = () => {
                       >
                         Delete
                       </Button>
+                      {/* <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handlePurgeChannel(channel.id)}
+                        disabled={isSubmitting}
+                      >
+                        Purge
+                      </Button> */}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -710,12 +399,13 @@ const ChannelsPage: React.FC = () => {
         API_URL={API_URL}
         getAccessToken={getAccessTokenSilently}
         onSuccess={(createdChannel) => {
-          // setChannels(prev => [...prev, createdChannel]);
+          setChannels(prev => [...prev, createdChannel]);
           setGeneratedToken(createdChannel.channelToken);
           setShowTokenModal(true);
           toast.success('Channel created successfully');
         }}
       />
+
 
       {/* Token Dialog */}
       <Dialog open={showTokenModal} onOpenChange={(open) => {

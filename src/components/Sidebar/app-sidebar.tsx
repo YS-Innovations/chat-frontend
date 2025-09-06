@@ -13,7 +13,7 @@ import { useChannels } from "./components/Nav/hooks/use-channels";
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { isCollapsed } = useSidebar();
   const { hasPermission, isLoading: permissionsLoading, role } = usePermissions();
-  const { channels, loading: channelsLoading, isConnected } = useChannels();
+  const { channels, loading: channelsLoading } = useChannels();
 
   const filteredItems = React.useMemo(() => {
     if (permissionsLoading) return [];
@@ -23,10 +23,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       title: channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`,
       url: `/app/channels/${channel.id}`,
       permission: "channel-access",
-      badge: isConnected ? undefined : { 
-        variant: "outline" as const, 
-        text: "Offline" 
-      }
     }));
 
     // Add "Manage Channels" item
@@ -34,10 +30,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       title: "Manage Channels",
       url: "/app/channel-settings",
       permission: "channel-settings-access",
-      badge: isConnected ? undefined : { 
-        variant: "outline" as const, 
-        text: "Offline" 
-      }
     };
 
     const itemsWithChannels = navMainItems.map(item => {
@@ -47,11 +39,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           items: [
             ...channelItems,
             manageChannelsItem
-          ],
-          badge: !isConnected ? { 
-            variant: "outline" as const, 
-            text: "Offline" 
-          } : undefined
+          ]
         };
       }
       return item;
@@ -84,20 +72,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         return null;
       })
       .filter(Boolean) as NavItem[];
-  }, [hasPermission, permissionsLoading, channels, isConnected]);
-
-  // Add connection status to the sidebar footer
-  const enhancedFooter = React.useMemo(() => (
-    <div className="flex flex-col gap-2">
-      <SidebarFooterArea />
-    </div>
-  ), [isConnected, isCollapsed]);
+  }, [hasPermission, permissionsLoading, channels]);
 
   if (role === "AGENT" && filteredItems.length === 0) {
     return (
       <Sidebar collapsible="icon" {...props}>
         <SidebarEmptyState isCollapsed={isCollapsed} />
-        {enhancedFooter}
+        <SidebarFooterArea />
       </Sidebar>
     );
   }
@@ -109,7 +90,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         isLoading={permissionsLoading || channelsLoading} 
         isCollapsed={isCollapsed} 
       />
-      {enhancedFooter}
+      <SidebarFooterArea />
       <SidebarRail />
     </Sidebar>
   );
