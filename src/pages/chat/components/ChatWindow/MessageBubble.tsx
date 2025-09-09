@@ -240,7 +240,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
           onClick={handleReply}
           aria-label="Reply to message"
           title="Reply"
-          className="ml-2 -mr-1 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
+          className="ml-2 mr-2 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
         >
           <ReplyIcon className="w-3 h-3" />
         </button>
