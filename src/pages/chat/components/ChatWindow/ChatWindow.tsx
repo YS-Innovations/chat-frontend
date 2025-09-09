@@ -1,3 +1,4 @@
+// src/components/ChatWindow/ChatWindow.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
@@ -19,9 +20,9 @@ interface ChatWindowProps {
 
 const SCROLL_THRESHOLD_PX = 120;
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  conversationId, 
-  selfId, 
+const ChatWindow: React.FC<ChatWindowProps> = ({
+  conversationId,
+  selfId,
   conversationData,
   onAgentAssignmentChange, onReply
 }) => {
@@ -127,26 +128,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <>
       <div className="flex flex-col h-full">
-        <ChatHeader 
+        <ChatHeader
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
           onShowDetails={() => setShowDetails(true)}
         />
-        
+
         <div
           ref={containerRef}
           className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
           tabIndex={0}
         >
           {isThreaded ? (
-        <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" />
-      ) : (
-        <>
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
-          ))}
-        </>
-      )}
+            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} />
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
+              ))}
+            </>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>
@@ -165,7 +166,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <SheetTitle>User Details</SheetTitle>
           </SheetHeader>
           {conversationId && (
-            <ConversationDetailsPanel 
+            <ConversationDetailsPanel
               conversationId={conversationId}
               conversation={conversationData}
             />
