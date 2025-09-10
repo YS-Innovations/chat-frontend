@@ -3,11 +3,13 @@ import React from 'react';
 import type { Message } from '../../api/chatService';
 import { sanitize } from '../../utils/sanitize';
 import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-react';
+
 interface MessageBubbleProps {
   message: Message;
   selfId: string;
   onReply?: (message: Message) => void;
 }
+
 /** Small double-check icon (two strokes) */
 const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -31,6 +33,7 @@ const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
     />
   </svg>
 );
+
 /**
  * determine whether a mediaUrl + mediaType corresponds to an image
  * fall back to extension check when mediaType is not available
@@ -41,6 +44,7 @@ const isImageMedia = (mediaUrl?: string, mediaType?: string) => {
   // fallback to extension check
   return /\.(jpe?g|png|gif|webp|bmp|tiff)$/i.test(mediaUrl);
 };
+
 const stripTags = (html?: string | null) => {
   if (!html) return '';
   // sanitize() returns safe html; we still strip tags for the preview text
@@ -48,20 +52,32 @@ const stripTags = (html?: string | null) => {
   // preserve spacing/newlines, collapse runs of whitespace into single spaces
   return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
+
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply }) => {
-  const isMe = message.senderId === selfId;
+  // Support comparing either the internal DB senderId *or* an Auth0 ID if backend provides it
+  // e.g. message.senderId === '68b67f3d...' OR message.senderAuth0Id === 'auth0|686f...'
+  const senderAuth0Id = (message as any).senderAuth0Id ?? (message as any).sender?.auth0Id ?? undefined;
+  const isMe = (typeof senderAuth0Id === 'string' && senderAuth0Id === selfId) || message.senderId === selfId;
+
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   // Normalize potentially-null fields to undefined so React/TSX props accept them.
-  const safeMediaUrl: string | undefined = typeof message.mediaUrl === 'string' && message.mediaUrl ? message.mediaUrl : undefined;
-  const safeMediaType: string | undefined = typeof message.mediaType === 'string' && message.mediaType ? message.mediaType : undefined;
-  const safeFileName: string | undefined = typeof message.fileName === 'string' && message.fileName ? message.fileName : undefined;
+  const safeMediaUrl: string | undefined =
+    typeof message.mediaUrl === 'string' && message.mediaUrl ? message.mediaUrl : undefined;
+  const safeMediaType: string | undefined =
+    typeof message.mediaType === 'string' && message.mediaType ? message.mediaType : undefined;
+  const safeFileName: string | undefined =
+    typeof message.fileName === 'string' && message.fileName ? message.fileName : undefined;
+
   const safeHtml = message.content ? sanitize(message.content) : '';
   const wrapperClass = `w-full flex ${isMe ? 'justify-end' : 'justify-start'} px-3 py-1`;
   const hasMedia = Boolean(safeMediaUrl);
   const mediaIsImage = isImageMedia(safeMediaUrl, safeMediaType);
+
   // Prefer backend `parentMessage` (threaded API). Fall back to older `parentPreview`.
   const parentObj = (message as any).parentMessage ?? (message as any).parentPreview;
   const hasParent = Boolean(message.parentId || parentObj);
+
   // Build preview text for parent: do NOT truncate here (show full/plain text), wrap instead.
   let previewText = '';
   if (parentObj?.content && typeof parentObj.content === 'string') {
@@ -73,18 +89,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
   } else {
     previewText = '';
   }
+
   const handleReply = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onReply) onReply(message);
   };
+
   // Jump-to-parent behavior (click or keyboard)
   const handleJumpToParent = (e?: React.MouseEvent | React.KeyboardEvent) => {
     if (e) e.stopPropagation();
     // prefer explicit parent object id -> parentObj.clientMsgId -> message.parentId
     const parentId =
-      (parentObj && (parentObj.id ?? (parentObj as any).clientMsgId)) ??
-      message.parentId ??
-      null;
+      (parentObj && (parentObj.id ?? (parentObj as any).clientMsgId)) ?? message.parentId ?? null;
     if (!parentId) return;
     const selector = `[data-message-id="${String(parentId)}"]`;
     const el = document.querySelector(selector) as HTMLElement | null;
@@ -112,6 +128,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
       // ignore scroll errors
     }
   };
+
   // keyboard handler for preview button
   const handlePreviewKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -119,8 +136,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
       handleJumpToParent(e);
     }
   };
+
   // Determine stable message id for data attribute (support clientMsgId fallback)
   const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
+
   return (
     <div className={wrapperClass} data-message-id={stableMessageId}>
       <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -131,9 +150,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
         >
           {/* Reply preview/header (small, muted) - now interactive */}
           {(hasParent || previewText) && (
-            <div
-              className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600"
-            >
+            <div className="mb-2 rounded-md bg-gray-50 border border-gray-100 px-3 py-1 text-xs text-gray-600">
               <div className="font-medium text-xs text-gray-500">Replying to</div>
               {/* Make the preview interactive so users can click/keyboard to jump */}
               <div
@@ -150,6 +167,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
               </div>
             </div>
           )}
+
           {/* Media preview (image) or file card */}
           {hasMedia && (
             <div className="chat-bubble-media mb-2">
@@ -196,16 +214,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
               )}
             </div>
           )}
+
           {/* Message content (sanitized HTML) or fallback */}
           <div className="chat-bubble-content" style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}>
             {safeHtml ? (
               <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
-            ) : hasMedia ? (
-              null
-            ) : (
+            ) : hasMedia ? null : (
               <span className="text-gray-500">(empty)</span>
             )}
           </div>
+
           <div className="chat-bubble-time mt-2" aria-hidden>
             <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
             {isMe && (
@@ -215,13 +233,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
             )}
           </div>
         </div>
+
         {/* reply button shown only on hover/focus of the group */}
         <button
           type="button"
           onClick={handleReply}
           aria-label="Reply to message"
           title="Reply"
-          className="ml-2 -mr-1 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
+          className="ml-2 mr-2 w-6 h-6 flex items-center justify-center rounded-full bg-white border text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-300 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-150"
         >
           <ReplyIcon className="w-3 h-3" />
         </button>
@@ -229,4 +248,5 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
     </div>
   );
 };
+
 export default MessageBubble;

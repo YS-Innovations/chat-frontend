@@ -18,28 +18,13 @@ export interface ConversationListItem {
   createdAt: string;
   updatedAt: string;
   currentStatus: string;
-  seen: boolean; // Add this
+  seen: boolean;
   agent?: {
     id: string;
     name: string | null;
     email: string | null;
   };
   agentId?: string | null;
-}
-
-/**
- * Fetch all active conversations (guest sessions).
- * You’ll need a corresponding NestJS endpoint:
- *   @Get('conversations')
- *   findAll(): Promise<ConversationRoom[]> { ... }
- */
-export async function fetchConversations(token: string): Promise<ConversationListItem[]> {
-  const res = await axios.get<ConversationListItem[]>(`${API_BASE}/conversations`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.data;
 }
 
 /**
@@ -52,11 +37,15 @@ export async function fetchConversations(token: string): Promise<ConversationLis
  *   from the message.metadata field (see MessagesService.extractMediaFields).
  *
  * This type intentionally matches the enriched MessageWithMedia used by your NestJS backend.
+ *
+ * NEW: `senderAuth0Id` is optional and may be present when the backend includes the Auth0 id
+ * of the sender (useful to match the frontend auth identity against message sender).
  */
 export interface Message {
   id: string;
   conversationId: string;
-  senderId?: string | null;
+  senderId?: string | null;          // internal DB id (e.g. Mongo id)
+  senderAuth0Id?: string | null;     // optional Auth0 id (e.g. "auth0|...")
   parentId?: string | null;
   content?: string | null;
   mediaUrl?: string | null;
@@ -76,6 +65,21 @@ export interface Message {
 export interface FetchMessagesOptions {
   threads?: 'flat' | 'nested';
   threadPageSize?: number;
+}
+
+/**
+ * Fetch all active conversations (guest sessions).
+ * You’ll need a corresponding NestJS endpoint:
+ *   @Get('conversations')
+ *   findAll(): Promise<ConversationRoom[]> { ... }
+ */
+export async function fetchConversations(token: string): Promise<ConversationListItem[]> {
+  const res = await axios.get<ConversationListItem[]>(`${API_BASE}/conversations`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
 }
 
 /**
@@ -118,22 +122,4 @@ export async function deleteConversation(conversationId: string, token: string):
       Authorization: `Bearer ${token}`,
     },
   });
-}
-
-
-export interface ConversationListItem {
-  id: string;
-  guestId: string;
-  guestName: string;
-  channelId: string;
-  createdAt: string;
-  updatedAt: string;
-  currentStatus: string;
-  seen: boolean; // Add this property
-  agent?: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  };
-  agentId?: string | null;
 }

@@ -31,6 +31,12 @@ interface ThreadedMessageListProps {
    * Optional className forwarded to the outer container.
    */
   className?: string;
+
+  /**
+   * The current user's id (could be Auth0 id or internal DB id depending on app setup).
+   * This will be forwarded to MessageBubble so it can determine alignment correctly.
+   */
+  selfId: string;
 }
 
 /**
@@ -57,6 +63,7 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
   depth = 0,
   maxDepth,
   className,
+  selfId,
 }) => {
   if (!messages || messages.length === 0) {
     return null;
@@ -100,7 +107,7 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
               <MessageBubble
                 message={msg}
                 onReply={onReply}
-                selfId=''
+                selfId={selfId}
               />
             </div>
 
@@ -112,6 +119,7 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
                   onReply={onReply}
                   depth={depth + 1}
                   maxDepth={maxDepth}
+                  selfId={selfId}
                 />
               </div>
             )}
