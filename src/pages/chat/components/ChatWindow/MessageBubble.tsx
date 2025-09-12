@@ -59,6 +59,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
   const senderAuth0Id = (message as any).senderAuth0Id ?? (message as any).sender?.auth0Id ?? undefined;
   const isMe = (typeof senderAuth0Id === 'string' && senderAuth0Id === selfId) || message.senderId === selfId;
 
+  // Determine read receipt for this message (whether the other user has seen it)
+  const readReceipts = (message as any).readReceipts;
+  const readReceiptForOther = readReceipts?.find((rr: any) => rr.userId !== message.senderId);
+  const isRead = Boolean(readReceiptForOther?.seenAt || readReceiptForOther?.status === 'SEEN');
+
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   // Normalize potentially-null fields to undefined so React/TSX props accept them.
@@ -179,7 +184,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
                   className="inline-block"
                   title={safeFileName ?? 'Open image'}
                 >
-                  {/* only render img when we have a safe (non-null) url */}
                   {safeMediaUrl && (
                     <img
                       src={safeMediaUrl}
@@ -227,8 +231,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
           <div className="chat-bubble-time mt-2" aria-hidden>
             <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
             {isMe && (
-              <span className="chat-bubble-status ml-2" title="Sent / Delivered">
-                <DoubleCheckIcon className="inline-block w-4 h-4 text-gray-400" />
+              <span className="chat-bubble-status ml-2" title={isRead ? 'Read' : 'Sent / Delivered'}>
+                <DoubleCheckIcon className={`inline-block w-4 h-4 ${isRead ? 'text-blue-500' : 'text-gray-400'}`} />
               </span>
             )}
           </div>

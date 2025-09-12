@@ -1,6 +1,11 @@
 // src/hooks/useMessages.ts
 import { useState, useEffect } from 'react';
-import socket, { joinConversation, SOCKET_EVENT_NAMES } from '../api/socket';
+import socket, {
+  joinConversation,
+  SOCKET_EVENT_NAMES,
+  sendDeliveredReceipt,
+  sendSeenReceipt,
+} from '../api/socket';
 import { fetchMessages } from '../../chat/api/chatService';
 import type { Message as ApiMessage } from '../../chat/api/chatService';
 
@@ -22,6 +27,16 @@ export interface UseMessagesOptions {
 }
 
 /**
+ * Read receipt update shape received from the server via `receipt:updated`.
+ */
+interface ReadReceiptUpdate {
+  messageId: string;
+  status: 'DELIVERED' | 'SEEN' | string;
+  deliveredAt?: string;
+  seenAt?: string;
+}
+
+/**
  * Recursively check whether a message id already exists in the tree.
  */
 function containsMessage(tree: ApiMessage[], id: string): boolean {
@@ -38,7 +53,11 @@ function containsMessage(tree: ApiMessage[], id: string): boolean {
  * Append a reply under the parentId in a nested message tree.
  * Returns a tuple: [newTree, inserted]
  */
-function appendReplyToParent(tree: ApiMessage[], parentId: string, reply: ApiMessage): [ApiMessage[], boolean] {
+function appendReplyToParent(
+  tree: ApiMessage[],
+  parentId: string,
+  reply: ApiMessage
+): [ApiMessage[], boolean] {
   let inserted = false;
 
   const mapped = tree.map((m) => {
@@ -59,7 +78,11 @@ function appendReplyToParent(tree: ApiMessage[], parentId: string, reply: ApiMes
     }
 
     if (m.replies && m.replies.length > 0) {
-      const [newReplies, childInserted] = appendReplyToParent(m.replies, parentId, reply);
+      const [newReplies, childInserted] = appendReplyToParent(
+        m.replies,
+        parentId,
+        reply
+      );
       if (childInserted) {
         inserted = true;
         return { ...m, replies: newReplies };
@@ -73,8 +96,8 @@ function appendReplyToParent(tree: ApiMessage[], parentId: string, reply: ApiMes
 }
 
 /**
- * Flatten nested messages into a simple array (roots only).
- * Used only for fallback/dedupe checks when caller expects flat view.
+ * Flatten nested messages into a simple array (roots and replies).
+ * Used for dedupe checks and to produce a flat list when needed.
  */
 function flattenMessages(tree: ApiMessage[]): ApiMessage[] {
   const out: ApiMessage[] = [];
@@ -95,6 +118,8 @@ function flattenMessages(tree: ApiMessage[]): ApiMessage[] {
  * - Listens for incoming socket messages and merges them into local state.
  *   * In nested mode: replies (msg.parentId present) are attached under their parent if found.
  *   * In flat mode: messages are appended to the end if not present.
+ * - Emits delivered/seen receipts after loading history and when new messages arrive.
+ * - Listens for server `receipt:updated` events and merges deliveredAt/seenAt timestamps.
  */
 export function useMessages(
   conversationId: string | null,
@@ -115,6 +140,27 @@ export function useMessages(
         threadPageSize: options.threadPageSize,
       });
       setMessages(history ?? []);
+
+      // after loading, emit delivered (for all) and seen (up to last)
+      const allMsgs = history ?? [];
+      const flat = flattenMessages(allMsgs);
+      const messageIds = flat.map((m) => m.id);
+      if (messageIds.length > 0) {
+        try {
+          sendDeliveredReceipt({ conversationId, messageIds });
+        } catch (e) {
+          // swallow - non-fatal
+          // eslint-disable-next-line no-console
+          console.error('[useMessages] failed to send delivered receipt', e);
+        }
+        const lastId = messageIds[messageIds.length - 1];
+        try {
+          sendSeenReceipt({ conversationId, uptoMessageId: lastId });
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error('[useMessages] failed to send seen receipt', e);
+        }
+      }
     } catch (err: any) {
       setError(err);
     } finally {
@@ -147,6 +193,26 @@ export function useMessages(
         });
         if (!active) return;
         setMessages(history ?? []);
+
+        // after loading, emit delivered (for all) and seen (up to last)
+        const allMsgs = history ?? [];
+        const flat = flattenMessages(allMsgs);
+        const messageIds = flat.map((m) => m.id);
+        if (messageIds.length > 0) {
+          try {
+            sendDeliveredReceipt({ conversationId, messageIds });
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('[useMessages] failed to send delivered receipt', e);
+          }
+          const lastId = messageIds[messageIds.length - 1];
+          try {
+            sendSeenReceipt({ conversationId, uptoMessageId: lastId });
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('[useMessages] failed to send seen receipt', e);
+          }
+        }
       } catch (err: any) {
         if (!active) return;
         setError(err);
@@ -164,7 +230,7 @@ export function useMessages(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
-  // Socket handler for new messages
+  // Socket handlers: new messages + receipt updates
   useEffect(() => {
     if (!conversationId) return;
 
@@ -206,11 +272,58 @@ export function useMessages(
 
         return [...prev, msg];
       });
+
+      // Emit delivered receipt for the newly arrived message
+      try {
+        sendDeliveredReceipt({ conversationId, messageIds: [msg.id] });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[useMessages] failed to send delivered receipt for new message', e);
+      }
+    }
+
+    // Handle receipt updates (array of receipts) from server
+    function handleReceiptsUpdate(receipts: ReadReceiptUpdate[]) {
+      if (!Array.isArray(receipts) || receipts.length === 0) return;
+
+      setMessages((prev) => {
+        const updateTree = (tree: ApiMessage[]): ApiMessage[] => {
+          return tree.map((m) => {
+            // Check if any receipt applies to this message
+            const rec = receipts.find((r) => r.messageId === m.id);
+            if (rec) {
+              const updated: ApiMessage = { ...m };
+              // If delivered or seen, update deliveredAt
+              if (rec.status === 'DELIVERED' || rec.status === 'SEEN') {
+                updated.deliveredAt = rec.deliveredAt ?? updated.deliveredAt;
+              }
+              // If seen, update seenAt
+              if (rec.status === 'SEEN') {
+                updated.seenAt = rec.seenAt ?? updated.seenAt;
+              }
+              // Merge replies as well
+              if (updated.replies) {
+                updated.replies = updateTree(updated.replies);
+              }
+              return updated;
+            }
+            // No receipt for this message; still check replies
+            if (m.replies && m.replies.length > 0) {
+              return { ...m, replies: updateTree(m.replies) };
+            }
+            return m;
+          });
+        };
+        return updateTree(prev);
+      });
     }
 
     socket.on(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleNew);
+    socket.on(SOCKET_EVENT_NAMES.RECEIPT_UPDATED, handleReceiptsUpdate);
+
     return () => {
       socket.off(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleNew);
+      socket.off(SOCKET_EVENT_NAMES.RECEIPT_UPDATED, handleReceiptsUpdate);
     };
   }, [conversationId, options.threads]);
 

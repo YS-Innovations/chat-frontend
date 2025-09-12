@@ -44,16 +44,17 @@ export interface ConversationListItem {
 export interface Message {
   id: string;
   conversationId: string;
-  senderId?: string | null;          // internal DB id (e.g. Mongo id)
-  senderAuth0Id?: string | null;     // optional Auth0 id (e.g. "auth0|...")
+  senderId?: string | null;
+  senderAuth0Id?: string | null;
   parentId?: string | null;
   content?: string | null;
   mediaUrl?: string | null;
   mediaType?: string | null;
   fileName?: string | null;
   createdAt: string;
-  // When fetching threaded/nested view the backend returns replies for each root message.
-  // replies are the same Message shape (recursive).
+  // New fields for read receipts:
+  deliveredAt?: string | null;
+  seenAt?: string | null;
   replies?: Message[];
 }
 
@@ -121,5 +122,25 @@ export async function deleteConversation(conversationId: string, token: string):
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+}
+
+/** Mark one or more messages as “DELIVERED” via REST. */
+export async function markDelivered(
+  payload: { conversationId?: string; messageIds?: string[]; userId?: string; deliveredAt?: string },
+  token: string
+): Promise<void> {
+  await axios.post(`${API_BASE}/read-receipts/delivered`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+/** Mark messages as “SEEN” in a conversation via REST. */
+export async function markSeen(
+  payload: { conversationId: string; userId?: string; uptoMessageId?: string; seenAt?: string },
+  token: string
+): Promise<void> {
+  await axios.post(`${API_BASE}/read-receipts/seen`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
