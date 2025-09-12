@@ -1,3 +1,4 @@
+// src/components/ChatWindow/ChatWindow.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/useMessages';
 import MessageBubble from './MessageBubble';
@@ -8,6 +9,7 @@ import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
+import { sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -19,11 +21,12 @@ interface ChatWindowProps {
 
 const SCROLL_THRESHOLD_PX = 120;
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  conversationId, 
-  selfId, 
+const ChatWindow: React.FC<ChatWindowProps> = ({
+  conversationId,
+  selfId,
   conversationData,
-  onAgentAssignmentChange, onReply
+  onAgentAssignmentChange,
+  onReply,
 }) => {
   const { messages, loading, error } = useMessages(conversationId);
   const [showAgentDialog, setShowAgentDialog] = useState(false);
@@ -32,6 +35,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  // Refs to avoid re-sending same receipts repeatedly
+  const lastSeenUptoRef = useRef<string | null>(null);
+  const lastDeliveredSetRef = useRef<Set<string>>(new Set());
 
   const isNearBottom = useCallback((el: HTMLDivElement | null) => {
     if (!el) return false;
@@ -97,6 +104,55 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
   }, [isNearBottom, scrollToBottom, messages.length]);
 
+  // When messages change (and after initial load), request marking delivered/seen via socket.
+  useEffect(() => {
+    if (!conversationId) return;
+    if (loading) return;
+
+    try {
+      // 1) Mark delivered for messages in this convo that are from others and not yet delivered
+      const toDeliver = messages
+        .filter((m) => {
+          // Only mark messages not sent by us
+          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          const notDelivered = !m.deliveredAt;
+          return sentByOther && notDelivered;
+        })
+        .map((m) => m.id)
+        // filter out ids we've already sent delivered for
+        .filter((id) => !lastDeliveredSetRef.current.has(id));
+
+      if (toDeliver.length > 0) {
+        // Emit delivered event (server will upsert and broadcast)
+        sendDeliveredReceipt({ conversationId, messageIds: toDeliver });
+        // record them to avoid re-sending repeatedly
+        toDeliver.forEach((id) => lastDeliveredSetRef.current.add(id));
+      }
+
+      // 2) Mark seen up to the latest message from others that hasn't been seen yet
+      // find the newest message (last in array) where sender != self and seenAt is falsy
+      const lastUnreadFromOther = [...messages]
+        .reverse()
+        .find((m) => {
+          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          return sentByOther && !m.seenAt;
+        });
+
+      if (lastUnreadFromOther) {
+        const uptoId = lastUnreadFromOther.id;
+        if (lastSeenUptoRef.current !== uptoId) {
+          // send seen receipt up to this message id
+          sendSeenReceipt({ conversationId, uptoMessageId: uptoId });
+          lastSeenUptoRef.current = uptoId;
+        }
+      }
+    } catch (err) {
+      // keep UI stable on errors
+      // eslint-disable-next-line no-console
+      console.error('Failed to send read receipts:', err);
+    }
+  }, [conversationId, loading, messages, selfId]);
+
   if (!conversationId) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -126,27 +182,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <>
-      <div className="flex flex-col h-full">
-        <ChatHeader 
+      <div className="flex flex-col h-full min-h-0">
+        <ChatHeader
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
           onShowDetails={() => setShowDetails(true)}
         />
-        
+
         <div
           ref={containerRef}
           className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
           tabIndex={0}
         >
           {isThreaded ? (
-        <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" />
-      ) : (
-        <>
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
-          ))}
-        </>
-      )}
+            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} />
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
+              ))}
+            </>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>
@@ -165,10 +221,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <SheetTitle>User Details</SheetTitle>
           </SheetHeader>
           {conversationId && (
-            <ConversationDetailsPanel 
-              conversationId={conversationId}
-              conversation={conversationData}
-            />
+            <ConversationDetailsPanel conversationId={conversationId} conversation={conversationData} />
           )}
         </SheetContent>
       </Sheet>

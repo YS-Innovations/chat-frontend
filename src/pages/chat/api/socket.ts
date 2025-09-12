@@ -40,7 +40,27 @@ export interface SendMessagePayload {
   mediaType?: string | null;
   fileName?: string | null;
   clientMsgId?: string | null;
-  parentId?: string | null; // <-- new: optional parent message id for threaded replies
+  parentId?: string | null; // optional parent message id for threaded replies
+}
+
+/**
+ * Payload for delivery receipts emitted by the client.
+ * Matches backend expectation for `receipt:delivered`.
+ */
+export interface DeliveredReceiptPayload {
+  conversationId?: string;
+  messageIds?: string[]; // IDs of messages that were delivered
+  deliveredAt?: string; // ISO timestamp
+}
+
+/**
+ * Payload for seen receipts emitted by the client.
+ * Matches backend expectation for `receipt:seen`.
+ */
+export interface SeenReceiptPayload {
+  conversationId: string;
+  uptoMessageId?: string; // mark messages up to (and including) this id as seen
+  seenAt?: string; // ISO timestamp
 }
 
 /**
@@ -101,13 +121,45 @@ export function sendMessageSocket(payload: SendMessagePayload): void {
     connectSocket();
     socket.emit(SOCKET_EVENT_NAMES.SEND_MESSAGE, payload);
     // lightweight debug log — remove or guard behind env var in production if noisy
-    // (kept here intentionally to help during development)
     // eslint-disable-next-line no-console
     console.log('[Socket] emit sendMessage', payload);
   } catch (err) {
     // Surface any immediate client-side errors, but do not throw (non-fatal)
     // eslint-disable-next-line no-console
     console.error('[Socket] failed to send message:', err);
+  }
+}
+
+/**
+ * Emit a delivery receipt over Socket.IO.
+ * Components/hooks can call this when messages have been delivered to the device
+ * (e.g., when they are received by the client but not yet opened/seen).
+ */
+export function sendDeliveredReceipt(payload: DeliveredReceiptPayload): void {
+  try {
+    connectSocket();
+    socket.emit(SOCKET_EVENT_NAMES.RECEIPT_DELIVERED, payload);
+    // eslint-disable-next-line no-console
+    console.log('[Socket] emit receipt:delivered', payload);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[Socket] failed to send delivered receipt:', err);
+  }
+}
+
+/**
+ * Emit a seen receipt over Socket.IO.
+ * Call this when the user has viewed/read messages in a conversation.
+ */
+export function sendSeenReceipt(payload: SeenReceiptPayload): void {
+  try {
+    connectSocket();
+    socket.emit(SOCKET_EVENT_NAMES.RECEIPT_SEEN, payload);
+    // eslint-disable-next-line no-console
+    console.log('[Socket] emit receipt:seen', payload);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[Socket] failed to send seen receipt:', err);
   }
 }
 

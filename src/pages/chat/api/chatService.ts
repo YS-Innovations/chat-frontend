@@ -18,13 +18,54 @@ export interface ConversationListItem {
   createdAt: string;
   updatedAt: string;
   currentStatus: string;
-  seen: boolean; // Add this
+  seen: boolean;
   agent?: {
     id: string;
     name: string | null;
     email: string | null;
   };
   agentId?: string | null;
+}
+
+/**
+ * Message shape used across the frontend.
+ *
+ * Notes:
+ * - `parentId` is optional and present when this message is a reply.
+ * - `replies` is optional and present when the backend returns threaded (nested) results.
+ * - `mediaUrl`, `mediaType`, and `fileName` are populated by the backend by extracting them
+ *   from the message.metadata field (see MessagesService.extractMediaFields).
+ *
+ * This type intentionally matches the enriched MessageWithMedia used by your NestJS backend.
+ *
+ * NEW: `senderAuth0Id` is optional and may be present when the backend includes the Auth0 id
+ * of the sender (useful to match the frontend auth identity against message sender).
+ */
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId?: string | null;
+  senderAuth0Id?: string | null;
+  parentId?: string | null;
+  content?: string | null;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
+  fileName?: string | null;
+  createdAt: string;
+  // New fields for read receipts:
+  deliveredAt?: string | null;
+  seenAt?: string | null;
+  replies?: Message[];
+}
+
+/**
+ * Options for fetching messages.
+ * - threads: 'flat' (default) or 'nested' to request threaded view from the backend.
+ * - threadPageSize: when requesting 'nested' the backend will limit replies per parent by this value.
+ */
+export interface FetchMessagesOptions {
+  threads?: 'flat' | 'nested';
+  threadPageSize?: number;
 }
 
 /**
@@ -40,42 +81,6 @@ export async function fetchConversations(token: string): Promise<ConversationLis
     },
   });
   return res.data;
-}
-
-/**
- * Message shape used across the frontend.
- *
- * Notes:
- * - `parentId` is optional and present when this message is a reply.
- * - `replies` is optional and present when the backend returns threaded (nested) results.
- * - `mediaUrl`, `mediaType`, and `fileName` are populated by the backend by extracting them
- *   from the message.metadata field (see MessagesService.extractMediaFields).
- *
- * This type intentionally matches the enriched MessageWithMedia used by your NestJS backend.
- */
-export interface Message {
-  id: string;
-  conversationId: string;
-  senderId?: string | null;
-  parentId?: string | null;
-  content?: string | null;
-  mediaUrl?: string | null;
-  mediaType?: string | null;
-  fileName?: string | null;
-  createdAt: string;
-  // When fetching threaded/nested view the backend returns replies for each root message.
-  // replies are the same Message shape (recursive).
-  replies?: Message[];
-}
-
-/**
- * Options for fetching messages.
- * - threads: 'flat' (default) or 'nested' to request threaded view from the backend.
- * - threadPageSize: when requesting 'nested' the backend will limit replies per parent by this value.
- */
-export interface FetchMessagesOptions {
-  threads?: 'flat' | 'nested';
-  threadPageSize?: number;
 }
 
 /**
@@ -120,20 +125,22 @@ export async function deleteConversation(conversationId: string, token: string):
   });
 }
 
+/** Mark one or more messages as “DELIVERED” via REST. */
+export async function markDelivered(
+  payload: { conversationId?: string; messageIds?: string[]; userId?: string; deliveredAt?: string },
+  token: string
+): Promise<void> {
+  await axios.post(`${API_BASE}/read-receipts/delivered`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
 
-export interface ConversationListItem {
-  id: string;
-  guestId: string;
-  guestName: string;
-  channelId: string;
-  createdAt: string;
-  updatedAt: string;
-  currentStatus: string;
-  seen: boolean; // Add this property
-  agent?: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  };
-  agentId?: string | null;
+/** Mark messages as “SEEN” in a conversation via REST. */
+export async function markSeen(
+  payload: { conversationId: string; userId?: string; uptoMessageId?: string; seenAt?: string },
+  token: string
+): Promise<void> {
+  await axios.post(`${API_BASE}/read-receipts/seen`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

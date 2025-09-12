@@ -2,7 +2,6 @@
 import React, { useState, useCallback } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
