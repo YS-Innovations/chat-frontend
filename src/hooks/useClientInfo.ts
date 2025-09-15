@@ -35,7 +35,7 @@ interface ClientInfo {
 
 export default function useClientInfo(user: User | null) {
   const lastUserIdRef = useRef<string | null>(null);
-
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const fetchClientInfo = useCallback(async () => {
     try {
       const ipResponse = await fetch("https://api.ipify.org?format=json");
@@ -54,8 +54,9 @@ export default function useClientInfo(user: User | null) {
         loginTime: new Date().toISOString(),
       };
 
+
       if (user) {
-        await fetch("http://localhost:3000/auth/save-user", {
+        await fetch(`${backendUrl}/auth/save-user`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -80,7 +81,7 @@ export default function useClientInfo(user: User | null) {
       };
 
       if (user) {
-        await fetch("http://localhost:3000/auth/save-user", {
+        await fetch(`${backendUrl}/auth/save-user`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -9,7 +9,7 @@ import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import type { ConversationListItem } from '../api/chatService';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const AssignedConversations: React.FC = () => {
   const { getAccessTokenSilently, user } = useAuthShared();

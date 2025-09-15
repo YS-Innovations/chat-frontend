@@ -34,8 +34,9 @@ export function useContactsLogic() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [panelMode, setPanelMode] = useState<'details' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  useEffect(() => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  useEffect(() => 
+    {
     fetchMembers(); // Load members initially
   }, [fetchMembers]);
 
@@ -71,7 +72,7 @@ export function useContactsLogic() {
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/members/${memberId}/role`,
+        `${backendUrl}/auth/members/${memberId}/role`,
         {
           method: 'PUT',
           headers: {
@@ -110,7 +111,7 @@ export function useContactsLogic() {
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/permissions/${selectedMember.id}`,
+        `${backendUrl}/auth/permissions/${selectedMember.id}`,
         {
           method: 'PUT',
           headers: {

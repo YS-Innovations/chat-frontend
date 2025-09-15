@@ -25,7 +25,8 @@ export function LoginHistory({ history, total, memberId }: LoginHistoryProps) {
   const itemsPerPage = 5;
   const hasMore = page * itemsPerPage < total;
   const { getAccessTokenSilently } = useAuthShared();
-  
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   // Use ref to track if we're already loading more
   const isLoadingMoreRef = useRef(false);
 
@@ -38,7 +39,7 @@ export function LoginHistory({ history, total, memberId }: LoginHistoryProps) {
       const token = await getAccessTokenSilently();
       const nextPage = page + 1;
       const res = await fetch(
-        `http://localhost:3000/auth/user/${memberId}/login-history?skip=${(nextPage - 1) * itemsPerPage}&take=${itemsPerPage}`,
+        `${backendUrl}/auth/user/${memberId}/login-history?skip=${(nextPage - 1) * itemsPerPage}&take=${itemsPerPage}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       

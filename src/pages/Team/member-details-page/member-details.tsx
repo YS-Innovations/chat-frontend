@@ -60,6 +60,7 @@ export function MemberDetails({
   const [activeTab, setActiveTab] = useState('permissions');
   const [loginHistory, setLoginHistory] = useState<{ history: UserLoginHistory[]; total: number; }>({ history: [], total: 0 });
   const [currentRole, setCurrentRole] = useState<Role>(member.role);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(tempPermissions) !== JSON.stringify(permissions);
@@ -79,7 +80,7 @@ export function MemberDetails({
 
       // Fetch login history
       const loginRes = await fetch(
-        `http://localhost:3000/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
+        `${backendUrl}/auth/user/${member.id}/login-history?skip=${(page - 1) * perPage}&take=${perPage}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!loginRes.ok) throw new Error('Failed to fetch login history');
@@ -143,7 +144,7 @@ export function MemberDetails({
 
 
 
- const handleSaveAsTemplate = async (templateName: string) => {
+  const handleSaveAsTemplate = async (templateName: string) => {
     await savePermissions(tempPermissions, true, templateName);
     fetchTemplates();
   };
@@ -152,7 +153,7 @@ export function MemberDetails({
     setTemplatesLoading(true);
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:3000/auth/permissions/templates', {
+      const response = await fetch(`${backendUrl}/auth/permissions/templates`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch templates');
@@ -177,7 +178,7 @@ export function MemberDetails({
   const handleTemplateClick = async (templateId: string) => {
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch(`http://localhost:3000/auth/permissions/templates/${templateId}`, {
+      const response = await fetch(`${backendUrl}/auth/permissions/templates/${templateId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch template');
@@ -254,11 +255,11 @@ export function MemberDetails({
           onSuccess={onClose}
         />
         <RoleSwitcher
-  memberId={member.id}
-  initialRole={member.role}
-  canSwitch={role === 'OWNER'}
-  onRoleUpdate={setCurrentRole}
-/>
+          memberId={member.id}
+          initialRole={member.role}
+          canSwitch={role === 'OWNER'}
+          onRoleUpdate={setCurrentRole}
+        />
 
 
       </div>

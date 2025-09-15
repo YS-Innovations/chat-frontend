@@ -41,7 +41,7 @@ export const ProtectedRoutes = () => {
       const token = await getAccessTokenSilently();
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
+        `${import.meta.env.VITE_BACKEND_URL}/auth/user/${user?.sub}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

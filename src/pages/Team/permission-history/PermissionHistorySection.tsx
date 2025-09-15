@@ -26,13 +26,14 @@ export function PermissionHistorySection({ memberId, disabled }: Props) {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const fetchPermissionHistory = async (reset = false) => {
     try {
       setLoading(true);
       const token = await getAccessTokenSilently();
       const res = await fetch(
-        `http://localhost:3000/auth/permissions/${memberId}/history?skip=${reset ? 0 : skip}&take=${PAGE_SIZE}`,
+        `${backendUrl}/auth/permissions/${memberId}/history?skip=${reset ? 0 : skip}&take=${PAGE_SIZE}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

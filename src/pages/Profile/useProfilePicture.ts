@@ -7,6 +7,7 @@ export function useProfilePicture() {
   const { user: auth0User, getAccessTokenSilently } = useAuthShared();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const fetchProfilePicture = useCallback(async () => {
     try {
@@ -14,7 +15,7 @@ export function useProfilePicture() {
 
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/user/${encodeURIComponent(auth0User.sub)}/picture`,
+        `${backendUrl}/auth/user/${encodeURIComponent(auth0User.sub)}/picture`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -57,7 +58,7 @@ export function useProfilePicture() {
         formData.append('file', file);
 
         const response = await fetch(
-          `http://localhost:3000/auth/user/${auth0User.sub}/picture`,
+          `${backendUrl}/auth/user/${auth0User.sub}/picture`,
           {
             method: 'POST',
             headers: {

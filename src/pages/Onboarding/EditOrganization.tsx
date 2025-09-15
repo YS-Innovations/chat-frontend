@@ -47,7 +47,7 @@ function EditOrganization() {
       
       // Update organization data
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}/organization`,
+        `${import.meta.env.VITE_BACKEND_URL}/auth/user/${user?.sub}/organization`,
         { 
           organizationName: data.organizationName,
           website: data.website 
@@ -57,7 +57,7 @@ function EditOrganization() {
 
       // Fetch updated user data
       const updated = await axios.get(
-        `${import.meta.env.VITE_API_URL}/auth/user/${user?.sub}`,
+        `${import.meta.env.VITE_BACKEND_URL}/auth/user/${user?.sub}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       

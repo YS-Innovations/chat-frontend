@@ -88,7 +88,7 @@ interface ChannelSettingsForm {
   csatEnabled: boolean;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const ChannelsPage: React.FC = () => {
   const { getAccessTokenSilently } = useAuthShared();

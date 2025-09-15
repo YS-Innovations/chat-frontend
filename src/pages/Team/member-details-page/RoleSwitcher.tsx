@@ -21,6 +21,8 @@ export function RoleSwitcher({
   const { getAccessTokenSilently } = useAuthShared();
   const [currentRole, setCurrentRole] = useState<Role>(initialRole);
   const [changingRole, setChangingRole] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 
   useEffect(() => {
     setCurrentRole(initialRole);
@@ -33,7 +35,7 @@ export function RoleSwitcher({
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/role/${memberId}`,
+        `${backendUrl}/auth/role/${memberId}`,
         {
           method: "PUT",
           headers: {

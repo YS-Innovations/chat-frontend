@@ -16,7 +16,7 @@ export function useInactiveMembers() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   type SortDirection = 'asc' | 'desc';
   interface Sort {
     field: string;
@@ -54,7 +54,7 @@ export function useInactiveMembers() {
       const token = await getAccessTokenSilently();
       const queryParams = buildQueryParams();
 
-      const response = await fetch(`http://localhost:3000/auth/inactive-members?${queryParams}`, {
+      const response = await fetch(`${backendUrl}/auth/inactive-members?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -77,7 +77,7 @@ export function useInactiveMembers() {
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/resend-invitation/${invitationId}`,
+        `${backendUrl}/auth/resend-invitation/${invitationId}`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },

@@ -47,7 +47,7 @@ export const CannedResponsePage = () => {
     try {
       const token = await getAccessTokenSilently()
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/canned-responses`,
+        `${import.meta.env.VITE_BACKEND_URL}/canned-responses`,
         {
           ...formData,
           userId: user?.sub,
@@ -74,7 +74,7 @@ export const CannedResponsePage = () => {
     try {
       const token = await getAccessTokenSilently()
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/canned-responses/${editingResponse.id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/canned-responses/${editingResponse.id}`,
         {
           name: formData.name,
           message: formData.message,
@@ -106,7 +106,7 @@ export const CannedResponsePage = () => {
     try {
       const token = await getAccessTokenSilently()
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/canned-responses/${responseToDelete}`,
+        `${import.meta.env.VITE_BACKEND_URL}/canned-responses/${responseToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

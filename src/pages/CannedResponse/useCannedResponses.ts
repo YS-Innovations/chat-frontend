@@ -23,7 +23,7 @@ export const useCannedResponses = () => {
       setLoading(true)
       const token = await getAccessTokenSilently()
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canned-responses/available/${user?.sub}`,
+        `${import.meta.env.VITE_BACKEND_URL}/canned-responses/available/${user?.sub}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
