@@ -29,13 +29,14 @@ export const PermissionTemplates: React.FC = () => {
   const [templateName, setTemplateName] = useState('');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [successMessage, setSuccessMessage] = useState('');
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const columns: ColumnDef<Template>[] = [
     {
       accessorKey: 'policyName',
       header: 'Template Name',
       cell: ({ row }) => (
-        <div 
+        <div
           className="font-medium cursor-pointer hover:text-primary"
           onClick={() => handleSelectTemplate(row.original)}
         >
@@ -60,14 +61,14 @@ export const PermissionTemplates: React.FC = () => {
     setPermissions(initialPermissions);
   }, []);
 
- const hasFetchedTemplates = useRef(false);
+  const hasFetchedTemplates = useRef(false);
 
   const fetchTemplates = async () => {
     if (!isAuthenticated) return;
     setLoading(true);
     try {
       const token = await getAccessTokenSilently();
-      const res = await fetch('http://localhost:3000/auth/permissions/templates', {
+      const res = await fetch(`${backendUrl}/auth/permissions/templates`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch templates');
@@ -92,7 +93,7 @@ export const PermissionTemplates: React.FC = () => {
     setLoading(true);
     try {
       const token = await getAccessTokenSilently();
-      const res = await fetch(`http://localhost:3000/auth/permissions/templates/${id}`, {
+      const res = await fetch(`${backendUrl}/auth/permissions/templates/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch template detail');
@@ -127,7 +128,7 @@ export const PermissionTemplates: React.FC = () => {
 
     try {
       const token = await getAccessTokenSilently();
-      const res = await fetch('http://localhost:3000/auth/permissions/templates', {
+      const res = await fetch(`${backendUrl}/auth/permissions/templates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ export const PermissionTemplates: React.FC = () => {
 
     try {
       const token = await getAccessTokenSilently();
-      const res = await fetch(`http://localhost:3000/auth/permissions/templates/${selectedTemplate.id}`, {
+      const res = await fetch(`${backendUrl}/auth/permissions/templates/${selectedTemplate.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +180,7 @@ export const PermissionTemplates: React.FC = () => {
 
     try {
       const token = await getAccessTokenSilently();
-      const res = await fetch(`http://localhost:3000/auth/permissions/templates/${selectedTemplate.id}`, {
+      const res = await fetch(`${backendUrl}/auth/permissions/templates/${selectedTemplate.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -223,7 +224,7 @@ export const PermissionTemplates: React.FC = () => {
                   <Checkbox
                     id={permission.value}
                     checked={permissions[permission.value] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       handlePermissionChange(permission.value, checked as boolean)
                     }
                     disabled={!editMode && !newTemplateMode}
@@ -281,10 +282,10 @@ export const PermissionTemplates: React.FC = () => {
                   error={null}
                   pageIndex={0}
                   pageSize={templates.length}
-                  setPageIndex={() => {}}
-                  setPageSize={() => {}}
+                  setPageIndex={() => { }}
+                  setPageSize={() => { }}
                   sorting={[]}
-                  setSorting={() => {}}
+                  setSorting={() => { }}
                   enableRowSelection={false}
                   emptyState={
                     <div className="p-4 text-center text-muted-foreground">
@@ -327,18 +328,18 @@ export const PermissionTemplates: React.FC = () => {
                       placeholder="Enter template name"
                     />
                   </div>
-                  
+
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Permissions</h3>
                     {renderPermissionsGrid()}
                   </div>
-                  
+
                   <div className="flex space-x-3">
                     <Button onClick={handleCreateTemplate}>
                       Create Template
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setNewTemplateMode(false)}
                     >
                       Cancel
@@ -379,23 +380,23 @@ export const PermissionTemplates: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <p className="text-muted-foreground">
                     Created: {new Date(selectedTemplate.createdAt).toLocaleString()}
                   </p>
-                  
+
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Permissions</h3>
                     {renderPermissionsGrid()}
                   </div>
-                  
+
                   {editMode && (
                     <div className="flex space-x-3">
                       <Button onClick={handleUpdateTemplate}>
                         Save Changes
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => setEditMode(false)}
                       >
                         Cancel
@@ -406,8 +407,8 @@ export const PermissionTemplates: React.FC = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
-                    {templates.length > 0 
-                      ? 'Select a template to view details' 
+                    {templates.length > 0
+                      ? 'Select a template to view details'
                       : 'Create your first template to get started'}
                   </p>
                 </div>

@@ -15,7 +15,8 @@ export const PermissionsProvider = ({ children }: { children: React.ReactNode })
     setIsLoading(true);
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:3000/auth/my-permissions', {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/auth/my-permissions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

@@ -16,6 +16,7 @@ export function useAcceptInvite() {
   const [step, setStep] = useState(1); // 1: Verify token, 2: Set password
 
   const hasVerifiedTokenRef = useRef<string | null>(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -31,7 +32,7 @@ export function useAcceptInvite() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3000/auth/verify-invitation?token=${encodeURIComponent(token)}`
+        `${backendUrl}/auth/verify-invitation?token=${encodeURIComponent(token)}`
       );
 
       if (!response.ok) {
@@ -64,7 +65,7 @@ export function useAcceptInvite() {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/auth/complete-invitation', {
+      const response = await fetch(`${backendUrl}/auth/complete-invitation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password, name }),

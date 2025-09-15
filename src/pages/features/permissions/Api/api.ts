@@ -1,7 +1,8 @@
 import type { PermissionTemplate } from "../types/types";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export async function fetchTemplates(token: string): Promise<PermissionTemplate[]> {
-  const res = await fetch('http://localhost:3000/templates', {
+  const res = await fetch(`${backendUrl}/templates`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error('Failed to fetch templates');
@@ -9,7 +10,7 @@ export async function fetchTemplates(token: string): Promise<PermissionTemplate[
 }
 
 export async function fetchUser(token: string, userId: string) {
-  const res = await fetch(`http://localhost:3000/auth/user/${userId}`, {
+  const res = await fetch(`${backendUrl}/auth/user/${userId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error('Failed to fetch user');
@@ -17,7 +18,7 @@ export async function fetchUser(token: string, userId: string) {
 }
 
 export async function fetchUserPermissions(token: string, userId: string): Promise<{ permissions: string[] }> {
-  const res = await fetch(`http://localhost:3000/auth/permissions/user/${userId}`, {
+  const res = await fetch(`${backendUrl}/auth/permissions/user/${userId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error('Failed to fetch user permissions');
@@ -25,7 +26,7 @@ export async function fetchUserPermissions(token: string, userId: string): Promi
 }
 
 export async function saveUserPermissions(token: string, userId: string, permissions: string[]) {
-  const res = await fetch(`http://localhost:3000/auth/permissions/${userId}`, {
+  const res = await fetch(`${backendUrl}/auth/permissions/${userId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +43,7 @@ export async function updateTemplate(
   templateId: string, 
   data: { policy: Record<string, boolean> }
 ) {
-  const res = await fetch(`http://localhost:3000/auth/permissions/templates/${templateId}`, {
+  const res = await fetch(`${backendUrl}/auth/permissions/templates/${templateId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

@@ -1,5 +1,7 @@
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 export async function deleteUser(userId: string, token: string): Promise<void> {
-  const response = await fetch(`http://localhost:3000/auth/members/${userId}`, {
+  const response = await fetch(`${backendUrl}/auth/members/${userId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

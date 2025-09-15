@@ -16,6 +16,7 @@ export function useProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -24,7 +25,7 @@ export function useProfile() {
       setIsLoading(true);
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:3000/auth/user/${encodeURIComponent(auth0User.sub)}`,
+        `${backendUrl}/auth/user/${encodeURIComponent(auth0User.sub)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -62,9 +63,9 @@ export function useProfile() {
       try {
         setIsUpdating(true);
         const token = await getAccessTokenSilently();
-        
+
         const response = await fetch(
-          `http://localhost:3000/auth/user/${auth0User.sub}`,
+          `${backendUrl}/auth/user/${auth0User.sub}`,
           {
             method: 'PUT',
             headers: {
@@ -107,7 +108,7 @@ export function useProfile() {
         formData.append('file', file);
 
         const response = await fetch(
-          `http://localhost:3000/auth/user/${auth0User.sub}/picture`,
+          `${backendUrl}/auth/user/${auth0User.sub}/picture`,
           {
             method: 'POST',
             headers: {
