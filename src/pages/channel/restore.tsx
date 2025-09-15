@@ -19,7 +19,7 @@ interface Channel {
   deletedAt?: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 function daysLeftUntil(dateStr: string | null | undefined) {
   if (!dateStr) return null;

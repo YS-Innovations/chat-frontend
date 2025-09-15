@@ -34,7 +34,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const initSocket = async () => {
     const token = await getAccessTokenSilently();
-    const newSocket = io(`${import.meta.env.VITE_API_URL}/user-status`, {
+    const newSocket = io(`${import.meta.env.VITE_BACKEND_URL}/user-status`, {
       path: '/socket.io',
       query: { token },
       transports: ['websocket'],

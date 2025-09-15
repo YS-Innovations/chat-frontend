@@ -21,7 +21,7 @@ import { useChannels } from '@/hooks/useChannels';
 import type { ConversationListItem } from '../api/chatService';
 import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Dashboard: React.FC = () => {
   const { channelId } = useParams<{ channelId: string }>();

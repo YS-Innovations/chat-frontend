@@ -40,7 +40,7 @@ function Onboarding() {
       const token = await getAccessTokenSilently();
 
       const res = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/auth/onboard`,
+        `${import.meta.env.VITE_BACKEND_URL}/auth/onboard`,
         { organizationName: data.organizationName, websiteUrl: data.websiteUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
