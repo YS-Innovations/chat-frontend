@@ -34,7 +34,7 @@ export async function fetchMembersFromApi(
     return cached.data;
   }
 
-  const url = new URL(`${import.meta.env.VITE_API_BASE_URL}/auth/members`);
+  const url = new URL(`${import.meta.env.VITE_BACKEND_URL}/auth/members`);
   
   url.searchParams.append('page', pageIndex.toString());
   url.searchParams.append('pageSize', pageSize.toString());

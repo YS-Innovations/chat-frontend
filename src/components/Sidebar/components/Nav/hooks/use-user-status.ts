@@ -22,7 +22,7 @@ export const useUserStatus = () => {
     const connectSocket = async () => {
       try {
         const token = await getAccessTokenSilently();
-        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const baseUrl = import.meta.env.VITE_BACKEND_URL;
 
         if (!baseUrl) {
           console.warn('⚠️ VITE_API_BASE_URL is not defined');
