@@ -144,3 +144,60 @@ export async function markSeen(
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+
+export interface SearchConversationsParams {
+  query?: string;
+  status?: string;
+  channelId?: string;
+  agentId?: string;
+  hasAgent?: boolean;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchConversationsResult {
+  results: ConversationListItem[];
+  totalCount: number;
+}
+
+export interface MessageMatch {
+  id: string;
+  content: string;
+  createdAt: string;
+  senderName: string | null;
+}
+
+export interface SearchConversationResult extends ConversationListItem {
+  messageMatches?: MessageMatch[];
+}
+
+export async function searchConversations(
+  params: SearchConversationsParams,
+  token: string
+): Promise<SearchConversationsResult> {
+  const queryParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      // Convert boolean values to strings
+      if (typeof value === 'boolean') {
+        queryParams.append(key, value.toString());
+      } else {
+        queryParams.append(key, value.toString());
+      }
+    }
+  });
+
+  const res = await axios.get<SearchConversationsResult>(
+    `${API_BASE}/conversations/search?${queryParams.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return res.data;
+}

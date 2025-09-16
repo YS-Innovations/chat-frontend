@@ -1,7 +1,7 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
 import React, { useState } from 'react';
-import { MoreVertical, Trash2, Clock, User, UserX, Users } from 'lucide-react';
-import type { ConversationListItem } from '../../api/chatService';
+import { MoreVertical, Trash2, Clock, User, UserX, Users, MessageSquare } from 'lucide-react';
+import type { ConversationListItem, MessageMatch } from '../../api/chatService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from './AgentAssignmentDialog';
+import { Highlight } from '../Search/Highlight';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -18,6 +19,8 @@ interface ConversationItemProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAgentAssignmentChange?: () => void;
+  searchMatches?: MessageMatch[];
+  searchTerm?: string;
 }
 
 const ConversationItem: React.FC<ConversationItemProps> = ({ 
@@ -25,7 +28,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   selected, 
   onSelect, 
   onDelete,
-  onAgentAssignmentChange 
+  onAgentAssignmentChange,
+  searchMatches = [],
+  searchTerm = ''
 }) => {
   const { id, guestId, updatedAt, guestName, agent } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
@@ -83,7 +88,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h4 className="font-medium text-gray-900 truncate">
-                {guestName || `Guest ${guestId.slice(0, 8)}`}
+                <Highlight text={guestName || `Guest ${guestId.slice(0, 8)}`} searchTerm={searchTerm} />
               </h4>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
@@ -92,14 +97,35 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             </div>
             
             <p className="text-sm text-muted-foreground truncate">
-              {guestId}
+              <Highlight text={guestId} searchTerm={searchTerm} />
             </p>
 
             {/* Agent Assignment Info */}
             {agent && (
               <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">
                 <User className="h-3 w-3" />
-                <span className="truncate">Assigned to {agent.name || agent.email || 'Assigned agent'}</span>
+                <span className="truncate">
+                  Assigned to <Highlight text={agent.name || agent.email || 'Assigned agent'} searchTerm={searchTerm} />
+                </span>
+              </div>
+            )}
+
+            {/* Message Matches */}
+            {searchMatches.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {searchMatches.slice(0, 2).map((match) => (
+                  <div key={match.id} className="flex items-start gap-1 text-xs text-green-600 bg-green-50 p-1 rounded">
+                    <MessageSquare className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span className="flex-1">
+                      <Highlight text={match.content} searchTerm={searchTerm} />
+                    </span>
+                  </div>
+                ))}
+                {searchMatches.length > 2 && (
+                  <div className="text-xs text-muted-foreground">
+                    +{searchMatches.length - 2} more matches
+                  </div>
+                )}
               </div>
             )}
           </div>
