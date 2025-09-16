@@ -5,13 +5,14 @@ import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/useConversations';
 import { useConversationSearch } from '../../hooks/useConversationSearch';
 import { useAvailableAgents } from '../../hooks/useAvailableAgents';
-import { deleteConversation, type ConversationListItem } from '../../api/chatService';
+import { deleteConversation, type ConversationListItem, type MessageMatch } from '../../api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters';
+import { Highlight } from '../Search/Highlight';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -86,11 +87,35 @@ const ConversationList: React.FC<ConversationListProps> = ({
     setIsSearching(false);
   };
 
-  const displayedConversations = useMemo(() => {
-    if (isSearching && results) {
-      return results.results;
+  // Group search results by conversation
+  const { matchingConversations, allMessageMatches } = useMemo(() => {
+    if (!isSearching || !results) {
+      return { matchingConversations: conversations, allMessageMatches: [] };
     }
-    return conversations;
+
+    // Get unique conversations from search results
+    const conversationMap = new Map();
+    const messageMatches: (MessageMatch & { conversationId: string; guestName: string })[] = [];
+
+    results.results.forEach((conv: any) => {
+      if (!conversationMap.has(conv.id)) {
+        conversationMap.set(conv.id, { ...conv, messageMatches: [] });
+      }
+      
+      if (conv.messageMatches && conv.messageMatches.length > 0) {
+        conversationMap.get(conv.id).messageMatches = conv.messageMatches;
+        messageMatches.push(...conv.messageMatches.map((match: MessageMatch) => ({
+          ...match,
+          conversationId: conv.id,
+          guestName: conv.guestName || `Guest ${conv.guestId.slice(0, 8)}`
+        })));
+      }
+    });
+
+    return {
+      matchingConversations: Array.from(conversationMap.values()),
+      allMessageMatches: messageMatches
+    };
   }, [conversations, results, isSearching]);
 
   const handleDelete = async (id: string) => {
@@ -147,7 +172,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              {displayedConversations.length} conversation{displayedConversations.length !== 1 ? 's' : ''}
+              {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
             </Badge>
             {isSearching && results && (
               <Badge variant="outline" className="text-xs">
@@ -186,17 +211,18 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
-        {(searchLoading || loading) && displayedConversations.length === 0 ? (
+        {(searchLoading || loading) && matchingConversations.length === 0 ? (
           <div className="p-4 text-center">
             <LoadingSpinner />
           </div>
-        ) : displayedConversations.length === 0 ? (
+        ) : matchingConversations.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             {isSearching ? 'No conversations match your search' : 'No conversations found'}
           </div>
         ) : (
           <>
-            {displayedConversations.map((conv: any) => (
+            {/* Matching Conversations */}
+            {matchingConversations.map((conv: any) => (
               <ConversationItem
                 key={conv.id}
                 conversation={conv}
@@ -208,6 +234,51 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 searchTerm={searchTerm}
               />
             ))}
+            
+            {/* Matching Messages Section */}
+            {isSearching && allMessageMatches.length > 0 && (
+              <div className="border-t border-gray-200 p-4">
+                <h3 className="font-semibold text-sm text-gray-700 mb-3">
+                  Matching Messages ({allMessageMatches.length})
+                </h3>
+                <div className="space-y-3">
+                  {allMessageMatches.map((match: MessageMatch & { conversationId: string; guestName: string }) => (
+                    <div
+                      key={`${match.conversationId}-${match.id}`}
+                      className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => onSelectConversation(match.conversationId)}
+                    >
+                      <div className="flex items-start gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                          {match.guestName
+                            .split(' ')
+                            .map(word => word[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-gray-900">
+                            <Highlight text={match.guestName} searchTerm={searchTerm} />
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Conversation ID: {match.conversationId.slice(0, 8)}...
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700 bg-white p-2 rounded border">
+                        <Highlight text={match.content} searchTerm={searchTerm} />
+                      </div>
+                      {match.createdAt && (
+                        <div className="text-xs text-gray-500 mt-2">
+                          {new Date(match.createdAt).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {hasMore && !isSearching && (
               <div className="p-4 text-center">
