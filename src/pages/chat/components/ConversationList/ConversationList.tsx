@@ -22,10 +22,12 @@ interface ConversationListProps {
   conversations: ConversationListItem[];
   loading: boolean;
   onRefresh: () => void;
+  onSelectMessage?: (conversationId: string, messageId: string) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
   onSelectConversation,
+  onSelectMessage,
   channelId,
   selectedConversationId,
   onAgentAssignmentChange,
@@ -117,6 +119,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
       allMessageMatches: messageMatches
     };
   }, [conversations, results, isSearching]);
+
+  
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.');
@@ -248,11 +252,27 @@ const ConversationList: React.FC<ConversationListProps> = ({
                   {allMessageMatches.map((match: MessageMatch & { conversationId: string; guestName: string }) => (
                     <div
                       key={`${match.conversationId}-${match.id}`}
-                      className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => onSelectConversation(match.conversationId)}
+                      className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors relative"
+                      onClick={() => {
+                        if (onSelectMessage) {
+                          onSelectMessage(match.conversationId, match.id);
+
+                          // Add a temporary loading indicator
+                          const element = document.getElementById(`search-result-${match.id}`);
+                          if (element) {
+                            element.classList.add('bg-blue-50');
+                            setTimeout(() => {
+                              element.classList.remove('bg-blue-50');
+                            }, 2000);
+                          }
+                        } else {
+                          onSelectConversation(match.conversationId);
+                        }
+                      }}
+                      id={`search-result-${match.id}`}
                     >
                       <div className="flex items-start gap-2">
-                        <div className="flex justify-between items-center w-full ">
+                        <div className="flex justify-between items-center w-full">
                           <div className="font-medium text-sm text-gray-900">
                             <Highlight text={match.guestName} searchTerm={searchTerm} />
                           </div>
@@ -262,10 +282,15 @@ const ConversationList: React.FC<ConversationListProps> = ({
                             </div>
                           )}
                         </div>
-
                       </div>
                       <div className="text-sm text-gray-700 rounded">
                         <Highlight text={match.content} searchTerm={searchTerm} />
+                      </div>
+
+                      {/* Loading indicator that shows when clicked */}
+                      <div className="absolute inset-0 bg-blue-50 opacity-0 transition-opacity duration-300 pointer-events-none"
+                        id={`loading-${match.id}`}>
+                        <div className="absolute right-2 top-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       </div>
                     </div>
                   ))}

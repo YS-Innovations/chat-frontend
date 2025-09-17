@@ -17,6 +17,7 @@ interface ChatWindowProps {
   conversationData?: ConversationListItem | null;
   onAgentAssignmentChange?: () => void;
   onReply?: (message: Message) => void;
+    highlightMessageId?: string | null; 
 }
 
 const SCROLL_THRESHOLD_PX = 120;
@@ -27,11 +28,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationData,
   onAgentAssignmentChange,
   onReply,
+  highlightMessageId
 }) => {
   const { messages, loading, error } = useMessages(conversationId);
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-
+  const highlightedMessageRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -152,6 +154,58 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       console.error('Failed to send read receipts:', err);
     }
   }, [conversationId, loading, messages, selfId]);
+
+   useEffect(() => {
+    if (!highlightMessageId || loading ) {
+      return;
+    }
+
+    // Only highlight if messages are loaded and we haven't highlighted this message yet
+    if (messages.length > 0) {
+      const highlightMessage = () => {
+        const selector = `[data-message-id="${highlightMessageId}"]`;
+        const el = document.querySelector(selector) as HTMLElement | null;
+        
+        if (!el) {
+          // If element not found, try again after a short delay
+          setTimeout(highlightMessage, 100);
+          return;
+        }
+        
+        try {
+          // Scroll to the message
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Apply highlight effect
+          el.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
+          el.style.transition = 'background-color 700ms ease';
+          
+          // Mark this message as highlighted
+          highlightedMessageRef.current = highlightMessageId;
+          
+          // Remove highlight after 2 seconds
+          setTimeout(() => {
+            if (el) {
+              el.style.backgroundColor = '';
+              setTimeout(() => {
+                if (el) {
+                  el.style.transition = '';
+                }
+              }, 300);
+            }
+          }, 2000);
+        } catch (error) {
+          console.error('Failed to highlight message:', error);
+        }
+      };
+
+      // Small delay to ensure DOM is fully rendered
+      const timeoutId = setTimeout(highlightMessage, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [highlightMessageId, loading, messages.length]);
+
 
   if (!conversationId) {
     return (

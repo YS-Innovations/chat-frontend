@@ -37,6 +37,35 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
+  const [selectedConversationForHighlight, setSelectedConversationForHighlight] = useState<string | null>(null);
+
+  // Function to handle message selection from search results
+  const handleSelectMessageFromSearch = useCallback((conversationId: string, messageId: string) => {
+    // If we're already in the right conversation, just highlight the message
+    if (selectedConversationId === conversationId) {
+      setHighlightMessageId(messageId);
+    } else {
+      // If we need to switch conversations, store both values
+      setSelectedConversationForHighlight(conversationId);
+      setHighlightMessageId(messageId);
+      setSelectedConversationId(conversationId);
+    }
+    
+    // Clear highlight after 3 seconds (gives time for loading)
+    setTimeout(() => {
+      setHighlightMessageId(null);
+      setSelectedConversationForHighlight(null);
+    }, 3000);
+  }, [selectedConversationId]);
+
+  // Effect to apply highlight when conversation changes to match the searched message
+  useEffect(() => {
+    if (selectedConversationId && selectedConversationForHighlight === selectedConversationId && highlightMessageId) {
+      // The highlight will be handled by the ChatWindow's useEffect
+    }
+  }, [selectedConversationId, selectedConversationForHighlight, highlightMessageId]);
+
 
   // Page-level reply state: when non-null, RichTextEditor shows the reply banner
   // and the outgoing message will include parentId.
@@ -231,6 +260,7 @@ const Dashboard: React.FC = () => {
             conversations={conversations}
             loading={loadingConversations}
             onRefresh={refreshConversations}
+            onSelectMessage={handleSelectMessageFromSearch}
           />
         </div>
       </div>
@@ -250,6 +280,7 @@ const Dashboard: React.FC = () => {
               selfId={user.sub}
               conversationData={selectedConversation}
               onAgentAssignmentChange={handleAgentAssignmentChange}
+              highlightMessageId={highlightMessageId}
             />
             <div className="p-4 border-t bg-white">
               <RichTextEditor 
