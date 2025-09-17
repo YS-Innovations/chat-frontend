@@ -120,7 +120,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     };
   }, [conversations, results, isSearching]);
 
-  
+
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.');
@@ -160,7 +160,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search conversations, messages, guests..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 pr-9"
@@ -178,11 +178,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <Badge variant="secondary" className="text-xs">
               {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
             </Badge>
-            {isSearching && results && (
+            {/* {isSearching && results && (
               <Badge variant="outline" className="text-xs">
                 {results.totalCount} total matches
               </Badge>
-            )}
+            )} */}
           </div>
 
           <div className="flex items-center gap-2">
@@ -195,9 +195,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
               <Filter className="h-4 w-4 mr-1" />
               Filters
             </Button>
-            <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading || searchLoading}>
+            {/* <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading || searchLoading}>
               Refresh
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -225,9 +225,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         ) : (
           <>
-            <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4">
-              Chats ({matchingConversations.length})
-            </h3>
+
+            {isSearching && results && (
+              <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4">
+                Chats ({matchingConversations.length})
+              </h3>
+            )}
             {/* Matching Conversations */}
             {matchingConversations.map((conv: any) => (
               <ConversationItem

@@ -45,7 +45,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       {/* Search Input */}
       <div className="relative">
         <Input
-          placeholder="Search conversations, messages, guests..."
+          placeholder="Search..."
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           className="pl-10"

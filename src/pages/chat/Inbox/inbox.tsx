@@ -152,14 +152,14 @@ export const Inbox: React.FC = () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">Inbox</h2>
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={fetchInboxConversations}
               disabled={loading}
             >
               {loading ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            </Button> */}
           </div>
           <p className="text-sm text-muted-foreground">
             New conversations that need attention
