@@ -8,6 +8,7 @@ import ChatWindow from '../components/ChatWindow/ChatWindow';
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import type { ConversationListItem } from '../api/chatService';
+import type { Message as ApiMessage } from '../api/chatService';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,51 +19,83 @@ export const AssignedConversations: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'open' | 'closed'>('all');
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
+  const [selectedConversationForHighlight, setSelectedConversationForHighlight] = useState<string | null>(null);
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
-if (!API_BASE) {
-  throw new Error('VITE_BACKEND_URL is not defined');
-}
-
-const fetchAssignedConversations = useCallback(async () => {
-  try {
-    setLoading(true);
-    const token = await getAccessTokenSilently();
-    
-    // Debug: log the user ID being used
-    console.log('Fetching conversations for user:', user?.sub);
-    
-    const response = await fetch(`${API_BASE}/conversations/Myconversation`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch assigned conversations: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('Received conversations:', data); // Debug: see what's returned
-    
-    setConversations(data);
-    
-    // Update selected conversation if it exists
-    if (selectedConversationId) {
-      const updatedConversation = data.find((c: ConversationListItem) => c.id === selectedConversationId);
-      setSelectedConversation(updatedConversation || null);
-    }
-  } catch (error) {
-    console.error('Failed to fetch assigned conversations:', error);
-    toast.error('Failed to load assigned conversations');
-  } finally {
-    setLoading(false);
+  if (!API_BASE) {
+    throw new Error('VITE_BACKEND_URL is not defined');
   }
-}, [getAccessTokenSilently, selectedConversationId, user?.sub]); // Added user?.sub to dependencies
+
+  // Function to handle message selection from search results
+  const handleSelectMessageFromSearch = useCallback((conversationId: string, messageId: string) => {
+    // If we're already in the right conversation, just highlight the message
+    if (selectedConversationId === conversationId) {
+      setHighlightMessageId(messageId);
+    } else {
+      // If we need to switch conversations, store both values
+      setSelectedConversationForHighlight(conversationId);
+      setHighlightMessageId(messageId);
+      setSelectedConversationId(conversationId);
+    }
+    
+    // Clear highlight after 3 seconds (gives time for loading)
+    setTimeout(() => {
+      setHighlightMessageId(null);
+      setSelectedConversationForHighlight(null);
+    }, 3000);
+  }, [selectedConversationId]);
+
+  // Effect to apply highlight when conversation changes to match the searched message
+  React.useEffect(() => {
+    if (selectedConversationId && selectedConversationForHighlight === selectedConversationId && highlightMessageId) {
+      // The highlight will be handled by the ChatWindow's useEffect
+    }
+  }, [selectedConversationId, selectedConversationForHighlight, highlightMessageId]);
+
+  const fetchAssignedConversations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+      
+      // Debug: log the user ID being used
+      console.log('Fetching conversations for user:', user?.sub);
+      
+      const response = await fetch(`${API_BASE}/conversations/Myconversation`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch assigned conversations: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received conversations:', data); // Debug: see what's returned
+      
+      setConversations(data);
+      
+      // Update selected conversation if it exists
+      if (selectedConversationId) {
+        const updatedConversation = data.find((c: ConversationListItem) => c.id === selectedConversationId);
+        setSelectedConversation(updatedConversation || null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch assigned conversations:', error);
+      toast.error('Failed to load assigned conversations');
+    } finally {
+      setLoading(false);
+    }
+  }, [getAccessTokenSilently, selectedConversationId, user?.sub]); // Added user?.sub to dependencies
+
   const handleSelectConversation = useCallback((id: string) => {
     setSelectedConversationId(id);
     const foundConversation = conversations.find(c => c.id === id);
     setSelectedConversation(foundConversation || null);
+    // Clear any existing highlight when selecting a new conversation
+    setHighlightMessageId(null);
+    setSelectedConversationForHighlight(null);
   }, [conversations]);
 
   const handleAgentAssignmentChange = useCallback(async () => {
@@ -118,14 +151,6 @@ const fetchAssignedConversations = useCallback(async () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">My Inbox</h2>
-            {/* <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchAssignedConversations}
-              disabled={loading}
-            >
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </Button> */}
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -146,6 +171,7 @@ const fetchAssignedConversations = useCallback(async () => {
             conversations={filteredConversations}
             loading={loading}
             onRefresh={fetchAssignedConversations}
+            onSelectMessage={handleSelectMessageFromSearch}
           />
         </div>
       </div>
@@ -159,6 +185,7 @@ const fetchAssignedConversations = useCallback(async () => {
               selfId={user.sub}
               conversationData={selectedConversation}
               onAgentAssignmentChange={handleAgentAssignmentChange}
+              highlightMessageId={highlightMessageId}
             />
             <div className="p-4 border-t bg-white">
               <RichTextEditor 
