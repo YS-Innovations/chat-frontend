@@ -4,14 +4,6 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { 
-//   Select, 
-//   SelectContent, 
-//   SelectItem, 
-//   SelectTrigger, 
-//   SelectValue 
-// } from '@/components/ui/select';
-
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
@@ -20,6 +12,7 @@ import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
 import type { ConversationListItem } from '../api/chatService';
 import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
+import { useConversationSearch } from '../hooks/useConversationSearch';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -39,6 +32,11 @@ const Dashboard: React.FC = () => {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
   const [selectedConversationForHighlight, setSelectedConversationForHighlight] = useState<string | null>(null);
+
+  // Search functionality
+  const { search, loading: searchLoading, results, clearResults } = useConversationSearch();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Function to handle message selection from search results
   const handleSelectMessageFromSearch = useCallback((conversationId: string, messageId: string) => {
@@ -66,6 +64,47 @@ const Dashboard: React.FC = () => {
     }
   }, [selectedConversationId, selectedConversationForHighlight, highlightMessageId]);
 
+  // Debounced search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchTerm.trim()) {
+        performSearch();
+      } else {
+        clearResults();
+        setIsSearching(false);
+        // Refresh conversations when search is cleared
+        refreshConversations();
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, channelId]);
+
+  const performSearch = async () => {
+    if (!searchTerm.trim()) {
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      await search({
+        query: searchTerm.trim(),
+        channelId,
+        limit: 50,
+        offset: 0
+      });
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast.error('Search failed');
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    clearResults();
+    setIsSearching(false);
+    refreshConversations();
+  };
 
   // Page-level reply state: when non-null, RichTextEditor shows the reply banner
   // and the outgoing message will include parentId.
@@ -76,6 +115,10 @@ const Dashboard: React.FC = () => {
     setSelectedConversation(null);
     // also clear any reply state (we're switching channel)
     setReplyTo(null);
+    // Clear search when channel changes
+    setSearchTerm('');
+    clearResults();
+    setIsSearching(false);
   }, [channelId]);
 
   const refreshConversations = useCallback(async () => {
@@ -86,6 +129,16 @@ const Dashboard: React.FC = () => {
       if (channelId) {
         url.searchParams.set('channelId', channelId);
       }
+      
+      // Add status filter based on active tab
+      if (activeTab === 'unread') {
+        url.searchParams.set('status', 'UNREAD');
+      } else if (activeTab === 'archived') {
+        url.searchParams.set('status', 'ARCHIVED');
+      } else {
+        url.searchParams.set('status', 'ALL');
+      }
+      
       const response = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -106,7 +159,7 @@ const Dashboard: React.FC = () => {
       }));
       
       setConversations(formattedConversations);
-       setReplyTo(null);
+      setReplyTo(null);
       
       // Update selected conversation if it exists
       if (selectedConversationId) {
@@ -119,32 +172,33 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoadingConversations(false);
     }
-  }, [getAccessTokenSilently, selectedConversationId, channelId]);
+  }, [getAccessTokenSilently, selectedConversationId, channelId, activeTab]);
 
-
-    const markConversationAsSeen = useCallback(async (conversationId: string) => {
-      try {
-        const token = await getAccessTokenSilently();
-        await fetch(`${API_URL}/conversations/${conversationId}/mark-seen`, {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        // Remove the conversation from the inbox list after marking as seen
+  const markConversationAsSeen = useCallback(async (conversationId: string) => {
+    try {
+      const token = await getAccessTokenSilently();
+      await fetch(`${API_URL}/conversations/${conversationId}/mark-seen`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      // Remove the conversation from the list after marking as seen
+      if (activeTab === 'unread') {
         setConversations(prev => prev.filter(conv => conv.id !== conversationId));
-      } catch (error) {
-        console.error('Failed to mark conversation as seen:', error);
       }
-    }, [getAccessTokenSilently]);
+    } catch (error) {
+      console.error('Failed to mark conversation as seen:', error);
+    }
+  }, [getAccessTokenSilently, activeTab]);
 
   const handleSelectConversation = useCallback(async(id: string) => {
     setSelectedConversationId(id);
     const foundConversation = conversations.find(c => c.id === id);
     setSelectedConversation(foundConversation || null);
     await markConversationAsSeen(id);
-  }, [conversations,markConversationAsSeen]);
+  }, [conversations, markConversationAsSeen]);
 
   const handleAgentAssignmentChange = useCallback(async () => {
     await refreshConversations();
@@ -169,10 +223,10 @@ const Dashboard: React.FC = () => {
     }
   }, [refreshConversations, selectedConversationId, getAccessTokenSilently]);
 
-  // Load conversations on component mount and when channel changes
+  // Load conversations on component mount and when channel or tab changes
   useEffect(() => {
     refreshConversations();
-  }, [refreshConversations, channelId]);
+  }, [refreshConversations, channelId, activeTab]);
 
   if (!user?.sub) {
     return (
@@ -231,14 +285,14 @@ const Dashboard: React.FC = () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">Conversations</h2>
-            {/* <Button
+            <Button
               variant="outline"
               size="sm"
               onClick={refreshConversations}
-              disabled={loadingConversations}
+              disabled={loadingConversations || searchLoading}
             >
               {loadingConversations ? 'Refreshing...' : 'Refresh'}
-            </Button> */}
+            </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -258,9 +312,15 @@ const Dashboard: React.FC = () => {
             selectedConversationId={selectedConversationId}
             onAgentAssignmentChange={handleAgentAssignmentChange}
             conversations={conversations}
-            loading={loadingConversations}
+            loading={loadingConversations || searchLoading}
             onRefresh={refreshConversations}
             onSelectMessage={handleSelectMessageFromSearch}
+            // Pass search-related props
+            // searchTerm={searchTerm}
+            // onSearchTermChange={setSearchTerm}
+            // onClearSearch={handleClearSearch}
+            // isSearching={isSearching}
+            // searchResults={results}
           />
         </div>
       </div>
@@ -286,7 +346,7 @@ const Dashboard: React.FC = () => {
               <RichTextEditor 
                 conversationId={selectedConversationId} 
                 replyTo={replyTo}
-              onCancelReply={() => setReplyTo(null)}
+                onCancelReply={() => setReplyTo(null)}
                 selfId={user.sub} 
                 onSent={refreshConversations}
               />
