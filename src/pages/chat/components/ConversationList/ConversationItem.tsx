@@ -96,9 +96,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground truncate">
+            {/* <p className="text-sm text-muted-foreground truncate">
               <Highlight text={guestId} searchTerm={searchTerm} />
-            </p>
+            </p> */}
 
             {/* Agent Assignment Info */}
             {agent && (
@@ -111,7 +111,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             )}
 
             {/* Message Matches */}
-            {searchMatches.length > 0 && (
+            {/* {searchMatches.length > 0 && (
               <div className="mt-2 space-y-1">
                 {searchMatches.slice(0, 2).map((match) => (
                   <div key={match.id} className="flex items-start gap-1 text-xs text-green-600 bg-green-50 p-1 rounded">
@@ -127,7 +127,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                   </div>
                 )}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Actions */}

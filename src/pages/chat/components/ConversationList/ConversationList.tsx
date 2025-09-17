@@ -24,8 +24,8 @@ interface ConversationListProps {
   onRefresh: () => void;
 }
 
-const ConversationList: React.FC<ConversationListProps> = ({ 
-  onSelectConversation, 
+const ConversationList: React.FC<ConversationListProps> = ({
+  onSelectConversation,
   channelId,
   selectedConversationId,
   onAgentAssignmentChange,
@@ -37,7 +37,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const { search, loading: searchLoading, results, clearResults } = useConversationSearch();
   const { agents: availableAgents, loading: agentsLoading } = useAvailableAgents();
   const { getAccessTokenSilently } = useAuthShared();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFiltersState>({});
@@ -101,7 +101,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
       if (!conversationMap.has(conv.id)) {
         conversationMap.set(conv.id, { ...conv, messageMatches: [] });
       }
-      
+
       if (conv.messageMatches && conv.messageMatches.length > 0) {
         conversationMap.get(conv.id).messageMatches = conv.messageMatches;
         messageMatches.push(...conv.messageMatches.map((match: MessageMatch) => ({
@@ -162,7 +162,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             className="pl-9 pr-9"
           />
           {searchTerm && (
-            <X 
+            <X
               className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
               onClick={handleClearSearch}
             />
@@ -180,7 +180,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
               </Badge>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -221,6 +221,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         ) : (
           <>
+            <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4">
+              Chats ({matchingConversations.length})
+            </h3>
             {/* Matching Conversations */}
             {matchingConversations.map((conv: any) => (
               <ConversationItem
@@ -234,57 +237,47 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 searchTerm={searchTerm}
               />
             ))}
-            
+
             {/* Matching Messages Section */}
             {isSearching && allMessageMatches.length > 0 && (
-              <div className="border-t border-gray-200 p-4">
+              <div className="border-t border-gray-200 pt-4">
                 <h3 className="font-semibold text-sm text-gray-700 mb-3">
-                  Matching Messages ({allMessageMatches.length})
+                  Messages ({allMessageMatches.length})
                 </h3>
                 <div className="space-y-3">
                   {allMessageMatches.map((match: MessageMatch & { conversationId: string; guestName: string }) => (
                     <div
                       key={`${match.conversationId}-${match.id}`}
-                      className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => onSelectConversation(match.conversationId)}
                     >
-                      <div className="flex items-start gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
-                          {match.guestName
-                            .split(' ')
-                            .map(word => word[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </div>
-                        <div className="flex-1">
+                      <div className="flex items-start gap-2">
+                        <div className="flex justify-between items-center w-full ">
                           <div className="font-medium text-sm text-gray-900">
                             <Highlight text={match.guestName} searchTerm={searchTerm} />
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Conversation ID: {match.conversationId.slice(0, 8)}...
-                          </div>
+                          {match.createdAt && (
+                            <div className="text-xs text-gray-500 whitespace-nowrap">
+                              {new Date(match.createdAt).toLocaleString()}
+                            </div>
+                          )}
                         </div>
+
                       </div>
-                      <div className="text-sm text-gray-700 bg-white p-2 rounded border">
+                      <div className="text-sm text-gray-700 rounded">
                         <Highlight text={match.content} searchTerm={searchTerm} />
                       </div>
-                      {match.createdAt && (
-                        <div className="text-xs text-gray-500 mt-2">
-                          {new Date(match.createdAt).toLocaleString()}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            
+
             {hasMore && !isSearching && (
               <div className="p-4 text-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleLoadMore}
                   disabled={loading}
                 >
