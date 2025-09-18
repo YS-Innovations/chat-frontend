@@ -25,7 +25,7 @@ export const Highlight: React.FC<HighlightProps> = ({ text, searchTerm }) => {
 
     // Add the matching part
     parts.push(
-      <span key={index} className="bg-yellow-200 font-semibold">
+      <span key={index} className="bg-orange-200 font-semibold">
         {text.substring(index, index + searchTerm.length)}
       </span>
     );

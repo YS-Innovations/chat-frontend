@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters';
 import { Highlight } from '../Search/Highlight';
-import { sanitize } from '../../utils/sanitize';
+import sanitizeAndHighlight from '../sanitizeAndHighlight';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -290,10 +290,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
                       <div className="text-sm text-gray-700 rounded">
                         <div
                           dangerouslySetInnerHTML={{
-                            __html: sanitize(match.content || '')
+                            __html: sanitizeAndHighlight(match.content || '', searchTerm)
                           }}
                           className="line-clamp-2"
                         />
+
                       </div>
 
                       {/* Loading indicator that shows when clicked */}
