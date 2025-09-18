@@ -12,6 +12,7 @@ import {
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from './AgentAssignmentDialog';
 import { Highlight } from '../Search/Highlight';
+import { sanitize } from '../../utils/sanitize';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -102,14 +103,19 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               </div>
             </div>
 
-                   {lastMessage && (
+            {lastMessage && (
               <div className="text-sm text-gray-600 truncate">
                 {/* {lastMessage.senderName && (
                   <span className="font-medium text-gray-800">
                     {lastMessage.senderName}:{' '}
                   </span>
                 )} */}
-                {truncateMessage(lastMessage.content)}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: sanitize(lastMessage.content || '')
+                  }}
+                  className="line-clamp-2"
+                />
               </div>
             )}
 
