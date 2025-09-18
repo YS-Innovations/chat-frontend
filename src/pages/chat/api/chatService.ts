@@ -25,6 +25,11 @@ export interface ConversationListItem {
     email: string | null;
   };
   agentId?: string | null;
+   lastMessage?: {
+    content: string | null;
+    createdAt: string;
+    senderName: string | null;
+  } | null;
 }
 
 /**

@@ -23,24 +23,30 @@ interface ConversationItemProps {
   searchTerm?: string;
 }
 
-const ConversationItem: React.FC<ConversationItemProps> = ({ 
-  conversation, 
-  selected, 
-  onSelect, 
+const ConversationItem: React.FC<ConversationItemProps> = ({
+  conversation,
+  selected,
+  onSelect,
   onDelete,
   onAgentAssignmentChange,
   searchMatches = [],
   searchTerm = ''
 }) => {
-  const { id, guestId, updatedAt, guestName, agent } = conversation;
+  const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const { unassignAgent } = useAgentAssignment();
+  const truncateMessage = (content: string | null, maxLength: number = 50) => {
+    if (!content) return '';
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffInHours < 48) {
@@ -72,8 +78,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     <>
       <div
         className={`group relative p-3 border-b cursor-pointer transition-all duration-200
-          ${selected 
-            ? 'bg-blue-50 border-blue-200' 
+          ${selected
+            ? 'bg-blue-50 border-blue-200'
             : 'hover:bg-gray-50 border-gray-100'
           }`}
         onClick={() => onSelect(id)}
@@ -95,10 +101,24 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                 {formatTime(updatedAt)}
               </div>
             </div>
-            
-            {/* <p className="text-sm text-muted-foreground truncate">
-              <Highlight text={guestId} searchTerm={searchTerm} />
-            </p> */}
+
+                   {lastMessage && (
+              <div className="text-sm text-gray-600 truncate">
+                {/* {lastMessage.senderName && (
+                  <span className="font-medium text-gray-800">
+                    {lastMessage.senderName}:{' '}
+                  </span>
+                )} */}
+                {truncateMessage(lastMessage.content)}
+              </div>
+            )}
+
+            {/* No messages yet */}
+            {!lastMessage && (
+              <div className="text-sm text-gray-500 italic">
+                No messages yet
+              </div>
+            )}
 
             {/* Agent Assignment Info */}
             {agent && (
@@ -148,11 +168,11 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                 <Users className="h-4 w-4 mr-2" />
                 {agent ? 'Reassign Agent' : 'Assign Agent'}
               </DropdownMenuItem>
-              
+
               {agent && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-orange-600 focus:text-orange-600"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -164,9 +184,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                   </DropdownMenuItem>
                 </>
               )}
-              
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -181,9 +201,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         </div>
 
         {/* Online indicator */}
-        <div className={`absolute bottom-10 left-10 w-3 h-3 rounded-full ${
-          selected ? 'bg-blue-500' : agent ? 'bg-green-500' : 'bg-gray-400'
-        }`} />
+        <div className={`absolute bottom-10 left-10 w-3 h-3 rounded-full ${selected ? 'bg-blue-500' : agent ? 'bg-green-500' : 'bg-gray-400'
+          }`} />
       </div>
 
       <AgentAssignmentDialog
