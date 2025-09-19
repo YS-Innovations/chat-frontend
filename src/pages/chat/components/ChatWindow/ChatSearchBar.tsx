@@ -1,7 +1,7 @@
 // src/components/ChatWindow/ChatSearchBar.tsx
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Search, X } from 'lucide-react';
+import { X, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface ChatSearchBarProps {
   searchQuery: string;
@@ -22,52 +22,48 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   totalMatches,
   onNext,
   onPrevious,
-  onClose
+  onClose,
 }) => {
   return (
-    <div className="px-4 py-2 border-b bg-gray-50">
+    <div className="absolute top-33 right-25 z-50 shadow-lg rounded-md  bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search in conversation..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 pr-9"
+          placeholder="Search..."
+          className="pr-8 text-sm border border-amber-300"
         />
         {searchQuery && (
           <X
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600"
             onClick={onClear}
           />
         )}
       </div>
 
       {searchQuery && totalMatches > 0 && (
-        <div className="flex items-center gap-2 p-2 bg-white border-b text-sm">
-          <span className="text-gray-600">
-            {currentIndex + 1} of {totalMatches} matches
+        <div className="flex items-center justify-between text-xs text-gray-600 px-3">
+          <span>
+            {currentIndex + 1} of {totalMatches}
           </span>
-          <button
-            onClick={onPrevious}
-            className="p-1 hover:bg-gray-100 rounded"
-            disabled={currentIndex === 0}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={onNext}
-            className="p-1 hover:bg-gray-100 rounded"
-            disabled={currentIndex === totalMatches - 1}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onPrevious}
+              className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
+              disabled={currentIndex === 0}
+              title="Previous"
+            >
+              <ArrowUp className="w-3 h-3" />
+            </button>
+            <button
+              onClick={onNext}
+              className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
+              disabled={currentIndex === totalMatches - 1}
+              title="Next"
+            >
+              <ArrowDown className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       )}
     </div>
