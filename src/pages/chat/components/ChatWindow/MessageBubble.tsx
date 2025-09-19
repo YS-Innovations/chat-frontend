@@ -8,6 +8,7 @@ interface MessageBubbleProps {
   message: Message;
   selfId: string;
   onReply?: (message: Message) => void;
+  searchTerm?: string;
 }
 
 /** Small double-check icon (two strokes) */
@@ -53,7 +54,9 @@ const stripTags = (html?: string | null) => {
   return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply, searchTerm = '' }) => {
+
+
   // Support comparing either the internal DB senderId *or* an Auth0 ID if backend provides it
   // e.g. message.senderId === '68b67f3d...' OR message.senderAuth0Id === 'auth0|686f...'
   const senderAuth0Id = (message as any).senderAuth0Id ?? (message as any).sender?.auth0Id ?? undefined;
@@ -145,6 +148,24 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
   // Determine stable message id for data attribute (support clientMsgId fallback)
   const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
 
+  // Function to highlight search terms in content
+  const highlightSearchTerms = (html: string, term: string) => {
+    if (!term || !html) return html;
+
+    const safeHtml = sanitize(html);
+    const searchRegex = new RegExp(term, 'gi');
+
+    return safeHtml.replace(
+      searchRegex,
+      match => `<span class="bg-yellow-200 font-semibold">${match}</span>`
+    );
+  };
+
+  // Use highlighted content if search term exists
+  const displayHtml = searchTerm
+    ? highlightSearchTerms(message.content || '', searchTerm)
+    : safeHtml;
+
   return (
     <div className={wrapperClass} data-message-id={stableMessageId}>
       <div className={`inline-flex items-center group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -221,8 +242,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply 
 
           {/* Message content (sanitized HTML) or fallback */}
           <div className="chat-bubble-content" style={{ textAlign: isMe ? 'right' : 'left', margin: 0 }}>
-            {safeHtml ? (
-              <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
+            {displayHtml ? (
+              <div dangerouslySetInnerHTML={{ __html: displayHtml }} />
             ) : hasMedia ? null : (
               <span className="text-gray-500">(empty)</span>
             )}

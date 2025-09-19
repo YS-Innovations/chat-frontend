@@ -37,6 +37,7 @@ interface ThreadedMessageListProps {
    * This will be forwarded to MessageBubble so it can determine alignment correctly.
    */
   selfId: string;
+  searchTerm?: string;
 }
 
 /**
@@ -64,6 +65,8 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
   maxDepth,
   className,
   selfId,
+  searchTerm = ''
+
 }) => {
   if (!messages || messages.length === 0) {
     return null;
@@ -108,6 +111,7 @@ const ThreadedMessageList: React.FC<ThreadedMessageListProps> = ({
                 message={msg}
                 onReply={onReply}
                 selfId={selfId}
+                searchTerm={searchTerm}
               />
             </div>
 

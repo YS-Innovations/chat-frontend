@@ -10,6 +10,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
 import { sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
+import { Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useMessageSearch } from '../../hooks/useMessageSearch';
+import { Highlight } from '../Search/Highlight';
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -17,8 +21,54 @@ interface ChatWindowProps {
   conversationData?: ConversationListItem | null;
   onAgentAssignmentChange?: () => void;
   onReply?: (message: Message) => void;
-    highlightMessageId?: string | null; 
+  highlightMessageId?: string | null;
 }
+
+interface SearchMatchIndicatorProps {
+  currentIndex: number;
+  totalMatches: number;
+  onNext: () => void;
+  onPrevious: () => void;
+  onClose: () => void;
+}
+const SearchMatchIndicator: React.FC<SearchMatchIndicatorProps> = ({
+  currentIndex,
+  totalMatches,
+  onNext,
+  onPrevious,
+  onClose
+}) => {
+  if (totalMatches === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2 p-2 bg-white border-b text-sm">
+      <span className="text-gray-600">
+        {currentIndex + 1} of {totalMatches} matches
+      </span>
+      <button
+        onClick={onPrevious}
+        className="p-1 hover:bg-gray-100 rounded"
+        disabled={currentIndex === 0}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button
+        onClick={onNext}
+        className="p-1 hover:bg-gray-100 rounded"
+        disabled={currentIndex === totalMatches - 1}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
 
 const SCROLL_THRESHOLD_PX = 120;
 
@@ -41,6 +91,89 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   // Refs to avoid re-sending same receipts repeatedly
   const lastSeenUptoRef = useRef<string | null>(null);
   const lastDeliveredSetRef = useRef<Set<string>>(new Set());
+  const { searchResults, searchLoading, search, clearResults } = useMessageSearch();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
+  const searchMatchRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+ const conversationSearchResults = searchResults.filter(msg => 
+    msg.conversationId === conversationId
+  );
+
+  // Function to scroll to a search result
+  const scrollToSearchResult = useCallback((index: number) => {
+    if (conversationSearchResults.length === 0 || index < 0 || index >= conversationSearchResults.length) {
+      return;
+    }
+
+    const messageId = conversationSearchResults[index].id;
+    const element = searchMatchRefs.current.get(messageId);
+    
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Highlight the message
+      element.style.backgroundColor = 'rgba(255, 215, 0, 0.3)';
+      element.style.transition = 'background-color 700ms ease';
+      
+      setTimeout(() => {
+        if (element) {
+          element.style.backgroundColor = '';
+          setTimeout(() => {
+            if (element) {
+              element.style.transition = '';
+            }
+          }, 300);
+        }
+      }, 2000);
+    }
+  }, [conversationSearchResults]);
+
+  // Handle search query changes
+  useEffect(() => {
+    if (conversationId && searchQuery.trim()) {
+      const handler = setTimeout(() => {
+        search(conversationId, searchQuery);
+      }, 500);
+
+      return () => clearTimeout(handler);
+    } else {
+      clearResults();
+      setCurrentSearchMatchIndex(-1);
+    }
+  }, [searchQuery, conversationId]);
+
+  // Navigate through search results
+  const handleNextSearchMatch = () => {
+    const nextIndex = (currentSearchMatchIndex + 1) % conversationSearchResults.length;
+    setCurrentSearchMatchIndex(nextIndex);
+    scrollToSearchResult(nextIndex);
+  };
+
+  const handlePreviousSearchMatch = () => {
+    const prevIndex = currentSearchMatchIndex === 0 
+      ? conversationSearchResults.length - 1 
+      : currentSearchMatchIndex - 1;
+    setCurrentSearchMatchIndex(prevIndex);
+    scrollToSearchResult(prevIndex);
+  };
+
+  const handleCloseSearch = () => {
+    setSearchQuery('');
+    clearResults();
+    setCurrentSearchMatchIndex(-1);
+  };
+
+  // Register refs for search result messages
+  useEffect(() => {
+    searchMatchRefs.current.clear();
+    conversationSearchResults.forEach(msg => {
+      const element = document.querySelector(`[data-message-id="${msg.id}"]`) as HTMLElement;
+      if (element) {
+        searchMatchRefs.current.set(msg.id, element);
+      }
+    });
+  }, [conversationSearchResults]);
 
   const isNearBottom = useCallback((el: HTMLDivElement | null) => {
     if (!el) return false;
@@ -116,7 +249,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const toDeliver = messages
         .filter((m) => {
           // Only mark messages not sent by us
-          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
           const notDelivered = !m.deliveredAt;
           return sentByOther && notDelivered;
         })
@@ -136,7 +269,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const lastUnreadFromOther = [...messages]
         .reverse()
         .find((m) => {
-          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
           return sentByOther && !m.seenAt;
         });
 
@@ -155,8 +288,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [conversationId, loading, messages, selfId]);
 
-   useEffect(() => {
-    if (!highlightMessageId || loading ) {
+  useEffect(() => {
+    if (!highlightMessageId || loading) {
       return;
     }
 
@@ -165,24 +298,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const highlightMessage = () => {
         const selector = `[data-message-id="${highlightMessageId}"]`;
         const el = document.querySelector(selector) as HTMLElement | null;
-        
+
         if (!el) {
           // If element not found, try again after a short delay
           setTimeout(highlightMessage, 100);
           return;
         }
-        
+
         try {
           // Scroll to the message
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
+
           // Apply highlight effect
           el.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
           el.style.transition = 'background-color 700ms ease';
-          
+
           // Mark this message as highlighted
           highlightedMessageRef.current = highlightMessageId;
-          
+
           // Remove highlight after 2 seconds
           setTimeout(() => {
             if (el) {
@@ -201,7 +334,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       // Small delay to ensure DOM is fully rendered
       const timeoutId = setTimeout(highlightMessage, 100);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [highlightMessageId, loading, messages.length]);
@@ -243,17 +376,45 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           onShowDetails={() => setShowDetails(true)}
         />
 
+         <div className="px-4 py-2 border-b bg-gray-50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search in conversation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <X
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+                onClick={handleCloseSearch}
+              />
+            )}
+          </div>
+          
+          {searchQuery && (
+            <SearchMatchIndicator
+              currentIndex={currentSearchMatchIndex}
+              totalMatches={conversationSearchResults.length}
+              onNext={handleNextSearchMatch}
+              onPrevious={handlePreviousSearchMatch}
+              onClose={handleCloseSearch}
+            />
+          )}
+        </div>
+
         <div
           ref={containerRef}
           className="flex-1 px-4 py-2 overflow-y-auto space-y-2 bg-white min-h-0"
           tabIndex={0}
         >
           {isThreaded ? (
-            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} />
+            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} searchTerm={searchQuery} />
           ) : (
             <>
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
+                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} searchTerm={searchQuery} />
               ))}
             </>
           )}

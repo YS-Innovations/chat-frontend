@@ -206,3 +206,22 @@ export async function searchConversations(
   );
   return res.data;
 }
+
+
+export async function searchMessagesInConversation(
+  conversationId: string,
+  query: string,
+  limit = 20,
+  offset = 0
+): Promise<Message[]> {
+  const params = new URLSearchParams({
+    query,
+    limit: limit.toString(), // Convert to string for URL params
+    offset: offset.toString() // Convert to string for URL params
+  });
+
+  const url = `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages/search?${params.toString()}`;
+  
+  const res = await axios.get<Message[]>(url);
+  return res.data;
+}
