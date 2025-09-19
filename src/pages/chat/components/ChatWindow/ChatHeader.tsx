@@ -1,18 +1,22 @@
 import React from 'react';
-import { User, MoreVertical } from 'lucide-react';
+import { User, MoreVertical, Search } from 'lucide-react';
 import type { ConversationListItem } from '../../api/chatService';
 
-// src/pages/chat/components/ChatHeader/ChatHeader.tsx
 interface ChatHeaderProps {
   conversation: ConversationListItem | null | undefined;
   onAssignAgent?: () => void;
   onShowDetails?: () => void;
+  onToggleSearch?: () => void; // 👈 NEW
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent, onShowDetails }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({
+  conversation,
+  onAssignAgent,
+  onShowDetails,
+  onToggleSearch, // 👈 NEW
+}) => {
   if (!conversation) return null;
 
-  // Safely extract agent information
   const agent = conversation.agent || (conversation as any).agentData;
   const agentId = conversation.agentId || agent?.id;
 
@@ -39,8 +43,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent, on
               <span>Assigned to {agent.name || agent.email || 'Agent'}</span>
             </div>
           )}
-          
-          {/* Show agent ID if agent object is missing but agentId exists */}
+
           {!agent && agentId && (
             <div className="flex items-center gap-1 text-sm text-blue-600">
               <User className="w-3 h-3" />
@@ -51,6 +54,14 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent, on
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          onClick={onToggleSearch} // 👈 NEW
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+          title="Search in conversation"
+        >
+          <Search className="w-4 h-4" />
+        </button>
+
         {agent || agentId ? (
           <button
             onClick={onAssignAgent}
@@ -67,7 +78,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, onAssignAgent, on
             Assign Agent
           </button>
         )}
-        
+
         <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
           <MoreVertical className="w-4 h-4" />
         </button>

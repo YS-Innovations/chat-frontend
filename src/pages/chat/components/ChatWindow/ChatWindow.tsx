@@ -47,8 +47,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
   const searchMatchRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
- const conversationSearchResults = searchResults.filter(msg => 
+
+  const conversationSearchResults = searchResults.filter(msg =>
     msg.conversationId === conversationId
   );
 
@@ -60,14 +62,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     const messageId = conversationSearchResults[index].id;
     const element = searchMatchRefs.current.get(messageId);
-    
+
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
+
       // Highlight the message
       element.style.backgroundColor = 'rgba(255, 215, 0, 0.3)';
       element.style.transition = 'background-color 700ms ease';
-      
+
       setTimeout(() => {
         if (element) {
           element.style.backgroundColor = '';
@@ -103,8 +105,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const handlePreviousSearchMatch = () => {
-    const prevIndex = currentSearchMatchIndex === 0 
-      ? conversationSearchResults.length - 1 
+    const prevIndex = currentSearchMatchIndex === 0
+      ? conversationSearchResults.length - 1
       : currentSearchMatchIndex - 1;
     setCurrentSearchMatchIndex(prevIndex);
     scrollToSearchResult(prevIndex);
@@ -326,18 +328,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
           onShowDetails={() => setShowDetails(true)}
+          onToggleSearch={() => setShowSearchBar((prev) => !prev)}
         />
 
-        <ChatSearchBar
-  searchQuery={searchQuery}
-  onSearchChange={setSearchQuery}
-  onClear={handleCloseSearch}
-  currentIndex={currentSearchMatchIndex}
-  totalMatches={conversationSearchResults.length}
-  onNext={handleNextSearchMatch}
-  onPrevious={handlePreviousSearchMatch}
-  onClose={handleCloseSearch}
-/>
+        {showSearchBar && (
+          <ChatSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onClear={handleCloseSearch}
+            currentIndex={currentSearchMatchIndex}
+            totalMatches={conversationSearchResults.length}
+            onNext={handleNextSearchMatch}
+            onPrevious={handlePreviousSearchMatch}
+            onClose={() => {
+              handleCloseSearch();
+              setShowSearchBar(false); 
+            }}
+          />
+        )}
+
 
         <div
           ref={containerRef}
