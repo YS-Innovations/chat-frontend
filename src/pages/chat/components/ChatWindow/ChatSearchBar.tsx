@@ -25,7 +25,7 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   onClose,
 }) => {
   return (
-    <div className="absolute top-33 right-25 z-50 shadow-lg rounded-md  bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
+    <div className="absolute top-1/7 right-1/16 z-50 shadow-lg rounded-md  bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
       <div className="relative">
         <Input
           value={searchQuery}
