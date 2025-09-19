@@ -149,22 +149,71 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply,
   const stableMessageId = message.id ?? (message as any).clientMsgId ?? undefined;
 
   // Function to highlight search terms in content
-  const highlightSearchTerms = (html: string, term: string) => {
-    if (!term || !html) return html;
+const highlightSearchTerms = (html: string, term: string) => {
+  if (!term || !html) return sanitize(html);
 
-    const safeHtml = sanitize(html);
-    const searchRegex = new RegExp(term, 'gi');
-
-    return safeHtml.replace(
-      searchRegex,
-      match => `<span class="bg-yellow-200 font-semibold">${match}</span>`
-    );
+  // First sanitize the HTML to remove any dangerous content
+  const safeHtml = sanitize(html);
+  
+  // Create a temporary DOM element to work with
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = safeHtml;
+  
+  // Function to recursively search and highlight text nodes
+  const highlightTextNodes = (node: Node, searchRegex: RegExp) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || '';
+      if (searchRegex.test(text)) {
+        const frag = document.createDocumentFragment();
+        let lastIndex = 0;
+        
+        text.replace(searchRegex, (match, offset) => {
+          // Add text before the match
+          if (offset > lastIndex) {
+            frag.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+          }
+          
+          // Create highlight span for the match
+          const highlightSpan = document.createElement('span');
+          highlightSpan.className = 'bg-yellow-200 font-semibold';
+          highlightSpan.textContent = match;
+          frag.appendChild(highlightSpan);
+          
+          lastIndex = offset + match.length;
+          return match;
+        });
+        
+        // Add remaining text after last match
+        if (lastIndex < text.length) {
+          frag.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+        
+        // Replace the original text node with the highlighted fragment
+        if (node.parentNode) {
+          node.parentNode.replaceChild(frag, node);
+        }
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      // Recursively process child nodes
+      Array.from(node.childNodes).forEach(child => 
+        highlightTextNodes(child, searchRegex)
+      );
+    }
   };
+  
+  // Create regex for the search term
+  const searchRegex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  
+  // Apply highlighting to text nodes
+  highlightTextNodes(tempDiv, searchRegex);
+  
+  return tempDiv.innerHTML;
+};
 
   // Use highlighted content if search term exists
   const displayHtml = searchTerm
-    ? highlightSearchTerms(message.content || '', searchTerm)
-    : safeHtml;
+  ? highlightSearchTerms(message.content || '', searchTerm)
+  : sanitize(message.content || '');
 
   return (
     <div className={wrapperClass} data-message-id={stableMessageId}>
