@@ -1,6 +1,6 @@
 // src/pages/chat/components/ConversationList/ConversationList.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, ChevronDown, Calendar, User, SlidersHorizontal } from 'lucide-react';
 import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/useConversations';
 import { useConversationSearch } from '../../hooks/useConversationSearch';
@@ -14,6 +14,18 @@ import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters';
 import { Highlight } from '../Search/Highlight';
 import sanitizeAndHighlight from '../sanitizeAndHighlight';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -42,14 +54,22 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const { getAccessTokenSilently } = useAuthShared();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFiltersState>({});
   const [isSearching, setIsSearching] = useState(false);
+  const [filterCount, setFilterCount] = useState(0);
+
+  // Count active filters
+  useEffect(() => {
+    const count = Object.values(filters).filter(value => 
+      value !== undefined && value !== '' && value !== "ALL"
+    ).length;
+    setFilterCount(count);
+  }, [filters]);
 
   // Debounced search
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (searchTerm.trim() || Object.values(filters).some(v => v !== undefined)) {
+      if (searchTerm.trim() || Object.values(filters).some(v => v !== undefined && v !== "ALL")) {
         performSearch();
       } else {
         clearResults();
@@ -61,7 +81,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }, [searchTerm, filters]);
 
   const performSearch = async () => {
-    if (!searchTerm.trim() && !Object.values(filters).some(v => v !== undefined)) {
+    if (!searchTerm.trim() && !Object.values(filters).some(v => v !== undefined && v !== "ALL")) {
       return;
     }
 
@@ -90,13 +110,16 @@ const ConversationList: React.FC<ConversationListProps> = ({
     setIsSearching(false);
   };
 
+  const handleClearAllFilters = () => {
+    setFilters({});
+  };
+
   // Group search results by conversation
   const { matchingConversations, allMessageMatches } = useMemo(() => {
     if (!isSearching || !results) {
       return { matchingConversations: conversations, allMessageMatches: [] };
     }
 
-    // Get unique conversations from search results
     const conversationMap = new Map();
     const messageMatches: (MessageMatch & { conversationId: string; guestName: string })[] = [];
 
@@ -120,8 +143,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
       allMessageMatches: messageMatches
     };
   }, [conversations, results, isSearching]);
-
-
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.');
@@ -157,61 +178,133 @@ const ConversationList: React.FC<ConversationListProps> = ({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Search Header */}
-      <div className="p-3 border-b space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-9"
-          />
-          {searchTerm && (
-            <X
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
-              onClick={handleClearSearch}
+      <div className="p-4 border-b space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations and messages..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-9 h-10"
             />
-          )}
+            {searchTerm && (
+              <X
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground"
+                onClick={handleClearSearch}
+              />
+            )}
+          </div>
+
+          {/* Filter Button with Badge */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 relative shrink-0"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {filterCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 min-w-0 p-0 flex items-center justify-center text-xs"
+                  >
+                    {filterCount}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80 sm:w-96 p-0">
+              <SheetHeader className="p-6 pb-4 border-b">
+                <SheetTitle className="flex items-center justify-between">
+                  <span>Filters</span>
+                  {filterCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearAllFilters}
+                      className="h-8 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Clear all
+                    </Button>
+                  )}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="p-6">
+                <SearchFilters
+                  query={searchTerm}
+                  onQueryChange={setSearchTerm}
+                  filters={filters}
+                  onFiltersChange={handleFiltersChange}
+                  onClear={handleClearSearch}
+                  availableAgents={availableAgents}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
-            </Badge>
-            {/* {isSearching && results && (
-              <Badge variant="outline" className="text-xs">
-                {results.totalCount} total matches
+        {/* Active filters summary */}
+        {filterCount > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground">Active filters:</span>
+            {filters.status && filters.status !== "ALL" && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                Status: {filters.status}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-foreground"
+                  onClick={() => handleFiltersChange({ status: undefined })}
+                />
               </Badge>
-            )} */}
+            )}
+            {filters.agentId && filters.agentId !== "ALL" && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                Agent: {availableAgents.find(a => a.id === filters.agentId)?.name || filters.agentId}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-foreground"
+                  onClick={() => handleFiltersChange({ agentId: undefined })}
+                />
+              </Badge>
+            )}
+            {filters.hasAgent !== undefined && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                Assigned: {filters.hasAgent ? 'Yes' : 'No'}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-foreground"
+                  onClick={() => handleFiltersChange({ hasAgent: undefined })}
+                />
+              </Badge>
+            )}
+            {(filters.startDate || filters.endDate) && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                <Calendar className="h-3 w-3" />
+                {formatDateForDisplay(filters.startDate)} - {formatDateForDisplay(filters.endDate)}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-foreground"
+                  onClick={() => handleFiltersChange({ startDate: undefined, endDate: undefined })}
+                />
+              </Badge>
+            )}
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className={showFilters ? 'bg-accent' : ''}
-            >
-              <Filter className="h-4 w-4 mr-1" />
-              Filters
-            </Button>
-            {/* <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading || searchLoading}>
-              Refresh
-            </Button> */}
-          </div>
-        </div>
-
-        {showFilters && (
-          <SearchFilters
-            query={searchTerm}
-            onQueryChange={setSearchTerm}
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onClear={handleClearSearch}
-            availableAgents={availableAgents}
-          />
         )}
+
+        {/* Results count */}
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="text-xs font-normal">
+            {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
+          </Badge>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRefresh}
+            disabled={loading || searchLoading}
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Conversation List */}
@@ -226,12 +319,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         ) : (
           <>
-
             {isSearching && results && (
-              <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4">
+              <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4 px-4">
                 Chats ({matchingConversations.length})
               </h3>
             )}
+            
             {/* Matching Conversations */}
             {matchingConversations.map((conv: any) => (
               <ConversationItem
@@ -248,7 +341,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
             {/* Matching Messages Section */}
             {isSearching && allMessageMatches.length > 0 && (
-              <div className="border-t border-gray-200 pt-4">
+              <div className="border-t border-gray-200 pt-4 px-4">
                 <h3 className="font-semibold text-sm text-gray-700 mb-3">
                   Messages ({allMessageMatches.length})
                 </h3>
@@ -294,7 +387,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
                           }}
                           className="line-clamp-2"
                         />
-
                       </div>
 
                       {/* Loading indicator that shows when clicked */}
@@ -325,6 +417,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
       </div>
     </div>
   );
+};
+
+// Helper function for date display
+const formatDateForDisplay = (isoString?: string): string => {
+  if (!isoString) return '';
+  return isoString.split('T')[0];
 };
 
 export default ConversationList;

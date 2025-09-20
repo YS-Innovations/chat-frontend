@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
 interface SearchFiltersProps {
   query: string;
@@ -37,12 +38,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   onClear,
   availableAgents,
 }) => {
-  const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== '');
-
-  // Convert date to ISO string with time component
   const formatDateForBackend = (dateString: string): string => {
     if (!dateString) return '';
-    // Add time component to make it a full ISO datetime
     return `${dateString}T00:00:00.000Z`;
   };
 
@@ -50,86 +47,24 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     onFiltersChange({ [type]: formatDateForBackend(value) });
   };
 
-  // Format dates for display in input fields (remove time component)
   const formatDateForDisplay = (isoString?: string): string => {
     if (!isoString) return '';
     return isoString.split('T')[0];
   };
 
   return (
-    <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-      {/* Search Input */}
-      <div className="relative">
-        <Input
-          placeholder="Search..."
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          className="pl-10"
-        />
-        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      </div>
-
-      {/* Active Filters Badges */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {filters.status && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              Status: {filters.status}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => onFiltersChange({ status: undefined })}
-              />
-            </Badge>
-          )}
-          {filters.agentId && filters.agentId !== "ALL" && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              Agent: {availableAgents.find(a => a.id === filters.agentId)?.name || filters.agentId}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => onFiltersChange({ agentId: undefined })}
-              />
-            </Badge>
-          )}
-          {filters.hasAgent !== undefined && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              Has Agent: {filters.hasAgent ? 'Yes' : 'No'}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => onFiltersChange({ hasAgent: undefined })}
-              />
-            </Badge>
-          )}
-          {(filters.startDate || filters.endDate) && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {formatDateForDisplay(filters.startDate)} - {formatDateForDisplay(filters.endDate)}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => onFiltersChange({ startDate: undefined, endDate: undefined })}
-              />
-            </Badge>
-          )}
-          <Button variant="ghost" size="sm" onClick={onClear} className="h-6 px-2">
-            Clear all
-          </Button>
-        </div>
-      )}
-
-      {/* Filter Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Status Filter */}
+    <div className="space-y-6">
+      {/* Status Filter */}
+      <div className="space-y-2">
+        <Label htmlFor="status-filter" className="text-sm font-medium">Status</Label>
         <Select
           value={filters.status || "ALL"}
           onValueChange={(value) => {
-            if (value === "ALL") {
-              onFiltersChange({ status: undefined });
-            } else {
-              onFiltersChange({ status: value });
-            }
+            onFiltersChange({ status: value === "ALL" ? undefined : value });
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Status" />
+          <SelectTrigger id="status-filter" className="w-full">
+            <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All statuses</SelectItem>
@@ -138,20 +73,19 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             <SelectItem value="PENDING">Pending</SelectItem>
           </SelectContent>
         </Select>
+      </div>
 
-        {/* Agent Filter */}
+      {/* Agent Filter */}
+      <div className="space-y-2">
+        <Label htmlFor="agent-filter" className="text-sm font-medium">Agent</Label>
         <Select
           value={filters.agentId || "ALL"}
           onValueChange={(value) => {
-            if (value === "ALL") {
-              onFiltersChange({ agentId: undefined });
-            } else {
-              onFiltersChange({ agentId: value });
-            }
+            onFiltersChange({ agentId: value === "ALL" ? undefined : value });
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Agent" />
+          <SelectTrigger id="agent-filter" className="w-full">
+            <SelectValue placeholder="Select agent" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All agents</SelectItem>
@@ -162,8 +96,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
 
-        {/* Assignment Filter - Fix this to use boolean values */}
+      {/* Assignment Filter */}
+      <div className="space-y-2">
+        <Label htmlFor="assignment-filter" className="text-sm font-medium">Assignment</Label>
         <Select
           value={
             filters.hasAgent === undefined 
@@ -173,15 +110,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 : "false"
           }
           onValueChange={(value) => {
-            if (value === "ALL") {
-              onFiltersChange({ hasAgent: undefined });
-            } else {
-              onFiltersChange({ hasAgent: value === "true" });
-            }
+            onFiltersChange({ hasAgent: value === "ALL" ? undefined : value === "true" });
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Assignment" />
+          <SelectTrigger id="assignment-filter" className="w-full">
+            <SelectValue placeholder="Select assignment" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All</SelectItem>
@@ -189,25 +122,43 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             <SelectItem value="false">Unassigned</SelectItem>
           </SelectContent>
         </Select>
+      </div>
 
-        {/* Date Filters */}
-        <div className="flex gap-2 col-span-2">
-          <Input
-            type="date"
-            placeholder="Start date"
-            value={formatDateForDisplay(filters.startDate)}
-            onChange={(e) => handleDateChange('startDate', e.target.value)}
-            className="text-sm"
-          />
-          <Input
-            type="date"
-            placeholder="End date"
-            value={formatDateForDisplay(filters.endDate)}
-            onChange={(e) => handleDateChange('endDate', e.target.value)}
-            className="text-sm"
-          />
+      {/* Date Range Filter */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Date Range</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="start-date" className="text-xs text-muted-foreground">From</Label>
+            <Input
+              id="start-date"
+              type="date"
+              value={formatDateForDisplay(filters.startDate)}
+              onChange={(e) => handleDateChange('startDate', e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="end-date" className="text-xs text-muted-foreground">To</Label>
+            <Input
+              id="end-date"
+              type="date"
+              value={formatDateForDisplay(filters.endDate)}
+              onChange={(e) => handleDateChange('endDate', e.target.value)}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Clear Button */}
+      <Button
+        variant="outline"
+        onClick={onClear}
+        className="w-full mt-4"
+      >
+        Clear All Filters
+      </Button>
     </div>
   );
 };
