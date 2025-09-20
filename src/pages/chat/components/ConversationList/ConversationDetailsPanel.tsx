@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
-import { getAssignmentHistory, type AssignmentEntry } from '../../api/agentService';
+import { getAssignmentHistory, type AssignmentEntry } from '../../api/Agent/agentService';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';

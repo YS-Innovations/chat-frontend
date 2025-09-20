@@ -6,7 +6,7 @@ import {
   assignAgentToConversation, 
   unassignAgentFromConversation,
   type Agent 
-} from '../api/agentService';
+} from '../api/Agent/agentService';
 
 export function useAgentAssignment() {
   const { getAccessTokenSilently } = useAuthShared();
