@@ -1,6 +1,6 @@
 // src/pages/chat/components/ConversationList/ConversationList.tsx
-import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, Filter, ChevronDown, Calendar, User, SlidersHorizontal } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Search, X, Calendar, SlidersHorizontal } from 'lucide-react';
 import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/useConversations';
 import { useConversationSearch } from '../../hooks/useConversationSearch';
@@ -20,7 +20,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from '@/components/ui/sheet';
 
 interface ConversationListProps {
@@ -57,16 +56,41 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   // Count active filters
   useEffect(() => {
-    const count = Object.values(filters).filter(value => 
-      value !== undefined && value !== '' && value !== "ALL"
-    ).length;
+    const count = Object.entries(filters).filter(([key, value]) => {
+      if (value === undefined || value === '' || value === "ALL") return false;
+      if (key === 'hasAgent' && value === false) return true; // false is a valid value
+      return true;
+    }).length;
     setFilterCount(count);
   }, [filters]);
+
+  // Remove individual filter
+  const removeFilter = useCallback((filterType: keyof SearchFiltersState) => {
+    setFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterType];
+      return newFilters;
+    });
+  }, []);
+
+  // Remove date filter
+  const removeDateFilter = useCallback(() => {
+    setFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters.startDate;
+      delete newFilters.endDate;
+      return newFilters;
+    });
+  }, []);
 
   // Debounced search
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (searchTerm.trim() || Object.values(filters).some(v => v !== undefined && v !== "ALL")) {
+      const hasActiveFilters = Object.values(filters).some(
+        value => value !== undefined && value !== '' && value !== "ALL"
+      );
+      
+      if (searchTerm.trim() || hasActiveFilters) {
         performSearch();
       } else {
         clearResults();
@@ -78,7 +102,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }, [searchTerm, filters]);
 
   const performSearch = async () => {
-    if (!searchTerm.trim() && !Object.values(filters).some(v => v !== undefined && v !== "ALL")) {
+    const hasActiveFilters = Object.values(filters).some(
+      value => value !== undefined && value !== '' && value !== "ALL"
+    );
+    
+    if (!searchTerm.trim() && !hasActiveFilters) {
       return;
     }
 
@@ -93,34 +121,24 @@ const ConversationList: React.FC<ConversationListProps> = ({
       });
     } catch (error) {
       console.error('Search failed:', error);
+      setIsSearching(false);
     }
   };
 
-  const handleFiltersChange = (newFilters: Partial<SearchFiltersState>) => {
+  const handleFiltersChange = useCallback((newFilters: Partial<SearchFiltersState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchTerm('');
     setFilters({});
     clearResults();
     setIsSearching(false);
-  };
+  }, [clearResults]);
 
-  const handleClearAllFilters = () => {
+  const handleClearAllFilters = useCallback(() => {
     setFilters({});
-    // Don't close the sheet when clearing filters
-  };
-
-  // Remove individual filter
-  const removeFilter = (filterType: keyof SearchFiltersState) => {
-    setFilters(prev => ({ ...prev, [filterType]: undefined }));
-  };
-
-  // Remove date filter
-  const removeDateFilter = () => {
-    setFilters(prev => ({ ...prev, startDate: undefined, endDate: undefined }));
-  };
+  }, []);
 
   // Group search results by conversation
   const { matchingConversations, allMessageMatches } = useMemo(() => {
@@ -259,40 +277,44 @@ const ConversationList: React.FC<ConversationListProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-muted-foreground">Active filters:</span>
             {filters.status && filters.status !== "ALL" && (
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <Badge 
+                variant="secondary" 
+                className="flex items-center gap-1 text-xs cursor-pointer"
+                onClick={() => removeFilter('status')}
+              >
                 Status: {filters.status}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => removeFilter('status')}
-                />
+                <X className="h-3 w-3 hover:text-foreground" />
               </Badge>
             )}
             {filters.agentId && filters.agentId !== "ALL" && (
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <Badge 
+                variant="secondary" 
+                className="flex items-center gap-1 text-xs cursor-pointer"
+                onClick={() => removeFilter('agentId')}
+              >
                 Agent: {availableAgents.find(a => a.id === filters.agentId)?.name || filters.agentId}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => removeFilter('agentId')}
-                />
+                <X className="h-3 w-3 hover:text-foreground" />
               </Badge>
             )}
             {filters.hasAgent !== undefined && (
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <Badge 
+                variant="secondary" 
+                className="flex items-center gap-1 text-xs cursor-pointer"
+                onClick={() => removeFilter('hasAgent')}
+              >
                 Assigned: {filters.hasAgent ? 'Yes' : 'No'}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => removeFilter('hasAgent')}
-                />
+                <X className="h-3 w-3 hover:text-foreground" />
               </Badge>
             )}
             {(filters.startDate || filters.endDate) && (
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <Badge 
+                variant="secondary" 
+                className="flex items-center gap-1 text-xs cursor-pointer"
+                onClick={removeDateFilter}
+              >
                 <Calendar className="h-3 w-3" />
                 {formatDateForDisplay(filters.startDate)} - {formatDateForDisplay(filters.endDate)}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={removeDateFilter}
-                />
+                <X className="h-3 w-3 hover:text-foreground" />
               </Badge>
             )}
           </div>
@@ -431,7 +453,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
 // Helper function for date display
 const formatDateForDisplay = (isoString?: string): string => {
   if (!isoString) return '';
-  return isoString.split('T')[0];
+  try {
+    return new Date(isoString).toLocaleDateString();
+  } catch {
+    return isoString.split('T')[0];
+  }
 };
 
 export default ConversationList;

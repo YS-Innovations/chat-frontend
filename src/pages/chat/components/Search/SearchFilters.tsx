@@ -1,6 +1,6 @@
 // src/pages/chat/components/Search/SearchFilters.tsx
 import React from 'react';
-import { X, Calendar, User, Filter } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -69,9 +69,16 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     };
   };
 
-  const formatDateForDisplay = (isoString?: string): string => {
-    if (!isoString) return '';
-    return format(new Date(isoString), 'MMM dd, yyyy');
+  const handleStatusChange = (value: string) => {
+    onFiltersChange({ status: value === "ALL" ? undefined : value });
+  };
+
+  const handleAgentChange = (value: string) => {
+    onFiltersChange({ agentId: value === "ALL" ? undefined : value });
+  };
+
+  const handleAssignmentChange = (value: string) => {
+    onFiltersChange({ hasAgent: value === "ALL" ? undefined : value === "true" });
   };
 
   const handleApplyFilters = () => {
@@ -87,9 +94,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         <Label htmlFor="status-filter" className="text-sm font-medium">Status</Label>
         <Select
           value={filters.status || "ALL"}
-          onValueChange={(value) => {
-            onFiltersChange({ status: value === "ALL" ? undefined : value });
-          }}
+          onValueChange={handleStatusChange}
         >
           <SelectTrigger id="status-filter" className="w-full">
             <SelectValue placeholder="Select status" />
@@ -108,9 +113,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         <Label htmlFor="agent-filter" className="text-sm font-medium">Agent</Label>
         <Select
           value={filters.agentId || "ALL"}
-          onValueChange={(value) => {
-            onFiltersChange({ agentId: value === "ALL" ? undefined : value });
-          }}
+          onValueChange={handleAgentChange}
         >
           <SelectTrigger id="agent-filter" className="w-full">
             <SelectValue placeholder="Select agent" />
@@ -137,9 +140,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 ? "true" 
                 : "false"
           }
-          onValueChange={(value) => {
-            onFiltersChange({ hasAgent: value === "ALL" ? undefined : value === "true" });
-          }}
+          onValueChange={handleAssignmentChange}
         >
           <SelectTrigger id="assignment-filter" className="w-full">
             <SelectValue placeholder="Select assignment" />
@@ -166,7 +167,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             >
               <Calendar className="mr-2 h-4 w-4" />
               {filters.startDate && filters.endDate ? (
-                `${formatDateForDisplay(filters.startDate)} - ${formatDateForDisplay(filters.endDate)}`
+                `${format(new Date(filters.startDate), 'MMM dd, yyyy')} - ${format(new Date(filters.endDate), 'MMM dd, yyyy')}`
               ) : (
                 "Pick a date range"
               )}
