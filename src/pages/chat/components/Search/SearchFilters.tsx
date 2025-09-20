@@ -12,6 +12,14 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface SearchFiltersProps {
   query: string;
@@ -20,6 +28,7 @@ interface SearchFiltersProps {
   onFiltersChange: (filters: Partial<SearchFiltersState>) => void;
   onClear: () => void;
   availableAgents: Array<{ id: string; name: string | null; email: string | null }>;
+  onCloseSheet?: () => void;
 }
 
 export interface SearchFiltersState {
@@ -37,19 +46,38 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   onFiltersChange,
   onClear,
   availableAgents,
+  onCloseSheet,
 }) => {
-  const formatDateForBackend = (dateString: string): string => {
-    if (!dateString) return '';
-    return `${dateString}T00:00:00.000Z`;
+  const formatDateForBackend = (date: Date | undefined): string => {
+    if (!date) return '';
+    return date.toISOString();
   };
 
-  const handleDateChange = (type: 'startDate' | 'endDate', value: string) => {
-    onFiltersChange({ [type]: formatDateForBackend(value) });
+  const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
+    onFiltersChange({
+      startDate: range?.from ? formatDateForBackend(range.from) : undefined,
+      endDate: range?.to ? formatDateForBackend(range.to) : undefined,
+    });
+  };
+
+  const getDateRange = () => {
+    if (!filters.startDate && !filters.endDate) return undefined;
+    
+    return {
+      from: filters.startDate ? new Date(filters.startDate) : undefined,
+      to: filters.endDate ? new Date(filters.endDate) : undefined,
+    };
   };
 
   const formatDateForDisplay = (isoString?: string): string => {
     if (!isoString) return '';
-    return isoString.split('T')[0];
+    return format(new Date(isoString), 'MMM dd, yyyy');
+  };
+
+  const handleApplyFilters = () => {
+    if (onCloseSheet) {
+      onCloseSheet();
+    }
   };
 
   return (
@@ -124,41 +152,55 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         </Select>
       </div>
 
-      {/* Date Range Filter */}
+      {/* Date Range Filter with Calendar */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Date Range</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="start-date" className="text-xs text-muted-foreground">From</Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={formatDateForDisplay(filters.startDate)}
-              onChange={(e) => handleDateChange('startDate', e.target.value)}
-              className="w-full"
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                (!filters.startDate && !filters.endDate) && "text-muted-foreground"
+              )}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              {filters.startDate && filters.endDate ? (
+                `${formatDateForDisplay(filters.startDate)} - ${formatDateForDisplay(filters.endDate)}`
+              ) : (
+                "Pick a date range"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <CalendarComponent
+              initialFocus
+              mode="range"
+              defaultMonth={getDateRange()?.from}
+              selected={getDateRange()}
+              onSelect={handleDateRangeChange}
+              numberOfMonths={2}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="end-date" className="text-xs text-muted-foreground">To</Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={formatDateForDisplay(filters.endDate)}
-              onChange={(e) => handleDateChange('endDate', e.target.value)}
-              className="w-full"
-            />
-          </div>
-        </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      {/* Clear Button */}
-      <Button
-        variant="outline"
-        onClick={onClear}
-        className="w-full mt-4"
-      >
-        Clear All Filters
-      </Button>
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-4">
+        <Button
+          variant="outline"
+          onClick={onClear}
+          className="flex-1"
+        >
+          Clear All
+        </Button>
+        <Button
+          onClick={handleApplyFilters}
+          className="flex-1"
+        >
+          Apply Filters
+        </Button>
+      </div>
     </div>
   );
 };

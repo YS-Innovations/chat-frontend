@@ -15,16 +15,12 @@ import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters'
 import { Highlight } from '../Search/Highlight';
 import sanitizeAndHighlight from '../sanitizeAndHighlight';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from '@/components/ui/sheet';
 
 interface ConversationListProps {
@@ -57,6 +53,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const [filters, setFilters] = useState<SearchFiltersState>({});
   const [isSearching, setIsSearching] = useState(false);
   const [filterCount, setFilterCount] = useState(0);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Count active filters
   useEffect(() => {
@@ -112,6 +109,17 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   const handleClearAllFilters = () => {
     setFilters({});
+    // Don't close the sheet when clearing filters
+  };
+
+  // Remove individual filter
+  const removeFilter = (filterType: keyof SearchFiltersState) => {
+    setFilters(prev => ({ ...prev, [filterType]: undefined }));
+  };
+
+  // Remove date filter
+  const removeDateFilter = () => {
+    setFilters(prev => ({ ...prev, startDate: undefined, endDate: undefined }));
   };
 
   // Group search results by conversation
@@ -183,7 +191,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search conversations and messages..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 pr-9 h-10"
@@ -197,7 +205,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
           </div>
 
           {/* Filter Button with Badge */}
-          <Sheet>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -239,6 +247,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                   onFiltersChange={handleFiltersChange}
                   onClear={handleClearSearch}
                   availableAgents={availableAgents}
+                  onCloseSheet={() => setIsSheetOpen(false)}
                 />
               </div>
             </SheetContent>
@@ -254,7 +263,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 Status: {filters.status}
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => handleFiltersChange({ status: undefined })}
+                  onClick={() => removeFilter('status')}
                 />
               </Badge>
             )}
@@ -263,7 +272,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 Agent: {availableAgents.find(a => a.id === filters.agentId)?.name || filters.agentId}
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => handleFiltersChange({ agentId: undefined })}
+                  onClick={() => removeFilter('agentId')}
                 />
               </Badge>
             )}
@@ -272,7 +281,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 Assigned: {filters.hasAgent ? 'Yes' : 'No'}
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => handleFiltersChange({ hasAgent: undefined })}
+                  onClick={() => removeFilter('hasAgent')}
                 />
               </Badge>
             )}
@@ -282,7 +291,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 {formatDateForDisplay(filters.startDate)} - {formatDateForDisplay(filters.endDate)}
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-foreground"
-                  onClick={() => handleFiltersChange({ startDate: undefined, endDate: undefined })}
+                  onClick={removeDateFilter}
                 />
               </Badge>
             )}
