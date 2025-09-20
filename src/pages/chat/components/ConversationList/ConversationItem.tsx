@@ -1,7 +1,7 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
 import React, { useState } from 'react';
 import { MoreVertical, Trash2, Clock, User, UserX, Users, MessageSquare } from 'lucide-react';
-import type { ConversationListItem, MessageMatch } from '../../api/chatService';
+import type { ConversationListItem, MessageMatch } from '../../api/Chat/chatService';
 import {
   DropdownMenu,
   DropdownMenuContent,

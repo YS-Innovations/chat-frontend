@@ -1,6 +1,6 @@
 // src/components/ChatWindow/ThreadedMessageList.tsx
 import React from 'react';
-import type { Message } from '@/pages/chat/api/chatService';
+import type { Message } from '@/pages/chat/api/Chat/chatService';
 import MessageBubble from './MessageBubble';
 
 interface ThreadedMessageListProps {

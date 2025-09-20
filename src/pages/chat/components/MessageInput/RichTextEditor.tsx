@@ -37,7 +37,7 @@ import { uploadFileToS3 } from '../../api/uploadService';
 import { useCannedResponses } from '@/pages/CannedResponse/useCannedResponses';
 import { cn } from '@/lib/utils';
 import ReplyBanner from './ReplyBanner';
-import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
+import type { Message as ApiMessage } from '@/pages/chat/api/Chat/chatService';
 
 interface RichTextEditorProps {
   conversationId: string | null;

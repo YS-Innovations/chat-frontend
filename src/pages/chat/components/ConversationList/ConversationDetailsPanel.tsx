@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import type { ConversationListItem } from '../../api/chatService';
+import type { ConversationListItem } from '../../api/Chat/chatService';
 
 interface ConversationDetailsPanelProps {
   conversationId: string;

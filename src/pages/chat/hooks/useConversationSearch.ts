@@ -1,6 +1,6 @@
 // src/hooks/useConversationSearch.ts
 import { useState, useCallback } from 'react';
-import { searchConversations, type SearchConversationsParams, type SearchConversationsResult } from '@/pages/chat/api/chatService';
+import { searchConversations, type SearchConversationsParams, type SearchConversationsResult } from '@/pages/chat/api/Chat/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 
 export const useConversationSearch = () => {
