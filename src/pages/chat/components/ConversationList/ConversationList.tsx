@@ -325,16 +325,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
           <Badge variant="secondary" className="text-xs font-normal">
             {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
           </Badge>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={loading || searchLoading}
-            className="h-7 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Refresh
-          </Button>
         </div>
       </div>
 
