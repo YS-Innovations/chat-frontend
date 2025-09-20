@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { FC } from 'react';
 import { X as CloseIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Message as ApiMessage } from '../../api/Chat/chatService';
+import type { Message as ApiMessage } from '../../api/chatService';
 import { sanitize } from '../../utils/sanitize';
 
 interface ReplyBannerProps {

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
-import { getAssignmentHistory, type AssignmentEntry } from '../../api/Agent/agentService';
+import { getAssignmentHistory, type AssignmentEntry } from '../../api/agentService';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import type { ConversationListItem } from '../../api/Chat/chatService';
+import type { ConversationListItem } from '../../api/chatService';
 
 interface ConversationDetailsPanelProps {
   conversationId: string;

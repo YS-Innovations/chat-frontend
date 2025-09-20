@@ -6,8 +6,8 @@ import socket, {
   sendDeliveredReceipt,
   sendSeenReceipt,
 } from '../api/socket';
-import { fetchMessages } from '../api/Chat/chatService';
-import type { Message as ApiMessage } from '../api/Chat/chatService';
+import { fetchMessages } from '../../chat/api/chatService';
+import type { Message as ApiMessage } from '../../chat/api/chatService';
 
 export interface UseMessagesResult {
   messages: ApiMessage[];

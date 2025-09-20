@@ -7,8 +7,8 @@ import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
-import type { ConversationListItem } from '../api/Chat/chatService';
-import type { Message as ApiMessage } from '../api/Chat/chatService';
+import type { ConversationListItem } from '../api/chatService';
+import type { Message as ApiMessage } from '../api/chatService';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 

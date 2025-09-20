@@ -1,6 +1,6 @@
 // src/hooks/useMessageSearch.ts
 import { useState } from 'react';
-import { searchMessagesInConversation, type Message } from '../api/Chat/chatService';
+import { searchMessagesInConversation, type Message } from '../api/chatService';
 
 export function useMessageSearch() {
   const [searchResults, setSearchResults] = useState<Message[]>([]);

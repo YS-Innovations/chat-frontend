@@ -22,7 +22,7 @@ function sanitizeAndHighlight(html: string, searchTerm: string): string {
         const frag = document.createDocumentFragment();
 
         let lastIndex = 0;
-        text.replace(regex, (match,offset) => {
+        text.replace(regex, (match, p1, offset) => {
           // Append text before match
           const before = text.slice(lastIndex, offset);
           if (before) {
