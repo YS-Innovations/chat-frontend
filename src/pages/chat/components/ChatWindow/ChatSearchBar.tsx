@@ -24,8 +24,20 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   onPrevious,
   onClose,
 }) => {
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      onPrevious();
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < totalMatches - 1) {
+      onNext();
+    }
+  };
+
   return (
-    <div className="absolute top-1/7 right-1/16 z-50 shadow-lg rounded-md  bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
+    <div className="absolute top-1/7 right-1/16 z-50 shadow-lg rounded-md bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
       <div className="relative">
         <Input
           value={searchQuery}
@@ -48,7 +60,7 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
           </span>
           <div className="flex items-center gap-1">
             <button
-              onClick={onPrevious}
+              onClick={handlePrevious}
               className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
               disabled={currentIndex === 0}
               title="Previous"
@@ -56,7 +68,7 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
               <ArrowUp className="w-3 h-3" />
             </button>
             <button
-              onClick={onNext}
+              onClick={handleNext}
               className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
               disabled={currentIndex === totalMatches - 1}
               title="Next"
