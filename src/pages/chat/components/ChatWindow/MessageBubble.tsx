@@ -60,7 +60,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply,
   // Support comparing either the internal DB senderId *or* an Auth0 ID if backend provides it
   // e.g. message.senderId === '68b67f3d...' OR message.senderAuth0Id === 'auth0|686f...'
   const senderAuth0Id = (message as any).senderAuth0Id ?? (message as any).sender?.auth0Id ?? undefined;
-  const isMe = (typeof senderAuth0Id === 'string' && senderAuth0Id === selfId) || message.senderId === selfId;
+  const isMe = senderAuth0Id;
 
   // Determine read receipt for this message (whether the other user has seen it)
   const readReceipts = (message as any).readReceipts;
