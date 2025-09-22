@@ -23,15 +23,21 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   onPrevious,
   onClose,
 }) => {
-  // Create a reference for the input element
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the input field on mount
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, []);
+
+  // Handle Enter key press to move to the next result
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && currentIndex < totalMatches - 1) {
+      e.preventDefault(); // Prevent form submission if inside a form
+      onNext();
+    }
+  };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
@@ -49,9 +55,10 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
     <div className="absolute top-1/7 right-1/16 z-50 shadow-lg rounded-md bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
       <div className="relative">
         <Input
-          ref={inputRef} // Attach the reference to the input element
+          ref={inputRef}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
+          onKeyDown={handleKeyDown} // Add the onKeyDown event
           placeholder="Search..."
           className="pr-8 text-sm border border-amber-300"
         />
