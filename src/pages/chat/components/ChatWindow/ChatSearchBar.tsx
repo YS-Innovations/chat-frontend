@@ -53,6 +53,12 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
         )}
       </div>
 
+      {searchQuery && totalMatches === 0 && (
+        <div className="text-xs text-red-500 text-center py-2">
+          No matches found
+        </div>
+      )}
+
       {searchQuery && totalMatches > 0 && (
         <div className="flex items-center justify-between text-xs text-gray-600 px-3">
           <span>
