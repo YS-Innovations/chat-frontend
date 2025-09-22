@@ -31,23 +31,12 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
     }
   }, []);
 
-  // Handle Enter key press to move to the next result
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && currentIndex < totalMatches - 1) {
-      e.preventDefault(); // Prevent form submission if inside a form
-      onNext();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      onPrevious();
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < totalMatches - 1) {
-      onNext();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (totalMatches > 0) {
+        onNext();
+      }
     }
   };
 
@@ -58,7 +47,7 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
           ref={inputRef}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={handleKeyDown} // Add the onKeyDown event
+          onKeyDown={handleKeyDown}
           placeholder="Search..."
           className="pr-8 text-sm border border-amber-300"
         />
@@ -83,17 +72,17 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
           </span>
           <div className="flex items-center gap-1">
             <button
-              onClick={handlePrevious}
+              onClick={onPrevious}
               className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
-              disabled={currentIndex === 0}
+              disabled={totalMatches === 0}
               title="Previous"
             >
               <ArrowUp className="w-3 h-3" />
             </button>
             <button
-              onClick={handleNext}
+              onClick={onNext}
               className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
-              disabled={currentIndex === totalMatches - 1}
+              disabled={totalMatches === 0}
               title="Next"
             >
               <ArrowDown className="w-3 h-3" />
