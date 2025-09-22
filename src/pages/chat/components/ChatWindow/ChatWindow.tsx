@@ -10,6 +10,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
 import { sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
+import { useMessageSearch } from '../../hooks/useMessageSearch';
+import ChatSearchBar from './ChatSearchBar';
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -17,6 +19,7 @@ interface ChatWindowProps {
   conversationData?: ConversationListItem | null;
   onAgentAssignmentChange?: () => void;
   onReply?: (message: Message) => void;
+  highlightMessageId?: string | null;
 }
 
 const SCROLL_THRESHOLD_PX = 120;
@@ -27,11 +30,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationData,
   onAgentAssignmentChange,
   onReply,
+  highlightMessageId
 }) => {
   const { messages, loading, error } = useMessages(conversationId);
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-
+  const highlightedMessageRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -39,6 +43,91 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   // Refs to avoid re-sending same receipts repeatedly
   const lastSeenUptoRef = useRef<string | null>(null);
   const lastDeliveredSetRef = useRef<Set<string>>(new Set());
+  const { searchResults, search, clearResults } = useMessageSearch();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
+  const searchMatchRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [showSearchBar, setShowSearchBar] = useState(false);
+
+
+  const conversationSearchResults = searchResults.filter(msg =>
+    msg.conversationId === conversationId
+  );
+
+  // Function to scroll to a search result
+  const scrollToSearchResult = useCallback((index: number) => {
+    if (conversationSearchResults.length === 0 || index < 0 || index >= conversationSearchResults.length) {
+      return;
+    }
+
+    const messageId = conversationSearchResults[index].id;
+    const element = searchMatchRefs.current.get(messageId);
+
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Highlight the message
+      element.style.backgroundColor = 'rgba(255, 215, 0, 0.3)';
+      element.style.transition = 'background-color 700ms ease';
+
+      setTimeout(() => {
+        if (element) {
+          element.style.backgroundColor = '';
+          setTimeout(() => {
+            if (element) {
+              element.style.transition = '';
+            }
+          }, 300);
+        }
+      }, 2000);
+    }
+  }, [conversationSearchResults]);
+
+  // Handle search query changes
+  useEffect(() => {
+    if (conversationId && searchQuery.trim()) {
+      const handler = setTimeout(() => {
+        search(conversationId, searchQuery);
+      }, 500);
+
+      return () => clearTimeout(handler);
+    } else {
+      clearResults();
+      setCurrentSearchMatchIndex(-1);
+    }
+  }, [searchQuery, conversationId]);
+
+  // Navigate through search results
+  const handleNextSearchMatch = () => {
+    const nextIndex = (currentSearchMatchIndex + 1) % conversationSearchResults.length;
+    setCurrentSearchMatchIndex(nextIndex);
+    scrollToSearchResult(nextIndex);
+  };
+
+  const handlePreviousSearchMatch = () => {
+    const prevIndex = currentSearchMatchIndex === 0
+      ? conversationSearchResults.length - 1
+      : currentSearchMatchIndex - 1;
+    setCurrentSearchMatchIndex(prevIndex);
+    scrollToSearchResult(prevIndex);
+  };
+
+  const handleCloseSearch = () => {
+    setSearchQuery('');
+    clearResults();
+    setCurrentSearchMatchIndex(-1);
+  };
+
+  // Register refs for search result messages
+  useEffect(() => {
+    searchMatchRefs.current.clear();
+    conversationSearchResults.forEach(msg => {
+      const element = document.querySelector(`[data-message-id="${msg.id}"]`) as HTMLElement;
+      if (element) {
+        searchMatchRefs.current.set(msg.id, element);
+      }
+    });
+  }, [conversationSearchResults]);
 
   const isNearBottom = useCallback((el: HTMLDivElement | null) => {
     if (!el) return false;
@@ -114,7 +203,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const toDeliver = messages
         .filter((m) => {
           // Only mark messages not sent by us
-          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
           const notDelivered = !m.deliveredAt;
           return sentByOther && notDelivered;
         })
@@ -134,7 +223,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const lastUnreadFromOther = [...messages]
         .reverse()
         .find((m) => {
-          const sentByOther = !( (m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId );
+          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
           return sentByOther && !m.seenAt;
         });
 
@@ -152,6 +241,58 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       console.error('Failed to send read receipts:', err);
     }
   }, [conversationId, loading, messages, selfId]);
+
+  useEffect(() => {
+    if (!highlightMessageId || loading) {
+      return;
+    }
+
+    // Only highlight if messages are loaded and we haven't highlighted this message yet
+    if (messages.length > 0) {
+      const highlightMessage = () => {
+        const selector = `[data-message-id="${highlightMessageId}"]`;
+        const el = document.querySelector(selector) as HTMLElement | null;
+
+        if (!el) {
+          // If element not found, try again after a short delay
+          setTimeout(highlightMessage, 100);
+          return;
+        }
+
+        try {
+          // Scroll to the message
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          // Apply highlight effect
+          el.style.backgroundColor = 'rgba(253, 232, 138, 0.45)';
+          el.style.transition = 'background-color 700ms ease';
+
+          // Mark this message as highlighted
+          highlightedMessageRef.current = highlightMessageId;
+
+          // Remove highlight after 2 seconds
+          setTimeout(() => {
+            if (el) {
+              el.style.backgroundColor = '';
+              setTimeout(() => {
+                if (el) {
+                  el.style.transition = '';
+                }
+              }, 300);
+            }
+          }, 2000);
+        } catch (error) {
+          console.error('Failed to highlight message:', error);
+        }
+      };
+
+      // Small delay to ensure DOM is fully rendered
+      const timeoutId = setTimeout(highlightMessage, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [highlightMessageId, loading, messages.length]);
+
 
   if (!conversationId) {
     return (
@@ -187,7 +328,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           conversation={conversationData}
           onAssignAgent={() => setShowAgentDialog(true)}
           onShowDetails={() => setShowDetails(true)}
+          onToggleSearch={() => setShowSearchBar((prev) => !prev)}
         />
+
+        {showSearchBar && (
+          <ChatSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onClear={handleCloseSearch}
+            currentIndex={currentSearchMatchIndex}
+            totalMatches={conversationSearchResults.length}
+            onNext={handleNextSearchMatch}
+            onPrevious={handlePreviousSearchMatch}
+            onClose={() => {
+              handleCloseSearch();
+              setShowSearchBar(false); 
+            }}
+          />
+        )}
+
 
         <div
           ref={containerRef}
@@ -195,11 +354,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           tabIndex={0}
         >
           {isThreaded ? (
-            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} />
+            <ThreadedMessageList messages={messages} onReply={onReply} className="pt-1" selfId={selfId} searchTerm={searchQuery} />
           ) : (
             <>
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} />
+                <MessageBubble key={msg.id} message={msg} selfId={selfId} onReply={onReply} searchTerm={searchQuery} />
               ))}
             </>
           )}

@@ -1,7 +1,7 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
 import React, { useState } from 'react';
-import { MoreVertical, Trash2, Clock, User, UserX, Users } from 'lucide-react';
-import type { ConversationListItem } from '../../api/chatService';
+import { MoreVertical, Trash2, Clock, User, UserX, Users, MessageSquare } from 'lucide-react';
+import type { ConversationListItem, MessageMatch } from '../../api/chatService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from './AgentAssignmentDialog';
+import { Highlight } from '../Search/Highlight';
+import { sanitize } from '../../utils/sanitize';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -18,24 +20,35 @@ interface ConversationItemProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAgentAssignmentChange?: () => void;
+  searchMatches?: MessageMatch[];
+  searchTerm?: string;
 }
 
-const ConversationItem: React.FC<ConversationItemProps> = ({ 
-  conversation, 
-  selected, 
-  onSelect, 
+const ConversationItem: React.FC<ConversationItemProps> = ({
+  conversation,
+  selected,
+  onSelect,
   onDelete,
-  onAgentAssignmentChange 
+  onAgentAssignmentChange,
+  searchMatches = [],
+  searchTerm = ''
 }) => {
-  const { id, guestId, updatedAt, guestName, agent } = conversation;
+  const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const { unassignAgent } = useAgentAssignment();
+  
+  const truncateMessage = (content: string | null, maxLength: number = 50) => {
+    if (!content) return '';
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffInHours < 48) {
@@ -67,8 +80,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     <>
       <div
         className={`group relative p-3 border-b cursor-pointer transition-all duration-200
-          ${selected 
-            ? 'bg-blue-50 border-blue-200' 
+          ${selected
+            ? 'bg-blue-50 border-blue-200'
             : 'hover:bg-gray-50 border-gray-100'
           }`}
         onClick={() => onSelect(id)}
@@ -83,23 +96,40 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h4 className="font-medium text-gray-900 truncate">
-                {guestName || `Guest ${guestId.slice(0, 8)}`}
+                <Highlight text={guestName || `Guest ${guestId.slice(0, 8)}`} searchTerm={searchTerm} />
               </h4>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 {formatTime(updatedAt)}
               </div>
             </div>
-            
-            <p className="text-sm text-muted-foreground truncate">
-              {guestId}
-            </p>
+
+            {/* Show last message only if there's no search term */}
+            {!searchTerm && lastMessage && (
+              <div className="text-sm text-gray-600 truncate">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: sanitize(lastMessage.content || '')
+                  }}
+                  className="line-clamp-2"
+                />
+              </div>
+            )}
+
+            {/* No messages yet */}
+            {!searchTerm && !lastMessage && (
+              <div className="text-sm text-gray-500 italic">
+                No messages yet
+              </div>
+            )}
 
             {/* Agent Assignment Info */}
             {agent && (
               <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">
                 <User className="h-3 w-3" />
-                <span className="truncate">Assigned to {agent.name || agent.email || 'Assigned agent'}</span>
+                <span className="truncate">
+                  Assigned to <Highlight text={agent.name || agent.email || 'Assigned agent'} searchTerm={searchTerm} />
+                </span>
               </div>
             )}
           </div>
@@ -122,11 +152,11 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                 <Users className="h-4 w-4 mr-2" />
                 {agent ? 'Reassign Agent' : 'Assign Agent'}
               </DropdownMenuItem>
-              
+
               {agent && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-orange-600 focus:text-orange-600"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -138,9 +168,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                   </DropdownMenuItem>
                 </>
               )}
-              
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -155,9 +185,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         </div>
 
         {/* Online indicator */}
-        <div className={`absolute bottom-10 left-10 w-3 h-3 rounded-full ${
-          selected ? 'bg-blue-500' : agent ? 'bg-green-500' : 'bg-gray-400'
-        }`} />
+        <div className={`absolute bottom-10 left-10 w-3 h-3 rounded-full ${selected ? 'bg-blue-500' : agent ? 'bg-green-500' : 'bg-gray-400'
+          }`} />
       </div>
 
       <AgentAssignmentDialog
@@ -170,5 +199,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     </>
   );
 };
+
 
 export default ConversationItem;

@@ -25,6 +25,11 @@ export interface ConversationListItem {
     email: string | null;
   };
   agentId?: string | null;
+   lastMessage?: {
+    content: string | null;
+    createdAt: string;
+    senderName: string | null;
+  } | null;
 }
 
 /**
@@ -143,4 +148,80 @@ export async function markSeen(
   await axios.post(`${API_BASE}/read-receipts/seen`, payload, {
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+
+export interface SearchConversationsParams {
+  query?: string;
+  status?: string;
+  channelId?: string;
+  agentId?: string;
+  hasAgent?: boolean;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchConversationsResult {
+  results: ConversationListItem[];
+  totalCount: number;
+}
+
+export interface MessageMatch {
+  id: string;
+  content: string;
+  createdAt: string;
+  senderName: string | null;
+}
+
+export interface SearchConversationResult extends ConversationListItem {
+  messageMatches?: MessageMatch[];
+}
+
+export async function searchConversations(
+  params: SearchConversationsParams,
+  token: string
+): Promise<SearchConversationsResult> {
+  const queryParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      // Convert boolean values to strings
+      if (typeof value === 'boolean') {
+        queryParams.append(key, value.toString());
+      } else {
+        queryParams.append(key, value.toString());
+      }
+    }
+  });
+
+  const res = await axios.get<SearchConversationsResult>(
+    `${API_BASE}/conversations/search?${queryParams.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return res.data;
+}
+
+
+export async function searchMessagesInConversation(
+  conversationId: string,
+  query: string,
+  limit = 20,
+  offset = 0
+): Promise<Message[]> {
+  const params = new URLSearchParams({
+    query,
+    limit: limit.toString(), // Convert to string for URL params
+    offset: offset.toString() // Convert to string for URL params
+  });
+
+  const url = `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages/search?${params.toString()}`;
+  
+  const res = await axios.get<Message[]>(url);
+  return res.data;
 }

@@ -8,6 +8,7 @@ import ChatWindow from '../components/ChatWindow/ChatWindow';
 import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import type { ConversationListItem } from '../api/chatService';
+import type { Message as ApiMessage } from '../api/chatService';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
@@ -17,6 +18,34 @@ export const Inbox: React.FC = () => {
   const [selectedConversation, setSelectedConversation] = useState<ConversationListItem | null>(null);
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
+  const [selectedConversationForHighlight, setSelectedConversationForHighlight] = useState<string | null>(null);
+
+  // Function to handle message selection from search results
+  const handleSelectMessageFromSearch = useCallback((conversationId: string, messageId: string) => {
+    // If we're already in the right conversation, just highlight the message
+    if (selectedConversationId === conversationId) {
+      setHighlightMessageId(messageId);
+    } else {
+      // If we need to switch conversations, store both values
+      setSelectedConversationForHighlight(conversationId);
+      setHighlightMessageId(messageId);
+      setSelectedConversationId(conversationId);
+    }
+    
+    // Clear highlight after 3 seconds (gives time for loading)
+    setTimeout(() => {
+      setHighlightMessageId(null);
+      setSelectedConversationForHighlight(null);
+    }, 3000);
+  }, [selectedConversationId]);
+
+  // Effect to apply highlight when conversation changes to match the searched message
+  useEffect(() => {
+    if (selectedConversationId && selectedConversationForHighlight === selectedConversationId && highlightMessageId) {
+      // The highlight will be handled by the ChatWindow's useEffect
+    }
+  }, [selectedConversationId, selectedConversationForHighlight, highlightMessageId]);
 
   const fetchInboxConversations = useCallback(async () => {
     try {
@@ -60,7 +89,7 @@ export const Inbox: React.FC = () => {
       });
       
       // Remove the conversation from the inbox list after marking as seen
-    //   setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+      // setConversations(prev => prev.filter(conv => conv.id !== conversationId));
     } catch (error) {
       console.error('Failed to mark conversation as seen:', error);
     }
@@ -73,6 +102,10 @@ export const Inbox: React.FC = () => {
     
     // Mark the conversation as seen when selected and remove from inbox
     await markConversationAsSeen(id);
+    
+    // Clear any existing highlight when selecting a new conversation
+    setHighlightMessageId(null);
+    setSelectedConversationForHighlight(null);
   }, [conversations, markConversationAsSeen]);
 
   const handleAgentAssignmentChange = useCallback(async () => {
@@ -119,14 +152,14 @@ export const Inbox: React.FC = () => {
         <div className="p-4 border-b bg-white">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-lg">Inbox</h2>
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={fetchInboxConversations}
               disabled={loading}
             >
               {loading ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            </Button> */}
           </div>
           <p className="text-sm text-muted-foreground">
             New conversations that need attention
@@ -142,6 +175,7 @@ export const Inbox: React.FC = () => {
             conversations={conversations}
             loading={loading}
             onRefresh={fetchInboxConversations}
+            onSelectMessage={handleSelectMessageFromSearch}
           />
         </div>
       </div>
@@ -155,6 +189,7 @@ export const Inbox: React.FC = () => {
               selfId={user.sub}
               conversationData={selectedConversation}
               onAgentAssignmentChange={handleAgentAssignmentChange}
+              highlightMessageId={highlightMessageId}
             />
             <div className="p-4 border-t bg-white">
               <RichTextEditor 
