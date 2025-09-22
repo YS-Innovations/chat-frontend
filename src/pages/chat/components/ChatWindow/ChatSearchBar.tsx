@@ -1,5 +1,4 @@
-// src/components/ChatWindow/ChatSearchBar.tsx
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { X, ArrowUp, ArrowDown } from 'lucide-react';
 
@@ -24,6 +23,16 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   onPrevious,
   onClose,
 }) => {
+  // Create a reference for the input element
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input field on mount
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   const handlePrevious = () => {
     if (currentIndex > 0) {
       onPrevious();
@@ -40,6 +49,7 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
     <div className="absolute top-1/7 right-1/16 z-50 shadow-lg rounded-md bg-white w-[300px] p-2 flex flex-col space-y-2 animate-fade-in">
       <div className="relative">
         <Input
+          ref={inputRef} // Attach the reference to the input element
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search..."
