@@ -21,6 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -53,6 +54,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [filterCount, setFilterCount] = useState(0);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isChatsOpen, setIsChatsOpen] = useState(true);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(true);
 
   // Count active filters
   useEffect(() => {
@@ -89,7 +92,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
       const hasActiveFilters = Object.values(filters).some(
         value => value !== undefined && value !== '' && value !== "ALL"
       );
-      
+
       if (searchTerm.trim() || hasActiveFilters) {
         performSearch();
       } else {
@@ -105,7 +108,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     const hasActiveFilters = Object.values(filters).some(
       value => value !== undefined && value !== '' && value !== "ALL"
     );
-    
+
     if (!searchTerm.trim() && !hasActiveFilters) {
       return;
     }
@@ -232,8 +235,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 {filterCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
+                  <Badge
+                    variant="destructive"
                     className="absolute -top-2 -right-2 h-5 w-5 min-w-0 p-0 flex items-center justify-center text-xs"
                   >
                     {filterCount}
@@ -277,8 +280,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-muted-foreground">Active filters:</span>
             {filters.status && filters.status !== "ALL" && (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className="flex items-center gap-1 text-xs cursor-pointer"
                 onClick={() => removeFilter('status')}
               >
@@ -287,8 +290,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
               </Badge>
             )}
             {filters.agentId && filters.agentId !== "ALL" && (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className="flex items-center gap-1 text-xs cursor-pointer"
                 onClick={() => removeFilter('agentId')}
               >
@@ -297,8 +300,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
               </Badge>
             )}
             {filters.hasAgent !== undefined && (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className="flex items-center gap-1 text-xs cursor-pointer"
                 onClick={() => removeFilter('hasAgent')}
               >
@@ -307,8 +310,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
               </Badge>
             )}
             {(filters.startDate || filters.endDate) && (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className="flex items-center gap-1 text-xs cursor-pointer"
                 onClick={removeDateFilter}
               >
@@ -341,13 +344,24 @@ const ConversationList: React.FC<ConversationListProps> = ({
         ) : (
           <>
             {isSearching && results && (
-              <h3 className="font-semibold text-sm text-gray-700 mb-3 pt-4 px-4">
-                Chats ({matchingConversations.length})
-              </h3>
+              <div
+                className="flex items-center justify-between pt-4 px-4 cursor-pointer select-none mb-4"
+                onClick={() => setIsChatsOpen(prev => !prev)}
+              >
+                <h3 className="font-semibold text-sm text-gray-700">
+                  Chats ({matchingConversations.length})
+                </h3>
+                {isChatsOpen ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+
             )}
-            
+
             {/* Matching Conversations */}
-            {matchingConversations.map((conv: any) => (
+            {isChatsOpen && matchingConversations.map((conv: any) => (
               <ConversationItem
                 key={conv.id}
                 conversation={conv}
@@ -363,61 +377,73 @@ const ConversationList: React.FC<ConversationListProps> = ({
             {/* Matching Messages Section */}
             {isSearching && allMessageMatches.length > 0 && (
               <div className="border-t border-gray-200 pt-4 px-4">
-                <h3 className="font-semibold text-sm text-gray-700 mb-3">
-                  Messages ({allMessageMatches.length})
-                </h3>
-                <div className="space-y-3">
-                  {allMessageMatches.map((match: MessageMatch & { conversationId: string; guestName: string }) => (
-                    <div
-                      key={`${match.conversationId}-${match.id}`}
-                      className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors relative"
-                      onClick={() => {
-                        if (onSelectMessage) {
-                          onSelectMessage(match.conversationId, match.id);
+                <div
+                  className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                  onClick={() => setIsMessagesOpen(prev => !prev)}
+                >
+                  <h3 className="font-semibold text-sm text-gray-700">
+                    Messages ({allMessageMatches.length})
+                  </h3>
+                  {isMessagesOpen ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+                {isMessagesOpen && (
+                  <div className="space-y-3">
+                    {allMessageMatches.map((match: MessageMatch & { conversationId: string; guestName: string }) => (
+                      <div
+                        key={`${match.conversationId}-${match.id}`}
+                        className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors relative"
+                        onClick={() => {
+                          if (onSelectMessage) {
+                            onSelectMessage(match.conversationId, match.id);
 
-                          // Add a temporary loading indicator
-                          const element = document.getElementById(`search-result-${match.id}`);
-                          if (element) {
-                            element.classList.add('bg-blue-50');
-                            setTimeout(() => {
-                              element.classList.remove('bg-blue-50');
-                            }, 2000);
+                            // Add a temporary loading indicator
+                            const element = document.getElementById(`search-result-${match.id}`);
+                            if (element) {
+                              element.classList.add('bg-blue-50');
+                              setTimeout(() => {
+                                element.classList.remove('bg-blue-50');
+                              }, 2000);
+                            }
+                          } else {
+                            onSelectConversation(match.conversationId);
                           }
-                        } else {
-                          onSelectConversation(match.conversationId);
-                        }
-                      }}
-                      id={`search-result-${match.id}`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex justify-between items-center w-full">
-                          <div className="font-medium text-sm text-gray-900">
-                            <Highlight text={match.guestName} searchTerm={searchTerm} />
-                          </div>
-                          {match.createdAt && (
-                            <div className="text-xs text-gray-500 whitespace-nowrap">
-                              {new Date(match.createdAt).toLocaleString()}
+                        }}
+                        id={`search-result-${match.id}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex justify-between items-center w-full">
+                            <div className="font-medium text-sm text-gray-900">
+                              <Highlight text={match.guestName} searchTerm={searchTerm} />
                             </div>
-                          )}
+                            {match.createdAt && (
+                              <div className="text-xs text-gray-500 whitespace-nowrap">
+                                {new Date(match.createdAt).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-700 rounded">
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: sanitizeAndHighlight(match.content || '', searchTerm)
+                            }}
+                            className="line-clamp-2"
+                          />
+                        </div>
+
+                        {/* Loading indicator that shows when clicked */}
+                        <div className="absolute inset-0 bg-blue-50 opacity-0 transition-opacity duration-300 pointer-events-none"
+                          id={`loading-${match.id}`}>
+                          <div className="absolute right-2 top-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
                       </div>
-                      <div className="text-sm text-gray-700 rounded">
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: sanitizeAndHighlight(match.content || '', searchTerm)
-                          }}
-                          className="line-clamp-2"
-                        />
-                      </div>
-
-                      {/* Loading indicator that shows when clicked */}
-                      <div className="absolute inset-0 bg-blue-50 opacity-0 transition-opacity duration-300 pointer-events-none"
-                        id={`loading-${match.id}`}>
-                        <div className="absolute right-2 top-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
