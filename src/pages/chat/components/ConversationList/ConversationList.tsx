@@ -324,11 +324,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
         )}
 
         {/* Results count */}
-        <div className="flex items-center justify-between">
-          <Badge variant="secondary" className="text-xs font-normal">
-            {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
-          </Badge>
-        </div>
+        {!isSearching && (
+          <div className="flex items-center justify-between">
+            <Badge variant="secondary" className="text-xs font-normal">
+              {matchingConversations.length} conversation{matchingConversations.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* Conversation List */}
