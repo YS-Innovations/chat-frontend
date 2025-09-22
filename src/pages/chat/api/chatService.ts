@@ -25,11 +25,21 @@ export interface ConversationListItem {
     email: string | null;
   };
   agentId?: string | null;
-   lastMessage?: {
+  lastMessage?: {
     content: string | null;
     createdAt: string;
     senderName: string | null;
   } | null;
+  // Add channel property with settings
+  channel?: {
+    channelToken: string;
+    type: string;
+    channelSettings?: {
+      name: string | null;
+      domain: string | null;
+      // Include other settings fields if needed
+    };
+  };
 }
 
 /**
