@@ -36,6 +36,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const { unassignAgent } = useAgentAssignment();
+  
   const truncateMessage = (content: string | null, maxLength: number = 50) => {
     if (!content) return '';
     return content.length > maxLength
@@ -103,13 +104,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               </div>
             </div>
 
-            {lastMessage && (
+            {/* Show last message only if there's no search term */}
+            {!searchTerm && lastMessage && (
               <div className="text-sm text-gray-600 truncate">
-                {/* {lastMessage.senderName && (
-                  <span className="font-medium text-gray-800">
-                    {lastMessage.senderName}:{' '}
-                  </span>
-                )} */}
                 <div
                   dangerouslySetInnerHTML={{
                     __html: sanitize(lastMessage.content || '')
@@ -120,7 +117,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             )}
 
             {/* No messages yet */}
-            {!lastMessage && (
+            {!searchTerm && !lastMessage && (
               <div className="text-sm text-gray-500 italic">
                 No messages yet
               </div>
@@ -135,25 +132,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                 </span>
               </div>
             )}
-
-            {/* Message Matches */}
-            {/* {searchMatches.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {searchMatches.slice(0, 2).map((match) => (
-                  <div key={match.id} className="flex items-start gap-1 text-xs text-green-600 bg-green-50 p-1 rounded">
-                    <MessageSquare className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    <span className="flex-1">
-                      <Highlight text={match.content} searchTerm={searchTerm} />
-                    </span>
-                  </div>
-                ))}
-                {searchMatches.length > 2 && (
-                  <div className="text-xs text-muted-foreground">
-                    +{searchMatches.length - 2} more matches
-                  </div>
-                )}
-              </div>
-            )} */}
           </div>
 
           {/* Actions */}
@@ -221,5 +199,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     </>
   );
 };
+
 
 export default ConversationItem;
