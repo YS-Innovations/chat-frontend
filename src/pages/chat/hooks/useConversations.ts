@@ -1,6 +1,6 @@
 // src/pages/chat/hooks/useConversations.ts
 import { useState, useEffect, useCallback } from 'react';
-import socket, { connectSocket, joinConversation, disconnectSocket } from '../api/socket';
+import socket, { connectSocket, joinConversation, disconnectSocket, SOCKET_EVENT_NAMES } from '../api/socket';
 import { fetchConversations } from '../api/chatService';
 import type { ConversationListItem } from '../api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
@@ -118,11 +118,11 @@ export function useConversations(channelId?: string, page = 1, limit = 50): UseC
       });
     }
 
-    socket.on('message', handleIncoming);
+    socket.on(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleIncoming);
     socket.on('new_conversation', handleIncoming);
 
     return () => {
-      socket.off('message', handleIncoming);
+      socket.off(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleIncoming);
       socket.off('new_conversation', handleIncoming);
       disconnectSocket();
     };
