@@ -406,7 +406,7 @@ export default function RichTextEditor({
 
       const payload: any = {
         conversationId,
-        senderId: selfId ,
+        senderId: selfId,
       };
       if (mediaMeta) {
         payload.mediaUrl = mediaMeta.mediaUrl;
@@ -565,6 +565,17 @@ export default function RichTextEditor({
               action={() => HistoryEditor.redo(editor)}
               title="Redo (Ctrl + Y)"
             />
+            <ToolbarButton
+              format="slash"
+              icon={<span className="h-4 w-4">/</span>} // This is the slash icon, you can customize it
+              action={() => {
+                const { selection } = editor;
+                if (selection && Range.isCollapsed(selection)) {
+                  // Insert '/' at the current cursor position
+                  Transforms.insertText(editor, '/');
+                }
+              }}
+              title="Canned Response (/)" />
           </div>
 
           <Editable
