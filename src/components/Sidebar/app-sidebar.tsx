@@ -16,24 +16,26 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { channels, loading: channelsLoading } = useChannels();
 
   const filteredItems = React.useMemo(() => {
-    if (permissionsLoading) return [];
+  if (permissionsLoading) return [];
 
-    // Create channels menu items
-    const channelItems = channels.map(channel => ({
-      title: channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`,
-      url: `/app/channels/${channel.id}`,
-      permission: "channel-access",
-    }));
+  // Create channels menu items
+  const channelItems = channels.map(channel => ({
+    title: channel.channelSettings?.name || `Channel ${channel.id.slice(0, 8)}`,
+    url: `/app/channels/${channel.id}`,
+    permission: "channel-access",
+  }));
 
-    // Add "Manage Channels" item
-    const manageChannelsItem = {
-      title: "Manage Channels",
-      url: "/app/channel-settings",
-      permission: "channel-settings-access",
-    };
+  // Add "Manage Channels" item
+  const manageChannelsItem = {
+    title: "Manage Channels",
+    url: "/app/channel-settings",
+    permission: "channel-settings-access",
+  };
 
-    const itemsWithChannels = navMainItems.map(item => {
-      if (item.title === "Channels") {
+  const itemsWithChannels = navMainItems.map(item => {
+    if (item.title === "Channels") {
+      // Only add Channels section if there are channels or the user has permission
+      if (channels.length > 0) {
         return {
           ...item,
           items: [
@@ -42,37 +44,40 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           ]
         };
       }
-      return item;
-    });
+      return null; // Skip adding "Channels" item when there are no channels
+    }
+    return item;
+  }).filter(Boolean); // Remove any null items
 
-    return itemsWithChannels
-      .map(item => {
-        if (item.items) {
-          const filteredChildItems = item.items.filter(
-            subItem => !subItem.permission || hasPermission(subItem.permission)
-          );
+  return itemsWithChannels
+    .map(item => {
+      if (item.items) {
+        const filteredChildItems = item.items.filter(
+          subItem => !subItem.permission || hasPermission(subItem.permission)
+        );
 
-          if (
-            (item.permission ? hasPermission(item.permission) : true) ||
-            filteredChildItems.length > 0
-          ) {
-            return {
-              ...item,
-              items: filteredChildItems,
-            };
-          }
-
-          return null;
-        }
-
-        if (!item.permission || hasPermission(item.permission)) {
-          return item;
+        if (
+          (item.permission ? hasPermission(item.permission) : true) ||
+          filteredChildItems.length > 0
+        ) {
+          return {
+            ...item,
+            items: filteredChildItems,
+          };
         }
 
         return null;
-      })
-      .filter(Boolean) as NavItem[];
-  }, [hasPermission, permissionsLoading, channels]);
+      }
+
+      if (!item.permission || hasPermission(item.permission)) {
+        return item;
+      }
+
+      return null;
+    })
+    .filter(Boolean) as NavItem[];
+}, [hasPermission, permissionsLoading, channels]);
+
 
   if (role === "AGENT" && filteredItems.length === 0) {
     return (
