@@ -101,7 +101,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         )}
 
         <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-          <MoreVertical className="w-4 h-4" />
+          <MoreVertical className="w-4 h-4" onClick={onShowDetails}/>
         </button>
       </div>
     </div>
