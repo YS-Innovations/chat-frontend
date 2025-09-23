@@ -35,12 +35,23 @@ const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const generateUserColor = (userId: string) => {
+  const hash = [...userId].reduce((acc, char) => acc + char.charCodeAt(0), 0); // simple hash
+  const hue = hash % 360; // Generate a unique hue based on the hash
+  return `hsl(${hue}, 70%, 60%)`; // Use HSL for a wide color range
+};
+
+
 // Default profile picture component
-const DefaultProfileIcon: React.FC<{ className?: string; name?: string }> = ({ className, name }) => {
+const DefaultProfileIcon: React.FC<{ className?: string; name?: string; userId: string }> = ({ className, name, userId }) => {
   const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
+  const userColor = generateUserColor(userId); // Generate color based on user ID
   
   return (
-    <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-medium ${className}`}>
+    <div
+      className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${className}`}
+      style={{ backgroundColor: userColor }} // Apply the generated color
+    >
       {initials}
     </div>
   );
@@ -220,24 +231,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply,
       <div className={`inline-flex items-end group ${isMe ? 'flex-row-reverse' : 'flex-row'} ${showProfilePicture ? 'gap-2' : ''}`}>
         {/* Profile picture - only show for "me" messages that have auth0Id */}
         {showProfilePicture && (
-          <div 
-            className="flex-shrink-0"
-            title={`Sent by: ${senderName}`}
-          >
-            {senderPicture ? (
-              <img
-                src={senderPicture}
-                alt={senderName}
-                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
-              />
-            ) : (
-              <DefaultProfileIcon 
-                className="w-8 h-8 text-sm" 
-                name={senderName}
-              />
-            )}
-          </div>
-        )}
+  <div className="flex-shrink-0" title={`Sent by: ${senderName}`}>
+    {senderPicture ? (
+      <img
+        src={senderPicture}
+        alt={senderName}
+        className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+      />
+    ) : (
+      <DefaultProfileIcon 
+        className="w-8 h-8 text-sm" 
+        name={senderName}
+        userId={senderAuth0Id || 'default'} // Pass userId or fallback to 'default' if none exists
+      />
+    )}
+  </div>
+)}
+
 
         <div className={`inline-flex items-center ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
           <div
