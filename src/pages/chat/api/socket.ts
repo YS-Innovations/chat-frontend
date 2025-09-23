@@ -14,10 +14,10 @@ if (!SOCKET_URL) {
  * add a shared package, prefer importing the constants from there.
  */
 export const SOCKET_EVENT_NAMES = {
-  CONVERSATION_JOIN: 'joinConversation',
-  CONVERSATION_JOINED: 'conversationJoined',
+  CONVERSATION_JOIN: 'conversation:join',
+  CONVERSATION_JOINED: 'conversation:joined',
   SEND_MESSAGE: 'sendMessage',
-  MESSAGE_NEW: 'message',
+  MESSAGE_NEW: 'message:new',
   RECEIPT_DELIVERED: 'receipt:delivered',
   RECEIPT_SEEN: 'receipt:seen',
   RECEIPT_UPDATED: 'receipt:updated',
