@@ -9,7 +9,7 @@ import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
-import { sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
+import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
 import { useMessageSearch } from '../../hooks/useMessageSearch';
 import ChatSearchBar from './ChatSearchBar';
 
@@ -48,6 +48,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
   const searchMatchRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const typingTimeoutRef = useRef<number | null>(null);
 
 
   const conversationSearchResults = searchResults.filter(msg =>
@@ -82,6 +84,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       }, 2000);
     }
   }, [conversationSearchResults]);
+
+  // Listen to typing events for this conversation
+  useEffect(() => {
+    const onTyping = (payload: { conversationId: string; userId?: string | null; isTyping: boolean }) => {
+      try {
+        if (!conversationId) return;
+        if (payload.conversationId !== conversationId) return;
+        // Ignore self typing based on selfId matching either senderId or auth mapping (server sends only userId)
+        if (payload.userId && payload.userId === selfId) return;
+        setIsOtherTyping(!!payload.isTyping);
+        if (typingTimeoutRef.current) window.clearTimeout(typingTimeoutRef.current);
+        if (payload.isTyping) {
+          typingTimeoutRef.current = window.setTimeout(() => setIsOtherTyping(false), 2000);
+        }
+      } catch {/* ignore */ }
+    };
+    socket.on(SOCKET_EVENT_NAMES.TYPING, onTyping);
+    return () => {
+      socket.off(SOCKET_EVENT_NAMES.TYPING, onTyping as any);
+    };
+  }, [conversationId, selfId]);
 
   // Handle search query changes
   useEffect(() => {
@@ -342,7 +365,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             onPrevious={handlePreviousSearchMatch}
             onClose={() => {
               handleCloseSearch();
-              setShowSearchBar(false); 
+              setShowSearchBar(false);
             }}
           />
         )}
@@ -363,6 +386,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </>
           )}
           <div ref={bottomRef} />
+          {isOtherTyping && (
+            <div className="flex items-end space-x-2 mb-2">
+              <div className="max-w-xs dark:bg-[#2a2f32] text-black dark:text-white px-4 py-2 rounded-2xl rounded-bl-none">
+                <div className="flex items-center justify-center space-x-1 h-5">
+                  <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce"></span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

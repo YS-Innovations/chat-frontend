@@ -1,6 +1,6 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
-import React, { useState } from 'react';
-import { MoreVertical, Trash2, Clock, User, UserX, Users, MessageSquare } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { MoreVertical, Trash2, Clock, User, UserX, Users } from 'lucide-react';
 import type { ConversationListItem, MessageMatch } from '../../api/chatService';
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from './AgentAssignmentDialog';
 import { Highlight } from '../Search/Highlight';
 import { sanitize } from '../../utils/sanitize';
+import socket, { SOCKET_EVENT_NAMES } from '../../api/socket';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -36,13 +37,15 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;
   const [showAgentDialog, setShowAgentDialog] = useState(false);
   const { unassignAgent } = useAgentAssignment();
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimerRef = useRef<number | null>(null);
   
-  const truncateMessage = (content: string | null, maxLength: number = 50) => {
-    if (!content) return '';
-    return content.length > maxLength
-      ? content.substring(0, maxLength) + '...'
-      : content;
-  };
+  // const truncateMessage = (content: string | null, maxLength: number = 50) => {
+  //   if (!content) return '';
+  //   return content.length > maxLength
+  //     ? content.substring(0, maxLength) + '...'
+  //     : content;
+  // };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -76,6 +79,27 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     }
   };
 
+  // Listen for typing events specific to this conversation and show indicator briefly
+  useEffect(() => {
+    const onTyping = (payload: { conversationId: string; userId?: string | null; isTyping: boolean }) => {
+      try {
+        if (!payload || payload.conversationId !== id) return;
+        setIsTyping(!!payload.isTyping);
+        if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+        if (payload.isTyping) {
+          typingTimerRef.current = window.setTimeout(() => setIsTyping(false), 2000);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    socket.on(SOCKET_EVENT_NAMES.TYPING, onTyping);
+    return () => {
+      socket.off(SOCKET_EVENT_NAMES.TYPING, onTyping as any);
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+    };
+  }, [id]);
+
   return (
     <>
       <div
@@ -104,23 +128,24 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               </div>
             </div>
 
-            {/* Show last message only if there's no search term */}
-            {!searchTerm && lastMessage && (
-              <div className="text-sm text-gray-600 truncate">
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: sanitize(lastMessage.content || '')
-                  }}
-                  className="line-clamp-2"
-                />
-              </div>
-            )}
-
-            {/* No messages yet */}
-            {!searchTerm && !lastMessage && (
-              <div className="text-sm text-gray-500 italic">
-                No messages yet
-              </div>
+            {/* Last line: If typing -> show indicator, else show last message or empty state */}
+            {!searchTerm && (
+              isTyping ? (
+                <div className="text-sm text-blue-600 italic">Typing…</div>
+              ) : lastMessage ? (
+                <div className="text-sm text-gray-600 truncate">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: sanitize(lastMessage.content || '')
+                    }}
+                    className="line-clamp-2"
+                  />
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 italic">
+                  No messages yet
+                </div>
+              )
             )}
 
             {/* Agent Assignment Info */}
