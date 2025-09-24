@@ -387,9 +387,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           )}
           <div ref={bottomRef} />
           {isOtherTyping && (
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="p-3 rounded-lg bg-gray-200 dark:bg-gray-600 max-w-xs">
-                <div className="flex space-x-1 justify-center items-center h-4">
+            <div className="flex items-end space-x-2 mb-2">
+              <div className="max-w-xs dark:bg-[#2a2f32] text-black dark:text-white px-4 py-2 rounded-2xl rounded-bl-none">
+                <div className="flex items-center justify-center space-x-1 h-5">
                   <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                   <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                   <span className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce"></span>
