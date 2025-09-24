@@ -9,7 +9,7 @@ import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
-import { sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
+import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
 import { useMessageSearch } from '../../hooks/useMessageSearch';
 import ChatSearchBar from './ChatSearchBar';
 
@@ -48,6 +48,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
   const searchMatchRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const typingTimeoutRef = useRef<number | null>(null);
 
 
   const conversationSearchResults = searchResults.filter(msg =>
@@ -82,6 +84,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       }, 2000);
     }
   }, [conversationSearchResults]);
+
+  // Listen to typing events for this conversation
+  useEffect(() => {
+    const onTyping = (payload: { conversationId: string; userId?: string | null; isTyping: boolean }) => {
+      try {
+        if (!conversationId) return;
+        if (payload.conversationId !== conversationId) return;
+        // Ignore self typing based on selfId matching either senderId or auth mapping (server sends only userId)
+        if (payload.userId && payload.userId === selfId) return;
+        setIsOtherTyping(!!payload.isTyping);
+        if (typingTimeoutRef.current) window.clearTimeout(typingTimeoutRef.current);
+        if (payload.isTyping) {
+          typingTimeoutRef.current = window.setTimeout(() => setIsOtherTyping(false), 2000);
+        }
+      } catch {/* ignore */}
+    };
+    socket.on(SOCKET_EVENT_NAMES.TYPING, onTyping);
+    return () => {
+      socket.off(SOCKET_EVENT_NAMES.TYPING, onTyping as any);
+    };
+  }, [conversationId, selfId]);
 
   // Handle search query changes
   useEffect(() => {
@@ -363,6 +386,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </>
           )}
           <div ref={bottomRef} />
+          {isOtherTyping && (
+            <div className="text-xs text-gray-500 px-2 py-1">Typing…</div>
+          )}
         </div>
       </div>
 

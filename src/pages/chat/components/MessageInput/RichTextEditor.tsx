@@ -29,7 +29,7 @@ import { HistoryEditor, withHistory } from 'slate-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { sendMessageSocket } from '../../api/socket';
+import socketClient, { emitTyping, sendMessageSocket } from '../../api/socket';
 import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
 import FileUploader from './FileUploader';
@@ -292,6 +292,10 @@ export default function RichTextEditor({
 
   const { responses } = useCannedResponses();
 
+  // Typing indicator timer
+  const typingTimerRef = useRef<number | null>(null);
+  const lastTypingStateRef = useRef<boolean>(false);
+
   const getTextBeforeCursor = useCallback(() => {
     if (!editor.selection) return '';
 
@@ -475,6 +479,40 @@ export default function RichTextEditor({
       return !prev;
     });
   };
+
+  useEffect(() => {
+    // Emit typing when content changes
+    if (!conversationId) return;
+    const has = hasContent();
+    try {
+      // Only emit when state changes to reduce noise
+      if (has && !lastTypingStateRef.current) {
+        emitTyping(conversationId, true, selfId);
+        lastTypingStateRef.current = true;
+      }
+      // Schedule idle stop after 1500ms from last change
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = window.setTimeout(() => {
+        if (lastTypingStateRef.current) {
+          emitTyping(conversationId, false, selfId);
+          lastTypingStateRef.current = false;
+        }
+      }, 1500);
+    } catch {
+      // ignore
+    }
+    // cleanup timer on unmount or conversation change
+    return () => {
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+    };
+  }, [value, conversationId, selfId, hasContent]);
+
+  useEffect(() => {
+    // On conversation change, ensure we reset typing state
+    if (!conversationId && lastTypingStateRef.current) {
+      lastTypingStateRef.current = false;
+    }
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) {

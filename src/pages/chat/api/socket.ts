@@ -21,6 +21,7 @@ export const SOCKET_EVENT_NAMES = {
   RECEIPT_DELIVERED: 'receipt:delivered',
   RECEIPT_SEEN: 'receipt:seen',
   RECEIPT_UPDATED: 'receipt:updated',
+  TYPING: 'typing',
 } as const;
 
 export type SocketEventName = typeof SOCKET_EVENT_NAMES[keyof typeof SOCKET_EVENT_NAMES];
@@ -160,6 +161,19 @@ export function sendSeenReceipt(payload: SeenReceiptPayload): void {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[Socket] failed to send seen receipt:', err);
+  }
+}
+
+/**
+ * Emit typing status for a conversation. Debounce at call sites.
+ */
+export function emitTyping(conversationId: string, isTyping: boolean, userId?: string | null): void {
+  try {
+    connectSocket();
+    socket.emit(SOCKET_EVENT_NAMES.TYPING, { conversationId, isTyping, userId: userId ?? undefined });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[Socket] failed to emit typing:', err);
   }
 }
 
