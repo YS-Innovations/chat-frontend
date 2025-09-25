@@ -3,11 +3,9 @@ import { useState, useEffect } from 'react';
 import socket, {
   joinConversation,
   SOCKET_EVENT_NAMES,
-  sendDeliveredReceipt,
-  sendSeenReceipt,
 } from '../../socket/socket';
 import { fetchMessages } from '../../api/chatService';
-import type { Message as ApiMessage } from '../../api/chatService';
+import type { Message as ApiMessage } from '../../types/ChatApiTypes';
 
 export interface UseMessagesResult {
   messages: ApiMessage[];
@@ -26,15 +24,6 @@ export interface UseMessagesOptions {
   threadPageSize?: number;
 }
 
-/**
- * Read receipt update shape received from the server via `receipt:updated`.
- */
-interface ReadReceiptUpdate {
-  messageId: string;
-  status: 'DELIVERED' | 'SEEN' | string;
-  deliveredAt?: string;
-  seenAt?: string;
-}
 
 /**
  * Recursively check whether a message id already exists in the tree.
@@ -140,27 +129,6 @@ export function useMessages(
         threadPageSize: options.threadPageSize,
       });
       setMessages(history ?? []);
-
-      // after loading, emit delivered (for all) and seen (up to last)
-      const allMsgs = history ?? [];
-      const flat = flattenMessages(allMsgs);
-      const messageIds = flat.map((m) => m.id);
-      if (messageIds.length > 0) {
-        try {
-          sendDeliveredReceipt({ conversationId, messageIds });
-        } catch (e) {
-          // swallow - non-fatal
-          // eslint-disable-next-line no-console
-          console.error('[useMessages] failed to send delivered receipt', e);
-        }
-        const lastId = messageIds[messageIds.length - 1];
-        try {
-          sendSeenReceipt({ conversationId, uptoMessageId: lastId });
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error('[useMessages] failed to send seen receipt', e);
-        }
-      }
     } catch (err: any) {
       setError(err);
     } finally {
@@ -193,26 +161,6 @@ export function useMessages(
         });
         if (!active) return;
         setMessages(history ?? []);
-
-        // after loading, emit delivered (for all) and seen (up to last)
-        const allMsgs = history ?? [];
-        const flat = flattenMessages(allMsgs);
-        const messageIds = flat.map((m) => m.id);
-        if (messageIds.length > 0) {
-          try {
-            sendDeliveredReceipt({ conversationId, messageIds });
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('[useMessages] failed to send delivered receipt', e);
-          }
-          const lastId = messageIds[messageIds.length - 1];
-          try {
-            sendSeenReceipt({ conversationId, uptoMessageId: lastId });
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('[useMessages] failed to send seen receipt', e);
-          }
-        }
       } catch (err: any) {
         if (!active) return;
         setError(err);
@@ -272,58 +220,13 @@ export function useMessages(
 
         return [...prev, msg];
       });
-
-      // Emit delivered receipt for the newly arrived message
-      try {
-        sendDeliveredReceipt({ conversationId, messageIds: [msg.id] });
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('[useMessages] failed to send delivered receipt for new message', e);
-      }
     }
 
-    // Handle receipt updates (array of receipts) from server
-    function handleReceiptsUpdate(receipts: ReadReceiptUpdate[]) {
-      if (!Array.isArray(receipts) || receipts.length === 0) return;
-
-      setMessages((prev) => {
-        const updateTree = (tree: ApiMessage[]): ApiMessage[] => {
-          return tree.map((m) => {
-            // Check if any receipt applies to this message
-            const rec = receipts.find((r) => r.messageId === m.id);
-            if (rec) {
-              const updated: ApiMessage = { ...m };
-              // If delivered or seen, update deliveredAt
-              if (rec.status === 'DELIVERED' || rec.status === 'SEEN') {
-                updated.deliveredAt = rec.deliveredAt ?? updated.deliveredAt;
-              }
-              // If seen, update seenAt
-              if (rec.status === 'SEEN') {
-                updated.seenAt = rec.seenAt ?? updated.seenAt;
-              }
-              // Merge replies as well
-              if (updated.replies) {
-                updated.replies = updateTree(updated.replies);
-              }
-              return updated;
-            }
-            // No receipt for this message; still check replies
-            if (m.replies && m.replies.length > 0) {
-              return { ...m, replies: updateTree(m.replies) };
-            }
-            return m;
-          });
-        };
-        return updateTree(prev);
-      });
-    }
 
     socket.on(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleNew);
-    socket.on(SOCKET_EVENT_NAMES.RECEIPT_UPDATED, handleReceiptsUpdate);
 
     return () => {
       socket.off(SOCKET_EVENT_NAMES.MESSAGE_NEW, handleNew);
-      socket.off(SOCKET_EVENT_NAMES.RECEIPT_UPDATED, handleReceiptsUpdate);
     };
   }, [conversationId, options.threads]);
 

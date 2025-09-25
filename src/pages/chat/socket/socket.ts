@@ -132,39 +132,6 @@ export function sendMessageSocket(payload: SendMessagePayload): void {
 }
 
 /**
- * Emit a delivery receipt over Socket.IO.
- * Components/hooks can call this when messages have been delivered to the device
- * (e.g., when they are received by the client but not yet opened/seen).
- */
-export function sendDeliveredReceipt(payload: DeliveredReceiptPayload): void {
-  try {
-    connectSocket();
-    socket.emit(SOCKET_EVENT_NAMES.RECEIPT_DELIVERED, payload);
-    // eslint-disable-next-line no-console
-    console.log('[Socket] emit receipt:delivered', payload);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('[Socket] failed to send delivered receipt:', err);
-  }
-}
-
-/**
- * Emit a seen receipt over Socket.IO.
- * Call this when the user has viewed/read messages in a conversation.
- */
-export function sendSeenReceipt(payload: SeenReceiptPayload): void {
-  try {
-    connectSocket();
-    socket.emit(SOCKET_EVENT_NAMES.RECEIPT_SEEN, payload);
-    // eslint-disable-next-line no-console
-    console.log('[Socket] emit receipt:seen', payload);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('[Socket] failed to send seen receipt:', err);
-  }
-}
-
-/**
  * Emit typing status for a conversation. Debounce at call sites.
  */
 export function emitTyping(conversationId: string, isTyping: boolean, userId?: string | null): void {

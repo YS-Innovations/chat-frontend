@@ -1,8 +1,8 @@
 // src/components/ChatWindow/MessageBubble.tsx
 import React from 'react';
-import type { Message } from '../../../api/chatService';
 import { sanitize } from '../../../utils/sanitize';
 import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-react';
+import type { Message } from '@/pages/chat/types/ChatApiTypes';
 
 interface MessageBubbleProps {
   message: Message;
@@ -11,29 +11,6 @@ interface MessageBubbleProps {
   searchTerm?: string;
 }
 
-/** Small double-check icon (two strokes) */
-const DoubleCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 24 24" className={className} aria-hidden>
-    <path
-      d="M1 14l4 4 7-7"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      opacity="0.95"
-    />
-    <path
-      d="M9 14l4 4 7-7"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      opacity="0.95"
-    />
-  </svg>
-);
 
 const generateUserColor = (userId: string) => {
   const hash = [...userId].reduce((acc, char) => acc + char.charCodeAt(0), 0); // simple hash
@@ -76,7 +53,7 @@ const stripTags = (html?: string | null) => {
   return safe.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply, searchTerm = '' }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onReply, searchTerm = '' }) => {
   // Extract sender information from message
   const senderName = (message as any).senderName || (message as any).sender?.name || 'You';
   const senderPicture = (message as any).senderPicture || (message as any).sender?.picture || null;
@@ -87,11 +64,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply,
 
   // Only show profile picture if it's a "me" message AND has auth0Id
   const showProfilePicture = isMe && senderAuth0Id;
-
-  // Determine read receipt for this message (whether the other user has seen it)
-  const readReceipts = (message as any).readReceipts;
-  const readReceiptForOther = readReceipts?.find((rr: any) => rr.userId !== message.senderId);
-  const isRead = Boolean(readReceiptForOther?.seenAt || readReceiptForOther?.status === 'SEEN');
 
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -331,11 +303,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, selfId, onReply,
 
             <div className="chat-bubble-time mt-2" aria-hidden>
               <span className="chat-bubble-time-text text-xs text-gray-400">{time}</span>
-              {isMe && (
-                <span className="chat-bubble-status ml-2" title={isRead ? 'Read' : 'Sent / Delivered'}>
-                  <DoubleCheckIcon className={`inline-block w-4 h-4 ${isRead ? 'text-blue-500' : 'text-gray-400'}`} />
-                </span>
-              )}
+
             </div>
           </div>
 

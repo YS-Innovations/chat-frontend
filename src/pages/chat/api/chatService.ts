@@ -50,30 +50,6 @@ export async function deleteConversation(conversationId: string, token: string):
 }
 
 /**
- * Mark one or more messages as "DELIVERED" via REST.
- */
-export async function markDelivered(
-  payload: { conversationId?: string; messageIds?: string[]; userId?: string; deliveredAt?: string },
-  token: string
-): Promise<void> {
-  await axios.post(`${API_BASE}/read-receipts/delivered`, payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-/**
- * Mark messages as "SEEN" in a conversation via REST.
- */
-export async function markSeen(
-  payload: { conversationId: string; userId?: string; uptoMessageId?: string; seenAt?: string },
-  token: string
-): Promise<void> {
-  await axios.post(`${API_BASE}/read-receipts/seen`, payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-/**
  * Search conversations based on given parameters.
  */
 export async function searchConversations(
