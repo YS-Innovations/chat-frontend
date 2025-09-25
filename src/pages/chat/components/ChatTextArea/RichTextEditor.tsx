@@ -29,7 +29,7 @@ import { HistoryEditor, withHistory } from 'slate-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import socketClient, { emitTyping, sendMessageSocket } from '../../socket/socket';
+import { emitTyping, sendMessageSocket } from '../../socket/socket';
 import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
 import FileUploader from './FileUploader';
@@ -37,7 +37,7 @@ import { uploadFileToS3 } from '../../api/uploadService';
 import { useCannedResponses } from '@/pages/CannedResponse/useCannedResponses';
 import { cn } from '@/lib/utils';
 import ReplyBanner from './ReplyBanner';
-import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
+import type { Message } from '../../types/ChatApiTypes';
 
 interface RichTextEditorProps {
   conversationId: string | null;
@@ -50,7 +50,7 @@ interface RichTextEditorProps {
    * When replying to a message, the parent message object.
    * Pass null to indicate normal (non-reply) state.
    */
-  replyTo?: ApiMessage | null;
+  replyTo?: Message | null;
 
   /**
    * Called when the user cancels the reply (clicks X on the ReplyBanner)

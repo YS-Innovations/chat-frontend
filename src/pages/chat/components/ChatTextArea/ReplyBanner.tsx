@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import type { FC } from 'react';
 import { X as CloseIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Message as ApiMessage } from '../../api/chatService';
 import { sanitize } from '../../utils/sanitize';
+import type { Message } from '../../types/ChatApiTypes';
 
 interface ReplyBannerProps {
   /** The message being replied to; null hides the banner */
-  replyTo: ApiMessage | null;
+  replyTo: Message | null;
 
   /** current user id (optional) so we can render "You" when appropriate */
   selfId?: string | null;

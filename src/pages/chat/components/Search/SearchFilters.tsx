@@ -1,8 +1,7 @@
 // src/pages/chat/components/Search/SearchFilters.tsx
 import React from 'react';
-import { X, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -10,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import {
@@ -40,8 +38,6 @@ export interface SearchFiltersState {
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
-  query,
-  onQueryChange,
   filters,
   onFiltersChange,
   onClear,

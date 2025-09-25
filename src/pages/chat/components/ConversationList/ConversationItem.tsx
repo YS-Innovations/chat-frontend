@@ -1,7 +1,6 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { MoreVertical, Trash2, Clock, User, UserX, Users } from 'lucide-react';
-import type { ConversationListItem, MessageMatch } from '../../api/chatService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +13,7 @@ import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Highlight } from '../Search/HighLight/Highlight';
 import { sanitize } from '../../utils/sanitize';
 import socket, { SOCKET_EVENT_NAMES } from '../../socket/socket';
+import type { ConversationListItem, MessageMatch } from '../../types/ChatApiTypes';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -31,7 +31,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   onSelect,
   onDelete,
   onAgentAssignmentChange,
-  searchMatches = [],
   searchTerm = ''
 }) => {
   const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;

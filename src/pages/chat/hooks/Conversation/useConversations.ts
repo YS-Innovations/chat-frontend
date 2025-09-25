@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import socket, { connectSocket, joinConversation, disconnectSocket, SOCKET_EVENT_NAMES } from '../../socket/socket';
 import { fetchConversations } from '../../api/chatService';
-import type { ConversationListItem } from '../../api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
+import type { ConversationListItem } from '../../types/ChatApiTypes';
 
 export interface UseConversationsResult {
   conversations: ConversationListItem[];

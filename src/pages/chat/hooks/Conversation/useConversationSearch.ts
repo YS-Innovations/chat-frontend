@@ -1,7 +1,8 @@
 // src/hooks/useConversationSearch.ts
 import { useState, useCallback } from 'react';
-import { searchConversations, type SearchConversationsParams, type SearchConversationsResult } from '@/pages/chat/api/chatService';
+import { searchConversations} from '@/pages/chat/api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
+import type { SearchConversationsParams, SearchConversationsResult } from '../../types/ChatApiTypes';
 
 export const useConversationSearch = () => {
   const { getAccessTokenSilently } = useAuthShared();
