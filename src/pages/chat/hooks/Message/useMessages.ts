@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import socket, {
   joinConversation,
-  SOCKET_EVENT_NAMES,
 } from '../../socket/socket';
 import { fetchMessages } from '../../api/Chat/chatService';
 import type { Message as ApiMessage } from '../../types/ChatApiTypes';
+import { SOCKET_EVENT_NAMES } from '../../socket/eventNames';
 
 export interface UseMessagesResult {
   messages: ApiMessage[];

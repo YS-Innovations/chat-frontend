@@ -12,8 +12,9 @@ import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Highlight } from '../Search/HighLight/Highlight';
 import { sanitize } from '../../utils/sanitize';
-import socket, { SOCKET_EVENT_NAMES } from '../../socket/socket';
 import type { ConversationListItem, MessageMatch } from '../../types/ChatApiTypes';
+import { SOCKET_EVENT_NAMES } from '../../socket/eventNames';
+import socket from '../../socket/socket';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
