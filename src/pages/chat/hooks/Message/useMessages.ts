@@ -99,17 +99,6 @@ function flattenMessages(tree: ApiMessage[]): ApiMessage[] {
   return out;
 }
 
-/**
- * Hook: useMessages
- *
- * - Loads message history for a conversation (flat or nested/threaded view).
- * - Joins the socket conversation room.
- * - Listens for incoming socket messages and merges them into local state.
- *   * In nested mode: replies (msg.parentId present) are attached under their parent if found.
- *   * In flat mode: messages are appended to the end if not present.
- * - Emits delivered/seen receipts after loading history and when new messages arrive.
- * - Listens for server `receipt:updated` events and merges deliveredAt/seenAt timestamps.
- */
 export function useMessages(
   conversationId: string | null,
   options: UseMessagesOptions = { threads: 'flat', threadPageSize: 50 }
@@ -178,7 +167,7 @@ export function useMessages(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
-  // Socket handlers: new messages + receipt updates
+  // Socket handlers: new messages 
   useEffect(() => {
     if (!conversationId) return;
 

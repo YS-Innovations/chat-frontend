@@ -5,7 +5,7 @@ import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/Conversation/useConversations';
 import { useConversationSearch } from '../../hooks/Conversation/useConversationSearch';
 import { useAvailableAgents } from '../../hooks/useAvailableAgents';
-import { deleteConversation} from '../../api/Chat/chatService';
+import { deleteConversation } from '../../api/Chat/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

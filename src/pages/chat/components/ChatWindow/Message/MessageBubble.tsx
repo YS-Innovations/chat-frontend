@@ -23,7 +23,7 @@ const generateUserColor = (userId: string) => {
 const DefaultProfileIcon: React.FC<{ className?: string; name?: string; userId: string }> = ({ className, name, userId }) => {
   const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
   const userColor = generateUserColor(userId); // Generate color based on user ID
-  
+
   return (
     <div
       className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${className}`}
@@ -150,46 +150,46 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onReply, searchT
     const safeHtml = sanitize(html);
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = safeHtml;
-    
+
     const highlightTextNodes = (node: Node, searchRegex: RegExp) => {
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent || '';
         if (searchRegex.test(text)) {
           const frag = document.createDocumentFragment();
           let lastIndex = 0;
-          
+
           text.replace(searchRegex, (match, offset) => {
             if (offset > lastIndex) {
               frag.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
             }
-            
+
             const highlightSpan = document.createElement('span');
             highlightSpan.className = 'bg-yellow-200 font-semibold';
             highlightSpan.textContent = match;
             frag.appendChild(highlightSpan);
-            
+
             lastIndex = offset + match.length;
             return match;
           });
-          
+
           if (lastIndex < text.length) {
             frag.appendChild(document.createTextNode(text.substring(lastIndex)));
           }
-          
+
           if (node.parentNode) {
             node.parentNode.replaceChild(frag, node);
           }
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        Array.from(node.childNodes).forEach(child => 
+        Array.from(node.childNodes).forEach(child =>
           highlightTextNodes(child, searchRegex)
         );
       }
     };
-    
+
     const searchRegex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     highlightTextNodes(tempDiv, searchRegex);
-    
+
     return tempDiv.innerHTML;
   };
 
@@ -203,22 +203,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onReply, searchT
       <div className={`inline-flex items-end group ${isMe ? 'flex-row-reverse' : 'flex-row'} ${showProfilePicture ? 'gap-2' : ''}`}>
         {/* Profile picture - only show for "me" messages that have auth0Id */}
         {showProfilePicture && (
-  <div className="flex-shrink-0" title={`Sent by: ${senderName}`}>
-    {senderPicture ? (
-      <img
-        src={senderPicture}
-        alt={senderName}
-        className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
-      />
-    ) : (
-      <DefaultProfileIcon 
-        className="w-8 h-8 text-sm" 
-        name={senderName}
-        userId={senderAuth0Id || 'default'} // Pass userId or fallback to 'default' if none exists
-      />
-    )}
-  </div>
-)}
+          <div className="flex-shrink-0" title={`Sent by: ${senderName}`}>
+            {senderPicture ? (
+              <img
+                src={senderPicture}
+                alt={senderName}
+                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+              />
+            ) : (
+              <DefaultProfileIcon
+                className="w-8 h-8 text-sm"
+                name={senderName}
+                userId={senderAuth0Id || 'default'} // Pass userId or fallback to 'default' if none exists
+              />
+            )}
+          </div>
+        )}
 
 
         <div className={`inline-flex items-center ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>

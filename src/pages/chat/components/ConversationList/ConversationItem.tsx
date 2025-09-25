@@ -38,7 +38,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   const { unassignAgent } = useAgentAssignment();
   const [isTyping, setIsTyping] = useState(false);
   const typingTimerRef = useRef<number | null>(null);
-  
+
   // const truncateMessage = (content: string | null, maxLength: number = 50) => {
   //   if (!content) return '';
   //   return content.length > maxLength

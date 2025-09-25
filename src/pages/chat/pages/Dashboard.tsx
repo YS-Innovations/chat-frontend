@@ -10,9 +10,8 @@ import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
-import type { ConversationListItem } from '../api/Chat/chatService';
-import type { Message as ApiMessage } from '@/pages/chat/api/Chat/chatService';
 import { useConversationSearch } from '../hooks/Conversation/useConversationSearch';
+import type { ConversationListItem, Message } from '../types/ChatApiTypes';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -34,7 +33,7 @@ const Dashboard: React.FC = () => {
   const [selectedConversationForHighlight, setSelectedConversationForHighlight] = useState<string | null>(null);
 
   // Search functionality
-  const { search, loading: searchLoading, results, clearResults } = useConversationSearch();
+  const { search, loading: searchLoading, clearResults } = useConversationSearch();
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
@@ -99,16 +98,9 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleClearSearch = () => {
-    setSearchTerm('');
-    clearResults();
-    setIsSearching(false);
-    refreshConversations();
-  };
-
   // Page-level reply state: when non-null, RichTextEditor shows the reply banner
   // and the outgoing message will include parentId.
-  const [replyTo, setReplyTo] = useState<ApiMessage | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
 
   useEffect(() => {
     setSelectedConversationId(null);
@@ -331,7 +323,7 @@ const Dashboard: React.FC = () => {
           <>
             <ChatWindow 
               conversationId={selectedConversationId} 
-              onReply={(m: ApiMessage) => {
+              onReply={(m: Message) => {
                 // Only set reply when the message belongs to the current conversation (safety)
                 if (m && m.conversationId === selectedConversationId) {
                   setReplyTo(m);
