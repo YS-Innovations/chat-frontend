@@ -1,7 +1,7 @@
 // src/components/ChatWindow/MessageBubble.tsx
 import React from 'react';
-import type { Message } from '../../api/chatService';
-import { sanitize } from '../../utils/sanitize';
+import type { Message } from '../../../api/chatService';
+import { sanitize } from '../../../utils/sanitize';
 import { Download, File as FileIcon, CornerUpLeft as ReplyIcon } from 'lucide-react';
 
 interface MessageBubbleProps {

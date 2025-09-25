@@ -12,8 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters';
-import { Highlight } from '../Search/Highlight';
-import sanitizeAndHighlight from '../sanitizeAndHighlight';
+import { Highlight } from '../Search/HighLight/Highlight';
 import {
   Sheet,
   SheetContent,
@@ -22,6 +21,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import sanitizeAndHighlight from '../Search/HighLight/sanitizeAndHighlight';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -44,9 +44,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
   loading,
   onRefresh
 }) => {
-  const { error, refresh, loadMore, hasMore } = useConversations(channelId);
+  const { loadMore, hasMore } = useConversations(channelId);
   const { search, loading: searchLoading, results, clearResults } = useConversationSearch();
-  const { agents: availableAgents, loading: agentsLoading } = useAvailableAgents();
+  const { agents: availableAgents } = useAvailableAgents();
   const { getAccessTokenSilently } = useAuthShared();
 
   const [searchTerm, setSearchTerm] = useState('');

@@ -2,13 +2,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import ConversationList from '../components/ConversationList/ConversationList';
-import ChatWindow from '../components/ChatWindow/ChatWindow';
-import RichTextEditor from '../components/MessageInput/RichTextEditor';
+import type { ConversationListItem } from '../../api/chatService';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
-import type { ConversationListItem } from '../api/chatService';
-import type { Message as ApiMessage } from '../api/chatService';
+import ChatWindow from '../../components/ChatWindow/ChatWindow';
+import RichTextEditor from '../../components/ChatTextArea/RichTextEditor';
+import ConversationList from '../../components/ConversationList/ConversationList';
+// import type { Message as ApiMessage } from '../api/chatService';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL;
 

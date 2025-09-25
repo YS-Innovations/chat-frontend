@@ -10,8 +10,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
-import AgentAssignmentDialog from './AgentAssignmentDialog';
-import { Highlight } from '../Search/Highlight';
+import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
+import { Highlight } from '../Search/HighLight/Highlight';
 import { sanitize } from '../../utils/sanitize';
 import socket, { SOCKET_EVENT_NAMES } from '../../api/socket';
 

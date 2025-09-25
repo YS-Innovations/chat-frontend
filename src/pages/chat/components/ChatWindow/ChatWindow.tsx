@@ -1,13 +1,13 @@
 // src/components/ChatWindow/ChatWindow.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useMessages } from '../../hooks/Message/useMessages';
-import MessageBubble from './MessageBubble';
-import ThreadedMessageList from './ThreadedMessageList';
+import MessageBubble from './Message/MessageBubble';
+import ThreadedMessageList from './Message/ThreadedMessageList';
 import type { Message } from '../../api/chatService';
 import ChatHeader from './ChatHeader';
-import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
+import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
+import ConversationDetailsPanel from './ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
 import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
 import { useMessageSearch } from '../../hooks/Message/useMessageSearch';

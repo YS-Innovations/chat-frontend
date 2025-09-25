@@ -3,12 +3,12 @@ import React, { useState, useCallback } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ConversationList from '../components/ConversationList/ConversationList';
-import ChatWindow from '../components/ChatWindow/ChatWindow';
-import RichTextEditor from '../components/MessageInput/RichTextEditor';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
-import type { ConversationListItem } from '../api/chatService';
-import type { Message as ApiMessage } from '../api/chatService';
+import type { ConversationListItem } from '../../api/chatService';
+import ConversationList from '../../components/ConversationList/ConversationList';
+import ChatWindow from '../../components/ChatWindow/ChatWindow';
+import RichTextEditor from '../../components/ChatTextArea/RichTextEditor';
+// import type { Message as ApiMessage } from '../api/chatService';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 

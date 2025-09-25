@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import RichTextEditor from '../components/MessageInput/RichTextEditor';
+import RichTextEditor from '../components/ChatTextArea/RichTextEditor';
 import ConversationList from '../components/ConversationList/ConversationList';
 import ChatWindow from '../components/ChatWindow/ChatWindow';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
