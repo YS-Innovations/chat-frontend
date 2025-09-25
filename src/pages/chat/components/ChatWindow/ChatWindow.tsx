@@ -1,6 +1,6 @@
 // src/components/ChatWindow/ChatWindow.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { useMessages } from '../../hooks/useMessages';
+import { useMessages } from '../../hooks/Message/useMessages';
 import MessageBubble from './MessageBubble';
 import ThreadedMessageList from './ThreadedMessageList';
 import type { Message } from '../../api/chatService';
@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
 import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
-import { useMessageSearch } from '../../hooks/useMessageSearch';
+import { useMessageSearch } from '../../hooks/Message/useMessageSearch';
 import ChatSearchBar from './ChatSearchBar';
 
 interface ChatWindowProps {

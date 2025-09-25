@@ -12,7 +12,7 @@ import CreateChannelDialog from '@/pages/channel/CreateChannelDialog';
 import { useChannels } from '@/hooks/useChannels';
 import type { ConversationListItem } from '../api/chatService';
 import type { Message as ApiMessage } from '@/pages/chat/api/chatService';
-import { useConversationSearch } from '../hooks/useConversationSearch';
+import { useConversationSearch } from '../hooks/Conversation/useConversationSearch';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 

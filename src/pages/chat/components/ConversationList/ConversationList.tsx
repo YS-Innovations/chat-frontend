@@ -2,8 +2,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, X, Calendar, SlidersHorizontal } from 'lucide-react';
 import ConversationItem from './ConversationItem';
-import { useConversations } from '../../hooks/useConversations';
-import { useConversationSearch } from '../../hooks/useConversationSearch';
+import { useConversations } from '../../hooks/Conversation/useConversations';
+import { useConversationSearch } from '../../hooks/Conversation/useConversationSearch';
 import { useAvailableAgents } from '../../hooks/useAvailableAgents';
 import { deleteConversation, type ConversationListItem, type MessageMatch } from '../../api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
