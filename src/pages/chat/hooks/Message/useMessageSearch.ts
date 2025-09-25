@@ -1,6 +1,6 @@
 // src/hooks/useMessageSearch.ts
 import { useState } from 'react';
-import { searchMessagesInConversation } from '../../api/chatService';
+import { searchMessagesInConversation } from '../../api/Chat/chatService';
 import type { Message } from '../../types/ChatApiTypes';
 
 export function useMessageSearch() {

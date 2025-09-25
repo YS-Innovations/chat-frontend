@@ -1,7 +1,7 @@
 // src/pages/chat/hooks/useConversations.ts
 import { useState, useEffect, useCallback } from 'react';
 import socket, { connectSocket, joinConversation, disconnectSocket, SOCKET_EVENT_NAMES } from '../../socket/socket';
-import { fetchConversations } from '../../api/chatService';
+import { fetchConversations } from '../../api/Chat/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import type { ConversationListItem } from '../../types/ChatApiTypes';
 

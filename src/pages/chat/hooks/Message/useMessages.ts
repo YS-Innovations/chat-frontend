@@ -4,7 +4,7 @@ import socket, {
   joinConversation,
   SOCKET_EVENT_NAMES,
 } from '../../socket/socket';
-import { fetchMessages } from '../../api/chatService';
+import { fetchMessages } from '../../api/Chat/chatService';
 import type { Message as ApiMessage } from '../../types/ChatApiTypes';
 
 export interface UseMessagesResult {
