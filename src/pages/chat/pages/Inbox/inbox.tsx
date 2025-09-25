@@ -2,11 +2,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { toast } from 'sonner';
-import type { ConversationListItem } from '../../api/chatService';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import ChatWindow from '../../components/ChatWindow/ChatWindow';
 import RichTextEditor from '../../components/ChatTextArea/RichTextEditor';
 import ConversationList from '../../components/ConversationList/ConversationList';
+import type { ConversationListItem } from '../../api/types';
 // import type { Message as ApiMessage } from '../api/chatService';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL;

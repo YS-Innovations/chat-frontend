@@ -5,7 +5,7 @@ import ConversationItem from './ConversationItem';
 import { useConversations } from '../../hooks/Conversation/useConversations';
 import { useConversationSearch } from '../../hooks/Conversation/useConversationSearch';
 import { useAvailableAgents } from '../../hooks/useAvailableAgents';
-import { deleteConversation, type ConversationListItem, type MessageMatch } from '../../api/chatService';
+import { deleteConversation} from '../../api/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import sanitizeAndHighlight from '../Search/HighLight/sanitizeAndHighlight';
+import type { ConversationListItem, MessageMatch } from '../../api/types';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
