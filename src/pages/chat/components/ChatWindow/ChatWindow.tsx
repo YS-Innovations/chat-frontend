@@ -9,7 +9,7 @@ import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ConversationDetailsPanel from './ConversationDetailsPanel';
 import type { ConversationListItem } from '../../api/chatService';
-import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
+import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../socket/socket';
 import { useMessageSearch } from '../../hooks/Message/useMessageSearch';
 import ChatSearchBar from './ChatSearchBar';
 

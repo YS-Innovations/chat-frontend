@@ -1,6 +1,6 @@
 // src/hooks/useReadReceipts.ts
 import { useState, useEffect } from 'react';
-import socket, { SOCKET_EVENT_NAMES, joinConversation, leaveConversation } from '../api/socket';
+import socket, { SOCKET_EVENT_NAMES, joinConversation, leaveConversation } from '../socket/socket';
 import type {
   ReadReceiptPayload,
   MarkDeliveredParams,

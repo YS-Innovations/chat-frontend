@@ -29,7 +29,7 @@ import { HistoryEditor, withHistory } from 'slate-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import socketClient, { emitTyping, sendMessageSocket } from '../../api/socket';
+import socketClient, { emitTyping, sendMessageSocket } from '../../socket/socket';
 import { sanitize } from '../../utils/sanitize';
 import { serializeToHtml } from '../../utils/serializeToHtml';
 import FileUploader from './FileUploader';

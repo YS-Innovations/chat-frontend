@@ -1,7 +1,7 @@
 // src/pages/chat/api/chatService.ts
 import axios from 'axios';
-import type { ConversationListItem, Message, FetchMessagesOptions, SearchConversationsParams, SearchConversationsResult } from './types';
-import { buildQueryParams } from './utils';
+import type { ConversationListItem, Message, FetchMessagesOptions, SearchConversationsParams, SearchConversationsResult } from '../types/ChatApiTypes';
+import { buildQueryParams } from '../utils/Apiutils';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL;
 if (!API_BASE) {

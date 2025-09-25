@@ -5,7 +5,7 @@ import socket, {
   SOCKET_EVENT_NAMES,
   sendDeliveredReceipt,
   sendSeenReceipt,
-} from '../../api/socket';
+} from '../../socket/socket';
 import { fetchMessages } from '../../api/chatService';
 import type { Message as ApiMessage } from '../../api/chatService';
 

@@ -13,7 +13,7 @@ import { useAgentAssignment } from '../../hooks/useAgentAssignment';
 import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Highlight } from '../Search/HighLight/Highlight';
 import { sanitize } from '../../utils/sanitize';
-import socket, { SOCKET_EVENT_NAMES } from '../../api/socket';
+import socket, { SOCKET_EVENT_NAMES } from '../../socket/socket';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;

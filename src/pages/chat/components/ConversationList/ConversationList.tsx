@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import sanitizeAndHighlight from '../Search/HighLight/sanitizeAndHighlight';
-import type { ConversationListItem, MessageMatch } from '../../api/types';
+import type { ConversationListItem, MessageMatch } from '../../types/ChatApiTypes';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
