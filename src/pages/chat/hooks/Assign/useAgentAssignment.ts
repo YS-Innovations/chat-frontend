@@ -4,9 +4,9 @@ import {
   getAvailableAgents, 
   assignAgentToConversation, 
   unassignAgentFromConversation,
-  type Agent 
-} from '../../api/agentService';
+} from '../../api/Agent/agentService';
 import { useAuthShared } from '@/hooks/useAuthShared';
+import type { Agent } from '../../types/AgentTypes';
 
 export function useAgentAssignment() {
   const { getAccessTokenSilently } = useAuthShared();

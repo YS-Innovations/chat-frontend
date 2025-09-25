@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, User, UserCheck, UserX } from 'lucide-react';
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
-import type { Agent } from '../../api/agentService';
+import type { Agent } from '../../types/AgentTypes';
 
 interface AgentAssignmentDialogProps {
   open: boolean;
