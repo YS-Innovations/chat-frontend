@@ -5,13 +5,6 @@ import axios from 'axios';
 const API_BASE = import.meta.env.VITE_BACKEND_URL;
 if (!API_BASE) throw new Error('VITE_BACKEND_URL is not defined');
 
-/**
- * The shape we expect from the backend when requesting a presigned upload URL.
- * - uploadUrl: URL to PUT/POST the file to
- * - method: optional, either 'PUT' (default) or 'POST' for presigned-form uploads
- * - fields: for presigned POST (form) uploads
- * - publicUrl: final publicly accessible URL for the uploaded file (or a URL frontend can use)
- */
 export interface PresignResponse {
   uploadUrl: string;
   method?: 'PUT' | 'POST';
@@ -19,10 +12,6 @@ export interface PresignResponse {
   publicUrl: string;
 }
 
-/**
- * Request a presigned upload URL from your backend.
- * The backend should validate filename / contentType / size and return a short-lived presigned URL.
- */
 export async function getPresignedUrl(
   fileName: string,
   contentType: string,
@@ -58,9 +47,7 @@ export async function uploadToS3WithPut(
   });
 }
 
-/**
- * Upload using a presigned POST (form) upload. Backend returns `fields` and an `uploadUrl` (the form action).
- */
+
 export async function uploadToS3WithPost(
   uploadUrl: string,
   fields: Record<string, string>,
@@ -78,10 +65,6 @@ export async function uploadToS3WithPost(
   });
 }
 
-/**
- * High-level helper that requests a presign and uploads the file. Returns the public URL.
- * Defaults to PUT when backend doesn't specify a method.
- */
 export async function uploadFileToS3(
   file: File,
   onProgress?: (percent: number) => void

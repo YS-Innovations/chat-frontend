@@ -1,17 +1,16 @@
 // src/components/ChatWindow/ChatWindow.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { useMessages } from '../../hooks/useMessages';
-import MessageBubble from './MessageBubble';
-import ThreadedMessageList from './ThreadedMessageList';
-import type { Message } from '../../api/chatService';
+import { useMessages } from '../../hooks/Message/useMessages';
+import MessageBubble from './Message/MessageBubble';
+import ThreadedMessageList from './Message/ThreadedMessageList';
 import ChatHeader from './ChatHeader';
-import AgentAssignmentDialog from '../ConversationList/AgentAssignmentDialog';
+import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import ConversationDetailsPanel from '../ConversationList/ConversationDetailsPanel';
-import type { ConversationListItem } from '../../api/chatService';
-import socket, { SOCKET_EVENT_NAMES, sendDeliveredReceipt, sendSeenReceipt } from '../../api/socket';
-import { useMessageSearch } from '../../hooks/useMessageSearch';
+import ConversationDetailsPanel from './ConversationDetailsPanel';
+import socket, { SOCKET_EVENT_NAMES } from '../../socket/socket';
+import { useMessageSearch } from '../../hooks/Message/useMessageSearch';
 import ChatSearchBar from './ChatSearchBar';
+import type { ConversationListItem, Message } from '../../types/ChatApiTypes';
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -39,10 +38,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-
-  // Refs to avoid re-sending same receipts repeatedly
-  const lastSeenUptoRef = useRef<string | null>(null);
-  const lastDeliveredSetRef = useRef<Set<string>>(new Set());
   const { searchResults, search, clearResults } = useMessageSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState(-1);
@@ -216,54 +211,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
   }, [isNearBottom, scrollToBottom, messages.length]);
 
-  // When messages change (and after initial load), request marking delivered/seen via socket.
-  useEffect(() => {
-    if (!conversationId) return;
-    if (loading) return;
-
-    try {
-      // 1) Mark delivered for messages in this convo that are from others and not yet delivered
-      const toDeliver = messages
-        .filter((m) => {
-          // Only mark messages not sent by us
-          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
-          const notDelivered = !m.deliveredAt;
-          return sentByOther && notDelivered;
-        })
-        .map((m) => m.id)
-        // filter out ids we've already sent delivered for
-        .filter((id) => !lastDeliveredSetRef.current.has(id));
-
-      if (toDeliver.length > 0) {
-        // Emit delivered event (server will upsert and broadcast)
-        sendDeliveredReceipt({ conversationId, messageIds: toDeliver });
-        // record them to avoid re-sending repeatedly
-        toDeliver.forEach((id) => lastDeliveredSetRef.current.add(id));
-      }
-
-      // 2) Mark seen up to the latest message from others that hasn't been seen yet
-      // find the newest message (last in array) where sender != self and seenAt is falsy
-      const lastUnreadFromOther = [...messages]
-        .reverse()
-        .find((m) => {
-          const sentByOther = !((m.senderAuth0Id && m.senderAuth0Id === selfId) || m.senderId === selfId);
-          return sentByOther && !m.seenAt;
-        });
-
-      if (lastUnreadFromOther) {
-        const uptoId = lastUnreadFromOther.id;
-        if (lastSeenUptoRef.current !== uptoId) {
-          // send seen receipt up to this message id
-          sendSeenReceipt({ conversationId, uptoMessageId: uptoId });
-          lastSeenUptoRef.current = uptoId;
-        }
-      }
-    } catch (err) {
-      // keep UI stable on errors
-      // eslint-disable-next-line no-console
-      console.error('Failed to send read receipts:', err);
-    }
-  }, [conversationId, loading, messages, selfId]);
+  
 
   useEffect(() => {
     if (!highlightMessageId || loading) {

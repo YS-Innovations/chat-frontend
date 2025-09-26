@@ -1,7 +1,6 @@
 // src/pages/chat/components/ConversationList/ConversationItem.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { MoreVertical, Trash2, Clock, User, UserX, Users } from 'lucide-react';
-import type { ConversationListItem, MessageMatch } from '../../api/chatService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +9,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useAgentAssignment } from '../../hooks/useAgentAssignment';
-import AgentAssignmentDialog from './AgentAssignmentDialog';
-import { Highlight } from '../Search/Highlight';
+import AgentAssignmentDialog from '../AssignDialog/AgentAssignmentDialog';
+import { Highlight } from '../Search/HighLight/Highlight';
 import { sanitize } from '../../utils/sanitize';
-import socket, { SOCKET_EVENT_NAMES } from '../../api/socket';
+import type { ConversationListItem, MessageMatch } from '../../types/ChatApiTypes';
+import { SOCKET_EVENT_NAMES } from '../../socket/eventNames';
+import socket from '../../socket/socket';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -31,7 +32,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   onSelect,
   onDelete,
   onAgentAssignmentChange,
-  searchMatches = [],
   searchTerm = ''
 }) => {
   const { id, guestId, updatedAt, guestName, agent, lastMessage } = conversation;
@@ -39,7 +39,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   const { unassignAgent } = useAgentAssignment();
   const [isTyping, setIsTyping] = useState(false);
   const typingTimerRef = useRef<number | null>(null);
-  
+
   // const truncateMessage = (content: string | null, maxLength: number = 50) => {
   //   if (!content) return '';
   //   return content.length > maxLength

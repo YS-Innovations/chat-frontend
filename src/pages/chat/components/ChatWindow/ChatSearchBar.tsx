@@ -21,7 +21,6 @@ const ChatSearchBar: React.FC<ChatSearchBarProps> = ({
   totalMatches,
   onNext,
   onPrevious,
-  onClose,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 

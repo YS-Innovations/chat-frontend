@@ -2,18 +2,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, X, Calendar, SlidersHorizontal } from 'lucide-react';
 import ConversationItem from './ConversationItem';
-import { useConversations } from '../../hooks/useConversations';
-import { useConversationSearch } from '../../hooks/useConversationSearch';
+import { useConversations } from '../../hooks/Conversation/useConversations';
+import { useConversationSearch } from '../../hooks/Conversation/useConversationSearch';
 import { useAvailableAgents } from '../../hooks/useAvailableAgents';
-import { deleteConversation, type ConversationListItem, type MessageMatch } from '../../api/chatService';
+import { deleteConversation } from '../../api/Chat/chatService';
 import { useAuthShared } from '@/hooks/useAuthShared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import SearchFilters, { type SearchFiltersState } from '../Search/SearchFilters';
-import { Highlight } from '../Search/Highlight';
-import sanitizeAndHighlight from '../sanitizeAndHighlight';
+import { Highlight } from '../Search/HighLight/Highlight';
 import {
   Sheet,
   SheetContent,
@@ -22,6 +21,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import sanitizeAndHighlight from '../Search/HighLight/sanitizeAndHighlight';
+import type { ConversationListItem, MessageMatch } from '../../types/ChatApiTypes';
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -44,9 +45,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
   loading,
   onRefresh
 }) => {
-  const { error, refresh, loadMore, hasMore } = useConversations(channelId);
+  const { loadMore, hasMore } = useConversations(channelId);
   const { search, loading: searchLoading, results, clearResults } = useConversationSearch();
-  const { agents: availableAgents, loading: agentsLoading } = useAvailableAgents();
+  const { agents: availableAgents } = useAvailableAgents();
   const { getAccessTokenSilently } = useAuthShared();
 
   const [searchTerm, setSearchTerm] = useState('');

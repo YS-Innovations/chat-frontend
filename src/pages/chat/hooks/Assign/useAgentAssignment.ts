@@ -1,12 +1,12 @@
 // src/pages/chat/hooks/useAgentAssignment.ts
 import { useState } from 'react';
-import { useAuthShared } from '@/hooks/useAuthShared';
 import { 
   getAvailableAgents, 
   assignAgentToConversation, 
-  unassignAgentFromConversation
-} from '../api/Agent/agentService';
-import type { Agent } from '../types/AgentTypes';
+  unassignAgentFromConversation,
+} from '../../api/Agent/agentService';
+import { useAuthShared } from '@/hooks/useAuthShared';
+import type { Agent } from '../../types/AgentTypes';
 
 export function useAgentAssignment() {
   const { getAccessTokenSilently } = useAuthShared();

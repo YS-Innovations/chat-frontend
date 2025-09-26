@@ -16,8 +16,8 @@ import { CannedResponsePage } from '@/pages/CannedResponse/CannedResponsePage';
 import Dashboard from '@/pages/chat/pages/Dashboard';
 import ChannelsPage from '@/pages/channel/channel';
 import ChannelRestorePage from '@/pages/channel/restore';
-import { AssignedConversations } from '@/pages/chat/AssignedConversations/AssignedConversations';
-import Inbox from '@/pages/chat/Inbox/inbox';
+import Inbox from '@/pages/chat/pages/Inbox/inbox';
+import { AssignedConversations } from '@/pages/chat/pages/AssignedConversations/AssignedConversations';
 
 
 function AppRoutes() {

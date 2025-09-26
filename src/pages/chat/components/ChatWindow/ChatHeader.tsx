@@ -1,7 +1,7 @@
 // src/components/ChatWindow/ChatHeader.tsx
 import React from 'react';
 import { User, MoreVertical, Search } from 'lucide-react';
-import type { ConversationListItem } from '../../api/chatService';
+import type { ConversationListItem } from '../../types/ChatApiTypes';
 
 interface ChatHeaderProps {
   conversation: ConversationListItem | null | undefined;

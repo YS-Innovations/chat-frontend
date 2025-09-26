@@ -1,7 +1,8 @@
 // src/hooks/useAvailableAgents.ts
 import { useState, useEffect, useCallback } from 'react';
-import { getAvailableAgents, type Agent } from '@/pages/chat/api/agentService';
+import { getAvailableAgents } from '@/pages/chat/api/Agent/agentService';
 import { useAuthShared } from '@/hooks/useAuthShared';
+import type { Agent } from '../types/AgentTypes';
 
 export const useAvailableAgents = () => {
   const { getAccessTokenSilently } = useAuthShared();
