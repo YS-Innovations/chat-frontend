@@ -1,18 +1,6 @@
 // src/utils/sanitize.ts
 import sanitizeHtml from 'sanitize-html';
 
-/**
- * Sanitize arbitrary HTML coming from the editor or older messages.
- *
- * Notes:
- * - We allow <img> (and optionally <figure>/<figcaption>) with a restricted set of attributes.
- * - By default allowedSchemes are ['http','https','mailto'] but we allow 'data' for <img> only
- *   (so pasted inline data-URIs like `data:image/png;base64,...` will render as images).
- * - We DO NOT allow 'blob:' or other schemes here — previews that use URL.createObjectURL(blob)
- *   are handled in-memory on the client (FileUploader) and are not passed through this sanitizer.
- *
- * Always enforce file-type/size validation server-side as the frontend checks are only UX helpers.
- */
 export function sanitize(input: string): string {
     return sanitizeHtml(input, {
         allowedTags: [

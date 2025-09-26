@@ -1,8 +1,3 @@
-// src/pages/chat/api/utils.ts
-
-/**
- * Converts an object to URLSearchParams to make it easier to build query strings.
- */
 export function buildQueryParams(params: Record<string, any>): URLSearchParams {
   const queryParams = new URLSearchParams();
 

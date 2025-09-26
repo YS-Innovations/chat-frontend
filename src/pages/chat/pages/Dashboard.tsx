@@ -105,9 +105,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     setSelectedConversationId(null);
     setSelectedConversation(null);
-    // also clear any reply state (we're switching channel)
     setReplyTo(null);
-    // Clear search when channel changes
     setSearchTerm('');
     clearResults();
     setIsSearching(false);

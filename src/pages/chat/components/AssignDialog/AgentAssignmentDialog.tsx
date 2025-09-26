@@ -65,8 +65,6 @@ const AgentAssignmentDialog: React.FC<AgentAssignmentDialogProps> = ({
 
   const handleUnassign = async () => {
     try {
-      // You'll need to add unassign functionality to the hook
-      // For now, we'll just close the dialog
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to unassign agent:', error);
@@ -81,7 +79,7 @@ const AgentAssignmentDialog: React.FC<AgentAssignmentDialogProps> = ({
             {currentAgent ? 'Reassign Agent' : 'Assign Agent'}
           </DialogTitle>
           <DialogDescription>
-            {currentAgent 
+            {currentAgent
               ? `Currently assigned to ${currentAgent.name || currentAgent.email}`
               : 'Select an agent to assign to this conversation'
             }
@@ -101,9 +99,8 @@ const AgentAssignmentDialog: React.FC<AgentAssignmentDialogProps> = ({
               {agents.map((agent) => (
                 <div
                   key={agent.id}
-                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 ${
-                    selectedAgentId === agent.id ? 'bg-blue-50 border-blue-200' : ''
-                  }`}
+                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 ${selectedAgentId === agent.id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
                   onClick={() => setSelectedAgentId(agent.id)}
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm">
@@ -119,7 +116,7 @@ const AgentAssignmentDialog: React.FC<AgentAssignmentDialogProps> = ({
                   )}
                 </div>
               ))}
-              
+
               {agents.length === 0 && !loading && (
                 <div className="p-4 text-center text-gray-500">
                   No agents available

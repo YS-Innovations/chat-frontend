@@ -7,16 +7,8 @@ import { File as FileIcon, Upload, X } from 'lucide-react';
 
 interface FileUploaderProps {
   conversationId: string | null;
-  /**
-   * Called when the user selects a file (or clears it).
-   * The component no longer uploads automatically; parent will upload on Send.
-   */
   onSelectFile: (file: File | null) => void;
   disabled?: boolean;
-  /**
-   * If parent passes a file (selected), show it. This allows parent to control preview clearing.
-   * If omitted, the component maintains preview internally until onSelectFile(null) is called.
-   */
   selectedFile?: File | null;
 }
 
@@ -32,7 +24,6 @@ const FileUploader: FC<FileUploaderProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // preview will be either derived from selectedFile (prop) or internal selected file
   const [internalFile, setInternalFile] = useState<File | null>(null);
   const file = selectedFile ?? internalFile;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -62,10 +53,6 @@ const FileUploader: FC<FileUploaderProps> = ({
       }
     }
 
-    return () => {
-      // cleanup will happen when file changes
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
   // cleanup on unmount

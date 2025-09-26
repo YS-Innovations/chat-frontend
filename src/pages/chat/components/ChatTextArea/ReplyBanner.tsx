@@ -6,37 +6,13 @@ import { sanitize } from '../../utils/sanitize';
 import type { Message } from '../../types/ChatApiTypes';
 
 interface ReplyBannerProps {
-  /** The message being replied to; null hides the banner */
   replyTo: Message | null;
-
-  /** current user id (optional) so we can render "You" when appropriate */
   selfId?: string | null;
-
-  /** Called when the user cancels replying (clicks the X) */
   onCancel: () => void;
-
-  /**
-   * When user clicks the banner body, optionally focus editor (parent may pass).
-   * If omitted, clicking the banner does nothing special.
-   */
   onFocus?: () => void;
-
-  /** Maximum characters to show from the original message text */
   maxPreviewLength?: number;
 }
 
-/**
- * ReplyBanner
- *
- * Small, accessible "Replying to" bar that appears above the editor when
- * the user is replying to a specific message. It displays a short preview
- * of the original message (or attachment name) and a cancel button.
- *
- * - Uses the same Message type exported by src/pages/chat/api/chatService.ts
- * - Uses the project's sanitize util to safely extract text from HTML content.
- *
- * Drop-in ready: styles use Tailwind classes consistent with the app.
- */
 const ReplyBanner: FC<ReplyBannerProps> = ({
   replyTo,
   selfId = null,
@@ -83,8 +59,6 @@ const ReplyBanner: FC<ReplyBannerProps> = ({
   const senderLabel = useMemo(() => {
     if (!replyTo) return '';
     if (replyTo.senderId && selfId && replyTo.senderId === selfId) return 'You';
-    // If backend/frontend expose sender display name, prefer that; otherwise show shortened id
-    // We avoid reading fields that may not exist; keep it generic.
     if ((replyTo as any).senderName) return (replyTo as any).senderName as string;
     if (replyTo.senderId) return `User ${String(replyTo.senderId).slice(0, 8)}`;
     return 'System';

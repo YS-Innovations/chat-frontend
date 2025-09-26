@@ -1,11 +1,3 @@
-// src/utils/fileUtils.ts
-
-/**
- * File utility helpers: allowed extensions, size limits, and validation helpers.
- *
- * Keep these values in sync with server-side validation (VERY IMPORTANT).
- */
-
 export const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
 export const DOC_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv'];
 

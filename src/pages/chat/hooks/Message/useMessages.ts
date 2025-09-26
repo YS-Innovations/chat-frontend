@@ -14,20 +14,11 @@ export interface UseMessagesResult {
   refresh: () => Promise<void>;
 }
 
-/**
- * Options for loading messages.
- * - threads: 'flat' | 'nested' (nested will include replies[] on root messages)
- * - threadPageSize: when requesting nested threads, max replies per parent (backend uses this)
- */
 export interface UseMessagesOptions {
   threads?: 'flat' | 'nested';
   threadPageSize?: number;
 }
 
-
-/**
- * Recursively check whether a message id already exists in the tree.
- */
 function containsMessage(tree: ApiMessage[], id: string): boolean {
   for (const m of tree) {
     if (m.id === id) return true;
@@ -38,10 +29,6 @@ function containsMessage(tree: ApiMessage[], id: string): boolean {
   return false;
 }
 
-/**
- * Append a reply under the parentId in a nested message tree.
- * Returns a tuple: [newTree, inserted]
- */
 function appendReplyToParent(
   tree: ApiMessage[],
   parentId: string,
@@ -51,9 +38,7 @@ function appendReplyToParent(
 
   const mapped = tree.map((m) => {
     if (m.id === parentId) {
-      // insert under this message
       const existingReplies = Array.isArray(m.replies) ? m.replies : [];
-      // avoid duplication if reply already present
       if (existingReplies.some((r) => r.id === reply.id)) {
         inserted = true;
         return m;
@@ -84,10 +69,6 @@ function appendReplyToParent(
   return [mapped, inserted];
 }
 
-/**
- * Flatten nested messages into a simple array (roots and replies).
- * Used for dedupe checks and to produce a flat list when needed.
- */
 function flattenMessages(tree: ApiMessage[]): ApiMessage[] {
   const out: ApiMessage[] = [];
   for (const m of tree) {
@@ -162,9 +143,6 @@ export function useMessages(
     return () => {
       active = false;
     };
-    // note: options intentionally left out of deps to treat options as configuration at hook call time.
-    // If you need dynamic options, include options in deps and ensure stable identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
   // Socket handlers: new messages 
@@ -194,16 +172,10 @@ export function useMessages(
           return [...prev, msg];
         }
 
-        // Flat mode: simple array of messages
-        // Check presence in flat (prev could be nested or flat depending on earlier loads)
         const flat = flattenMessages(prev);
         if (flat.some((m) => m.id === msg.id)) return prev;
 
-        // In flat mode, we want a flat array as result.
-        // If prev currently contains nested replies (because server earlier returned nested), we convert to flat list.
-        // Prefer to keep root messages order, then append new msg.
         if (prev.length > 0 && prev[0].replies) {
-          // flatten existing tree to preserve earlier nested responses
           return [...flattenMessages(prev), msg];
         }
 

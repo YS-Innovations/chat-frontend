@@ -14,7 +14,7 @@ interface ConversationDetailsPanelProps {
 }
 
 const ConversationDetailsPanel: React.FC<ConversationDetailsPanelProps> = ({ conversationId, conversation }) => {
-  const { user, getAccessTokenSilently } = useAuthShared();
+  const { getAccessTokenSilently } = useAuthShared();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<AssignmentEntry[]>([]);

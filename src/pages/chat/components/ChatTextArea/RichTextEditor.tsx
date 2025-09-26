@@ -42,19 +42,9 @@ import type { Message } from '../../types/ChatApiTypes';
 interface RichTextEditorProps {
   conversationId: string | null;
   selfId: string;
-  /** optional callback after a message is sent */
   onSent?: () => void;
   disabled?: boolean;
-
-  /**
-   * When replying to a message, the parent message object.
-   * Pass null to indicate normal (non-reply) state.
-   */
   replyTo?: Message | null;
-
-  /**
-   * Called when the user cancels the reply (clicks X on the ReplyBanner)
-   */
   onCancelReply?: () => void;
 }
 
@@ -430,11 +420,8 @@ export default function RichTextEditor({
         payload.parentId = replyTo.id;
       }
 
-      // send via socket — backend expects parentId if this is a reply.
-      // sendMessageSocket's local type may not include parentId; cast to any to ensure runtime payload is correct.
       sendMessageSocket(payload as any);
 
-      // clear UI on successful send (best-effort; the server will broadcast the persisted message)
       if (html) {
         clearEditor(editor);
         setValue(initialValue);
